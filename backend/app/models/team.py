@@ -1,19 +1,12 @@
 class Team:
-    def __init__(self, name, driver, co_pilot, stats=None):
+    def __init__(self, name, driver_id, co_pilot_id):
         self.name = name
-        self.driver = driver
-        self.co_pilot = co_pilot
-        self.stats = stats or {
-            "wins": 0,
-            "losses": 0,
-            "total_races": 0
-        }
+        self.driver_id = driver_id # A participant can join as a driver
+        self.co_pilot_id = co_pilot_id # A participant can join as a co-pilot
 
     def to_dict(self):
-        """Convierte el objeto a un diccionario para guardarlo en Firebase"""
         return {
             "name": self.name,
-            "driver": self.driver,
-            "co_pilot": self.co_pilot,
-            "stats": self.stats
+            "driver_id": self.driver_id,
+            "co_pilot_id": self.co_pilot_id
         }
