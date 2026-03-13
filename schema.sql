@@ -248,6 +248,8 @@ CREATE TABLE segment_times (
 
     segment_number INT NOT NULL,
 
+    segment_distance_km FLOAT CHECK (segment_distance_km > 0),
+
     time_ms BIGINT NOT NULL CHECK (time_ms >= 0),
 
     UNIQUE (run_id, segment_number)
@@ -306,3 +308,25 @@ ON matches(stage_id);
 
 CREATE INDEX idx_participants_user
 ON participants(user_id);
+
+
+
+
+
+
+CREATE TABLE run_predictions (
+
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    run_id UUID NOT NULL REFERENCES runs(id),
+
+    predicted_time_ms BIGINT,
+
+    model_name VARCHAR(50),
+
+    model_version VARCHAR(20),
+
+    confidence FLOAT,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
