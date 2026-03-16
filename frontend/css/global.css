@@ -16,7 +16,7 @@ body::after {
     position: fixed;
     pointer-events: none;
     z-index: 0;
-    opacity: 0.62;
+    opacity: 0.56;
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;
@@ -24,18 +24,18 @@ body::after {
 }
 
 body::before {
-    width: min(54vw, 820px);
-    height: min(31vw, 470px);
-    top: -120px;
-    right: -220px;
+    width: min(44vw, 680px);
+    height: min(26vw, 400px);
+    top: -78px;
+    right: -170px;
     transform: rotate(-2deg);
 }
 
 body::after {
-    width: min(56vw, 860px);
-    height: min(33vw, 500px);
-    left: -250px;
-    bottom: -170px;
+    width: min(46vw, 710px);
+    height: min(27vw, 420px);
+    left: -185px;
+    bottom: -125px;
     transform: scaleX(-1) rotate(4deg);
 }
 
