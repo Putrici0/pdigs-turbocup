@@ -28,7 +28,8 @@
         const accountSummary = isLoggedIn ? `${session.name || "Account"}` : "Account";
         const accountItems = isLoggedIn
             ? `
-                <a href="create_tournament.html">Create tournament</a>
+                <a href="profile.html"${currentPage === "profile.html" ? ' class="is-current"' : ""}>Account</a>
+                <a href="create_tournament.html"${currentPage === "create_tournament.html" ? ' class="is-current"' : ""}>Create tournament</a>
                 <button type="button" class="account-logout" id="accountLogout">Logout</button>
               `
             : `
