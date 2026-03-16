@@ -25,12 +25,51 @@
     </aside>
 
     <main class="content">
-        <header>
-            <h2>Sample Photos</h2>
-            <p>Click the menu button to open the left toolbar.</p>
-        </header>
+        <section class="hero-slider" aria-label="TurboCup highlights">
+            <div class="slider-track" id="sliderTrack">
+                <article class="slide is-active">
+                    <div class="slide-visual visual-one" role="img" aria-label="Rally cars on neon city track"></div>
+                    <div class="slide-copy">
+                        <p class="slide-kicker">TurboCup Platform</p>
+                        <h2>Build 1v1 rally tournaments in minutes</h2>
+                        <p>
+                            Create brackets, assign teams, and keep every race organized from qualification to final.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="slide">
+                    <div class="slide-visual visual-two" role="img" aria-label="Mountain rally stage with dynamic colors"></div>
+                    <div class="slide-copy">
+                        <p class="slide-kicker">Live Management</p>
+                        <h2>Track stages, points and winners</h2>
+                        <p>
+                            Keep each head-to-head race clear with simple tournament views and quick updates.
+                        </p>
+                    </div>
+                </article>
+
+                <article class="slide">
+                    <div class="slide-visual visual-three" role="img" aria-label="Sunset desert rally route"></div>
+                    <div class="slide-copy">
+                        <p class="slide-kicker">Ready for Growth</p>
+                        <h2>Prepared for Firebase integration</h2>
+                        <p>
+                            Start with preload data now, then connect your backend and Firestore with minimal changes.
+                        </p>
+                    </div>
+                </article>
+            </div>
+
+            <div class="slider-controls">
+                <button id="slidePrev" class="slider-button" aria-label="Previous slide">Prev</button>
+                <div id="sliderDots" class="slider-dots" aria-label="Slide indicators"></div>
+                <button id="slideNext" class="slider-button" aria-label="Next slide">Next</button>
+            </div>
+        </section>
     </main>
 
     <script src="../js/toolbar.js" defer></script>
+    <script src="../js/index_slider.js" defer></script>
 </body>
 </html>
