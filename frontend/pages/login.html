@@ -2,9 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="../css/form.css">
 </head>
 <body>
+    <button id="menuToggle" class="menu-button" aria-expanded="false" aria-controls="toolbar">
+        Menu
+    </button>
+    <div id="backdrop" class="backdrop" aria-hidden="true"></div>
 
+    <aside id="toolbar" class="toolbar">
+        <button id="closeToggle" class="close-button" aria-label="Close menu">X</button>
+        <h1>Turbocup</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="view_tournaments.html">Explore</a>
+            <a href="#">Favorites</a>
+            <a href="view_statistics.html">Statistics</a>
+            <a href="#">Profile</a>
+        </nav>
+    </aside>
+
+    <main class="form-page">
+        <section class="form-card" aria-labelledby="login-title">
+            <h1 id="login-title">Login</h1>
+            <form action="#" method="post">
+                <label for="login-email">Email</label>
+                <input id="login-email" name="email" type="email" autocomplete="email" required>
+
+                <label for="login-password">Password</label>
+                <input id="login-password" name="password" type="password" autocomplete="current-password" required>
+
+                <button type="submit">Sign in</button>
+            </form>
+        </section>
+    </main>
+    <script src="../js/toolbar.js" defer></script>
 </body>
 </html>

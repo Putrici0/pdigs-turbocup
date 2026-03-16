@@ -2,9 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
+    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="../css/form.css">
 </head>
 <body>
+    <button id="menuToggle" class="menu-button" aria-expanded="false" aria-controls="toolbar">
+        Menu
+    </button>
+    <div id="backdrop" class="backdrop" aria-hidden="true"></div>
 
+    <aside id="toolbar" class="toolbar">
+        <button id="closeToggle" class="close-button" aria-label="Close menu">X</button>
+        <h1>Turbocup</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="view_tournaments.html">Explore</a>
+            <a href="#">Favorites</a>
+            <a href="view_statistics.html">Statistics</a>
+            <a href="#">Profile</a>
+        </nav>
+    </aside>
+
+    <main class="form-page">
+        <section class="form-card" aria-labelledby="register-title">
+            <h1 id="register-title">Register</h1>
+            <form action="#" method="post">
+                <label for="register-name">Full name</label>
+                <input id="register-name" name="full_name" type="text" autocomplete="name" required>
+
+                <label for="register-email">Email</label>
+                <input id="register-email" name="email" type="email" autocomplete="email" required>
+
+                <label for="register-password">Password</label>
+                <input id="register-password" name="password" type="password" autocomplete="new-password" required>
+
+                <label for="register-confirm-password">Confirm password</label>
+                <input id="register-confirm-password" name="confirm_password" type="password" autocomplete="new-password" required>
+
+                <button type="submit">Create account</button>
+            </form>
+        </section>
+    </main>
+    <script src="../js/toolbar.js" defer></script>
 </body>
 </html>
