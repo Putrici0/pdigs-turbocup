@@ -31,37 +31,6 @@
         </header>
     </main>
 
-    <script>
-        const menuToggle = document.getElementById("menuToggle");
-        const closeToggle = document.getElementById("closeToggle");
-        const backdrop = document.getElementById("backdrop");
-
-        function openToolbar() {
-            document.body.classList.add("toolbar-open");
-            menuToggle.setAttribute("aria-expanded", "true");
-        }
-
-        function closeToolbar() {
-            document.body.classList.remove("toolbar-open");
-            menuToggle.setAttribute("aria-expanded", "false");
-        }
-
-        function toggleToolbar() {
-            if (document.body.classList.contains("toolbar-open")) {
-                closeToolbar();
-                return;
-            }
-            openToolbar();
-        }
-
-        menuToggle.addEventListener("click", toggleToolbar);
-        closeToggle.addEventListener("click", closeToolbar);
-        backdrop.addEventListener("click", closeToolbar);
-        document.addEventListener("keydown", (event) => {
-            if (event.key === "Escape") {
-                closeToolbar();
-            }
-        });
-    </script>
+    <script src="../js/toolbar.js" defer></script>
 </body>
 </html>
