@@ -7,7 +7,13 @@
     <link rel="stylesheet" href="../css/index.css">
 </head>
 <body>
-    <aside class="toolbar">
+    <button id="menuToggle" class="menu-button" aria-expanded="false" aria-controls="toolbar">
+        Menu
+    </button>
+    <div id="backdrop" class="backdrop" aria-hidden="true"></div>
+
+    <aside id="toolbar" class="toolbar">
+        <button id="closeToggle" class="close-button" aria-label="Close menu">X</button>
         <h1>Turbocup</h1>
         <nav>
             <a href="#">Home</a>
@@ -21,8 +27,41 @@
     <main class="content">
         <header>
             <h2>Sample Photos</h2>
-            <p></p>
+            <p>Click the menu button to open the left toolbar.</p>
         </header>
     </main>
+
+    <script>
+        const menuToggle = document.getElementById("menuToggle");
+        const closeToggle = document.getElementById("closeToggle");
+        const backdrop = document.getElementById("backdrop");
+
+        function openToolbar() {
+            document.body.classList.add("toolbar-open");
+            menuToggle.setAttribute("aria-expanded", "true");
+        }
+
+        function closeToolbar() {
+            document.body.classList.remove("toolbar-open");
+            menuToggle.setAttribute("aria-expanded", "false");
+        }
+
+        function toggleToolbar() {
+            if (document.body.classList.contains("toolbar-open")) {
+                closeToolbar();
+                return;
+            }
+            openToolbar();
+        }
+
+        menuToggle.addEventListener("click", toggleToolbar);
+        closeToggle.addEventListener("click", closeToolbar);
+        backdrop.addEventListener("click", closeToolbar);
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape") {
+                closeToolbar();
+            }
+        });
+    </script>
 </body>
 </html>
