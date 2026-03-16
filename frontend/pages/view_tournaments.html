@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View tournaments</title>
+    <link rel="stylesheet" href="../css/view_tournaments.css">
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+
+<main class="page-shell">
+    <button id="menuToggle" class="menu-button" aria-expanded="false" aria-controls="toolbar">
+        Menu
+    </button>
+    <div id="backdrop" class="backdrop" aria-hidden="true"></div>
+
+    <aside id="toolbar" class="toolbar">
+        <button id="closeToggle" class="close-button" aria-label="Close menu">X</button>
+        <h1>Turbocup</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="view_tournaments.html">Explore</a>
+            <a href="#">Favorites</a>
+            <a href="view_tournament_statistic.html">Statistics</a>
+            <a href="#">Profile</a>
+        </nav>
+    </aside>
+
+
+
+
+
+    <section class="hero">
+        <p class="eyebrow">Tournament Overview</p>
+        <h1>View tournaments</h1>
+        <p class="hero-copy">
+            Review scheduled, current, and past tournaments in one place and search by tournament name.
+        </p>
+    </section>
+
+    <label class="search-field page-search" for="tournament-search">
+        <span>Search tournament</span>
+        <input
+            id="tournament-search"
+            type="search"
+            placeholder="Search by tournament name"
+            autocomplete="off"
+        >
+    </label>
+
+    <section class="panel" aria-labelledby="scheduled-tournaments-heading">
+        <div class="panel-header">
+            <div>
+                <h2 id="scheduled-tournaments-heading">Scheduled tournaments</h2>
+                <p class="panel-copy">
+                    Tournaments that have not started yet.
+                </p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table aria-describedby="scheduled-tournaments-heading">
+                <thead>
+                <tr>
+                    <th scope="col">Tournament name</th>
+                    <th scope="col">Start date and time</th>
+                    <th scope="col">End date and time</th>
+                    <th scope="col">Participants</th>
+                    <th scope="col">Points achieved</th>
+                    <th scope="col">Statistics</th>
+                </tr>
+                </thead>
+                <tbody id="scheduled-table-body"></tbody>
+            </table>
+        </div>
+
+        <p id="scheduled-empty-state" class="empty-state" hidden>
+            No scheduled tournaments are available.
+        </p>
+    </section>
+
+    <section class="panel" aria-labelledby="current-tournaments-heading">
+        <div class="panel-header">
+            <div>
+                <h2 id="current-tournaments-heading">Current tournaments</h2>
+                <p class="panel-copy">
+                    Tournaments that are currently in progress.
+                </p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table aria-describedby="current-tournaments-heading">
+                <thead>
+                <tr>
+                    <th scope="col">Tournament name</th>
+                    <th scope="col">Start date and time</th>
+                    <th scope="col">End date and time</th>
+                    <th scope="col">Participants</th>
+                    <th scope="col">Points achieved</th>
+                    <th scope="col">Statistics</th>
+                </tr>
+                </thead>
+                <tbody id="current-table-body"></tbody>
+            </table>
+        </div>
+
+        <p id="current-empty-state" class="empty-state" hidden>
+            No current tournaments are available.
+        </p>
+    </section>
+
+    <section class="panel" aria-labelledby="past-tournaments-heading">
+        <div class="panel-header">
+            <div>
+                <h2 id="past-tournaments-heading">Past tournaments</h2>
+                <p class="panel-copy">
+                    Tournaments are listed from newest to oldest using the tournament end date.
+                </p>
+            </div>
+        </div>
+
+        <div class="table-wrap">
+            <table aria-describedby="past-tournaments-heading">
+                <thead>
+                <tr>
+                    <th scope="col">Tournament name</th>
+                    <th scope="col">Start date and time</th>
+                    <th scope="col">End date and time</th>
+                    <th scope="col">Participants</th>
+                    <th scope="col">Points achieved</th>
+                    <th scope="col">Statistics</th>
+                </tr>
+                </thead>
+                <tbody id="past-table-body"></tbody>
+            </table>
+        </div>
+
+        <p id="past-empty-state" class="empty-state" hidden>
+            No completed tournaments are available.
+        </p>
+    </section>
+</main>
+
+<script src="../js/view_tournaments.js"></script>
+<script src="../js/toolbar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TurboCup</title>
+    <link rel="stylesheet" href="../css/index.css">
+</head>
+<body>
+    <button id="menuToggle" class="menu-button" aria-expanded="false" aria-controls="toolbar">
+        Menu
+    </button>
+    <div id="backdrop" class="backdrop" aria-hidden="true"></div>
+
+    <aside id="toolbar" class="toolbar">
+        <button id="closeToggle" class="close-button" aria-label="Close menu">X</button>
+        <h1>Turbocup</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="view_tournaments.html">Explore</a>
+            <a href="#">Favorites</a>
+            <a href="view_statistics.html">Statistics</a>
+            <a href="#">Profile</a>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <header>
+            <h2>Sample Photos</h2>
+            <p>Click the menu button to open the left toolbar.</p>
+        </header>
+    </main>
+
+    <script src="../js/toolbar.js" defer></script>
+</body>
+</html>
