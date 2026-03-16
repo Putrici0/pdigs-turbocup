@@ -1,0 +1,12 @@
+:root {
+    --bg: #444547;
+    --racecar-outline: #ff4fa3;
+}
+
+body {
+    background-color: var(--bg);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 700'%3E%3Cg fill='none' stroke='%23ff4fa3' stroke-width='8' stroke-linecap='round' stroke-linejoin='round' opacity='0.28'%3E%3Cpath d='M190 420 L285 420 L355 348 L560 322 L670 356 L730 356 L790 386 L925 386 L965 420 L1020 420'/%3E%3Cpath d='M355 348 L420 274 L570 250 L664 296 L670 356'/%3E%3Cpath d='M420 274 L430 238 L560 218 L642 250'/%3E%3Ccircle cx='360' cy='420' r='56'/%3E%3Ccircle cx='845' cy='420' r='56'/%3E%3Cpath d='M465 338 L620 338'/%3E%3Cpath d='M738 386 L738 420'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center 64%;
+    background-size: min(1120px, 94vw) auto;
+}

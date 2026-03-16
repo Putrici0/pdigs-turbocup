@@ -1,3 +1,5 @@
+@import url("./global.css");
+
 :root {
     --bg: #444547;
     --surface: #1f2937;
@@ -19,7 +21,7 @@ body {
     min-height: 100vh;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
     color: var(--text);
-    background: var(--bg);
+    background-color: var(--bg);
 }
 
 .page-shell {

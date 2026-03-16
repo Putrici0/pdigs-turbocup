@@ -1,3 +1,5 @@
+@import url("./global.css");
+
 * {
     box-sizing: border-box;
 }
@@ -5,7 +7,7 @@
 body {
     margin: 0;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background: #444547;
+    background-color: #444547;
     color: #dc247e;
 }
 
