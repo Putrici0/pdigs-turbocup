@@ -6,6 +6,9 @@
     }
 
     function createToolbarMarkup(currentPage) {
+        const auth = window.fakeAuth;
+        const session = auth && typeof auth.getSession === "function" ? auth.getSession() : null;
+        const isLoggedIn = !!session;
         const links = [
             { href: "index.html", label: "Home", match: ["index.html"] },
             { href: "view_tournaments.html", label: "Explore", match: ["view_tournaments.html", "create_tournament.html"] },
@@ -21,7 +24,17 @@
 
         const isLoginCurrent = currentPage === "login.html";
         const isRegisterCurrent = currentPage === "register.html";
-        const isAccountCurrent = isLoginCurrent || isRegisterCurrent;
+        const isAccountCurrent = isLoginCurrent || isRegisterCurrent || isLoggedIn;
+        const accountSummary = isLoggedIn ? `${session.name || "Account"}` : "Account";
+        const accountItems = isLoggedIn
+            ? `
+                <a href="create_tournament.html">Create tournament</a>
+                <button type="button" class="account-logout" id="accountLogout">Logout</button>
+              `
+            : `
+                <a href="login.html"${isLoginCurrent ? ' class="is-current"' : ""}>Login</a>
+                <a href="register.html"${isRegisterCurrent ? ' class="is-current"' : ""}>Register</a>
+              `;
 
         return `
             <button id="menuToggle" class="menu-button" aria-expanded="false" aria-controls="toolbar">Menu</button>
@@ -32,10 +45,9 @@
                 <nav>
                     ${navLinks}
                     <details class="account-menu"${isAccountCurrent ? " open" : ""}>
-                        <summary class="${isAccountCurrent ? "is-current" : ""}">Account</summary>
+                        <summary class="${isAccountCurrent ? "is-current" : ""}">${accountSummary}</summary>
                         <div class="account-dropdown">
-                            <a href="login.html"${isLoginCurrent ? ' class="is-current"' : ""}>Login</a>
-                            <a href="register.html"${isRegisterCurrent ? ' class="is-current"' : ""}>Register</a>
+                            ${accountItems}
                         </div>
                     </details>
                 </nav>
@@ -48,6 +60,14 @@
 
         if (!document.getElementById("toolbar")) {
             document.body.insertAdjacentHTML("afterbegin", createToolbarMarkup(currentPage));
+        }
+
+        const logoutButton = document.getElementById("accountLogout");
+        if (logoutButton && window.fakeAuth) {
+            logoutButton.addEventListener("click", function () {
+                window.fakeAuth.logout();
+                window.location.href = "index.html";
+            });
         }
 
         if (!document.querySelector(".site-footer")) {
