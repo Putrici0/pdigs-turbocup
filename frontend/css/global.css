@@ -1,45 +1,20 @@
 :root {
     --bg: #444547;
     --racecar-outline: #ff4fa3;
+    --racecar-outline-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 520'%3E%3Cg fill='none' stroke='%23ff4fa3' stroke-width='12' stroke-linecap='round' stroke-linejoin='round' opacity='0.84'%3E%3Cpath d='M70 370 L180 370 L245 305 L355 252 L530 220 L720 218 L865 238 L980 278 L1088 300 L1140 334 L1165 370'/%3E%3Cpath d='M245 305 L320 228 L500 175 L710 164 L860 180 L955 214'/%3E%3Cpath d='M365 248 L425 204 L590 170 L700 168 L792 176'/%3E%3Cpath d='M170 370 C182 312 230 272 286 272 C344 272 392 312 404 370'/%3E%3Ccircle cx='286' cy='370' r='82'/%3E%3Cpath d='M870 370 C882 312 930 272 986 272 C1044 272 1092 312 1104 370'/%3E%3Ccircle cx='986' cy='370' r='82'/%3E%3Cpath d='M540 222 L825 228'/%3E%3Cpath d='M80 280 L126 280 L176 302'/%3E%3Cpath d='M1018 300 L1106 300'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+html {
+    background-color: var(--bg);
+    background-image: var(--racecar-outline-svg), var(--racecar-outline-svg);
+    background-repeat: no-repeat, no-repeat;
+    background-size: min(44vw, 680px) auto, min(46vw, 710px) auto;
+    background-position: calc(100% + 170px) -78px, -185px calc(100% + 125px);
+    background-attachment: fixed, fixed;
 }
 
 body {
-    position: relative;
     min-height: 100vh;
-    background-color: var(--bg);
+    background: transparent !important;
     overflow-x: hidden;
-}
-
-body::before,
-body::after {
-    content: "";
-    position: fixed;
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.56;
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-position: center;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1400 700'%3E%3Cg fill='none' stroke='%23ff4fa3' stroke-width='9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M98 455 L222 450 L304 392 L465 322 L760 286 L972 304 L1084 356 L1228 365 L1284 392 L1322 448 L1366 452'/%3E%3Cpath d='M304 392 L382 274 L548 216 L768 188 L958 204 L1084 252 L1160 315'/%3E%3Cpath d='M402 266 L470 214 L650 164 L802 156 L926 172 L1012 204'/%3E%3Cpath d='M520 286 C578 248 666 228 760 226 C842 226 912 240 972 272'/%3E%3Cpath d='M666 226 L676 285'/%3E%3Cpath d='M842 226 L834 287'/%3E%3Cpath d='M1170 368 L1170 454'/%3E%3Cpath d='M236 454 C248 400 302 364 362 364 C424 364 478 402 490 454'/%3E%3Cpath d='M968 454 C980 400 1034 364 1094 364 C1156 364 1210 402 1222 454'/%3E%3Ccircle cx='362' cy='454' r='72'/%3E%3Ccircle cx='1094' cy='454' r='72'/%3E%3Cpath d='M520 286 L972 272'/%3E%3C/g%3E%3C/svg%3E");
-}
-
-body::before {
-    width: min(44vw, 680px);
-    height: min(26vw, 400px);
-    top: -78px;
-    right: -170px;
-    transform: rotate(-2deg);
-}
-
-body::after {
-    width: min(46vw, 710px);
-    height: min(27vw, 420px);
-    left: -185px;
-    bottom: -125px;
-    transform: scaleX(-1) rotate(4deg);
-}
-
-body > * {
-    position: relative;
-    z-index: 1;
 }
