@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Past Tournaments</title>
+    <link rel="stylesheet" href="../css/List of past tournaments.css">
+</head>
+<body>
+<main class="page-shell">
+    <section class="hero">
+        <p class="eyebrow">Tournament Archive</p>
+        <h1>Past tournaments</h1>
+        <p class="hero-copy">
+            Browse completed tournaments, search by name, and open the full statistics for each event.
+        </p>
+    </section>
+
+    <section class="panel" aria-labelledby="past-tournaments-heading">
+        <div class="panel-header">
+            <div>
+                <h2 id="past-tournaments-heading">Completed tournaments</h2>
+                <p class="panel-copy">
+                    Tournaments are listed from newest to oldest using the tournament end date.
+                </p>
+            </div>
+            <label class="search-field" for="tournament-search">
+                <span>Search tournament</span>
+                <input
+                    id="tournament-search"
+                    type="search"
+                    placeholder="Search by tournament name"
+                    autocomplete="off"
+                >
+            </label>
+        </div>
+
+        <div class="table-wrap">
+            <table aria-describedby="past-tournaments-heading">
+                <thead>
+                <tr>
+                    <th scope="col">Tournament name</th>
+                    <th scope="col">Start date and time</th>
+                    <th scope="col">End date and time</th>
+                    <th scope="col">Participants</th>
+                    <th scope="col">Points achieved</th>
+                    <th scope="col">Statistics</th>
+                </tr>
+                </thead>
+                <tbody id="tournaments-table-body"></tbody>
+            </table>
+        </div>
+
+        <p id="empty-state" class="empty-state" hidden>
+            No completed tournaments are available.
+        </p>
+    </section>
+</main>
+
+<script>
+    const tournaments = [
+        {
+            name: "Winter TurboCup Finals",
+            startDate: "2026-02-11T17:00:00",
+            endDate: "2026-02-13T20:30:00",
+            participants: [
+                {name: "Berlin Blazers", points: 16},
+                {name: "Munich Meteors", points: 12},
+                {name: "Hamburg Hawks", points: 9}
+            ],
+            statisticsUrl: "View statistics.html"
+        },
+        {
+            name: "January Invitational",
+            startDate: "2026-01-20T15:00:00",
+            endDate: "2026-01-21T19:00:00",
+            participants: [
+                {name: "Rhine Rockets", points: 11},
+                {name: "Cologne Cyclones", points: 8},
+                {name: "Leipzig Lynx", points: 6}
+            ],
+            statisticsUrl: "View statistics.html"
+        },
+        {
+            name: "Holiday Cup",
+            startDate: "2025-12-18T14:00:00",
+            endDate: "2025-12-19T18:00:00",
+            participants: [
+                {name: "Stuttgart Sparks", points: 13},
+                {name: "Frankfurt Force", points: 10},
+                {name: "Dresden Dragons", points: 7}
+            ],
+            statisticsUrl: "View statistics.html"
+        },
+        {
+            name: "Spring Qualifier",
+            startDate: "2026-04-04T12:00:00",
+            endDate: "2026-04-05T17:00:00",
+            participants: [
+                {name: "Future Flyers", points: 0},
+                {name: "North Knights", points: 0}
+            ],
+            statisticsUrl: "View statistics.html"
+        }
+    ];
+
+    const searchInput = document.getElementById("tournament-search");
+    const tableBody = document.getElementById("tournaments-table-body");
+    const emptyState = document.getElementById("empty-state");
+    const now = new Date();
+
+    const formatDateTime = (value) => new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(new Date(value));
+
+    const getPastTournaments = () => tournaments
+        .filter((tournament) => new Date(tournament.endDate) < now)
+        .sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
+
+    const renderTournaments = () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const filteredTournaments = getPastTournaments().filter((tournament) =>
+            tournament.name.toLowerCase().includes(query)
+        );
+
+        tableBody.innerHTML = "";
+
+        if (filteredTournaments.length === 0) {
+            emptyState.hidden = false;
+            return;
+        }
+
+        emptyState.hidden = true;
+
+        filteredTournaments.forEach((tournament) => {
+            const row = document.createElement("tr");
+            const participantNames = tournament.participants
+                .map((participant) => `<li>${participant.name}</li>`)
+                .join("");
+            const participantPoints = tournament.participants
+                .map((participant) => `<li><strong>${participant.name}:</strong> ${participant.points} pts</li>`)
+                .join("");
+
+            row.innerHTML = `
+                <td data-label="Tournament name">${tournament.name}</td>
+                <td data-label="Start date and time">${formatDateTime(tournament.startDate)}</td>
+                <td data-label="End date and time">${formatDateTime(tournament.endDate)}</td>
+                <td data-label="Participants">
+                    <ul class="compact-list">${participantNames}</ul>
+                </td>
+                <td data-label="Points achieved">
+                    <ul class="compact-list">${participantPoints}</ul>
+                </td>
+                <td data-label="Statistics">
+                    <a class="stats-link" href="${tournament.statisticsUrl}">View statistics</a>
+                </td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+    };
+
+    searchInput.addEventListener("input", renderTournaments);
+    renderTournaments();
+</script>
+</body>
+</html>
