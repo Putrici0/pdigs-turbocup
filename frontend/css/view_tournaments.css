@@ -142,24 +142,60 @@ tbody tr:last-child td {
     padding-left: 18px;
 }
 
+.participant-count {
+    margin: 0 0 10px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
 .compact-list li + li {
     margin-top: 6px;
 }
 
-.stats-link {
+.stats-link,
+.join-button {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     padding: 10px 14px;
     border-radius: 999px;
     background: var(--accent);
     color: #ffffff;
+    border: 0;
     text-decoration: none;
     font-weight: 700;
+    font: inherit;
+    cursor: pointer;
 }
 
 .stats-link:hover,
-.stats-link:focus-visible {
+.stats-link:focus-visible,
+.join-button:hover,
+.join-button:focus-visible {
     background: var(--accent-dark);
+}
+
+.join-button:disabled {
+    background: #4b5563;
+    color: #d1d5db;
+    cursor: not-allowed;
+}
+
+.action-stack {
+    display: grid;
+    gap: 8px;
+    justify-items: start;
+}
+
+.capacity-note {
+    font-size: 0.85rem;
+    color: var(--muted);
+}
+
+.full-note {
+    color: #fda4af;
+    font-weight: 700;
 }
 
 .empty-state {
