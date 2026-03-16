@@ -45,7 +45,7 @@
                     <th scope="col">End date and time</th>
                     <th scope="col">Participants</th>
                     <th scope="col">Points achieved</th>
-                    <th scope="col">Statistics</th>
+                    <th scope="col">Action</th>
                 </tr>
                 </thead>
                 <tbody id="scheduled-table-body"></tbody>
@@ -76,7 +76,7 @@
                     <th scope="col">End date and time</th>
                     <th scope="col">Participants</th>
                     <th scope="col">Points achieved</th>
-                    <th scope="col">Statistics</th>
+                    <th scope="col">Action</th>
                 </tr>
                 </thead>
                 <tbody id="current-table-body"></tbody>
@@ -107,7 +107,7 @@
                     <th scope="col">End date and time</th>
                     <th scope="col">Participants</th>
                     <th scope="col">Points achieved</th>
-                    <th scope="col">Statistics</th>
+                    <th scope="col">Action</th>
                 </tr>
                 </thead>
                 <tbody id="past-table-body"></tbody>
@@ -126,6 +126,7 @@
             name: "Winter TurboCup Finals",
             startDate: "2026-02-11T17:00:00",
             endDate: "2026-02-13T20:30:00",
+            maxParticipants: 4,
             participants: [
                 {name: "Berlin Blazers", points: 16},
                 {name: "Munich Meteors", points: 12},
@@ -137,6 +138,7 @@
             name: "January Invitational",
             startDate: "2026-01-20T15:00:00",
             endDate: "2026-01-21T19:00:00",
+            maxParticipants: 4,
             participants: [
                 {name: "Rhine Rockets", points: 11},
                 {name: "Cologne Cyclones", points: 8},
@@ -148,6 +150,7 @@
             name: "City Clash Open",
             startDate: "2026-03-10T09:30:00",
             endDate: "2026-03-18T18:00:00",
+            maxParticipants: 4,
             participants: [
                 {name: "Berlin Blazers", points: 7},
                 {name: "Cologne Cyclones", points: 5},
@@ -159,6 +162,7 @@
             name: "Holiday Cup",
             startDate: "2025-12-18T14:00:00",
             endDate: "2025-12-19T18:00:00",
+            maxParticipants: 4,
             participants: [
                 {name: "Stuttgart Sparks", points: 13},
                 {name: "Frankfurt Force", points: 10},
@@ -170,9 +174,21 @@
             name: "Spring Qualifier",
             startDate: "2026-04-04T12:00:00",
             endDate: "2026-04-05T17:00:00",
+            maxParticipants: 3,
             participants: [
                 {name: "Future Flyers", points: 0},
                 {name: "North Knights", points: 0}
+            ],
+            statisticsUrl: "view_statistics.html"
+        },
+        {
+            name: "Autumn Knockout",
+            startDate: "2026-04-12T10:00:00",
+            endDate: "2026-04-13T18:00:00",
+            maxParticipants: 2,
+            participants: [
+                {name: "South Strikers", points: 0},
+                {name: "West Wolves", points: 0}
             ],
             statisticsUrl: "view_statistics.html"
         }
@@ -194,31 +210,49 @@
         minute: "2-digit"
     }).format(new Date(value));
 
-    const createRowMarkup = (tournament) => {
+    const createRowMarkup = (tournament, sectionName) => {
         const participantNames = tournament.participants
             .map((participant) => `<li>${participant.name}</li>`)
             .join("");
         const participantPoints = tournament.participants
             .map((participant) => `<li><strong>${participant.name}:</strong> ${participant.points} pts</li>`)
             .join("");
+        const participantSummary = `${tournament.participants.length}/${tournament.maxParticipants} joined`;
+        const isFull = tournament.participants.length >= tournament.maxParticipants;
+        const actionMarkup = sectionName === "scheduled"
+            ? `
+                <div class="action-stack">
+                    <button
+                        type="button"
+                        class="join-button"
+                        data-tournament-name="${tournament.name}"
+                        ${isFull ? "disabled" : ""}
+                    >
+                        ${isFull ? "Tournament full" : "Join tournament"}
+                    </button>
+                    <span class="capacity-note ${isFull ? "full-note" : ""}">${participantSummary}</span>
+                </div>
+            `
+            : `<a class="stats-link" href="${tournament.statisticsUrl}">View statistics</a>`;
 
         return `
             <td data-label="Tournament name">${tournament.name}</td>
             <td data-label="Start date and time">${formatDateTime(tournament.startDate)}</td>
             <td data-label="End date and time">${formatDateTime(tournament.endDate)}</td>
             <td data-label="Participants">
+                <p class="participant-count">${participantSummary}</p>
                 <ul class="compact-list">${participantNames}</ul>
             </td>
             <td data-label="Points achieved">
                 <ul class="compact-list">${participantPoints}</ul>
             </td>
-            <td data-label="Statistics">
-                <a class="stats-link" href="${tournament.statisticsUrl}">View statistics</a>
+            <td data-label="Action">
+                ${actionMarkup}
             </td>
         `;
     };
 
-    const renderSection = (tableBody, emptyState, items) => {
+    const renderSection = (tableBody, emptyState, items, sectionName) => {
         tableBody.innerHTML = "";
 
         if (items.length === 0) {
@@ -230,9 +264,26 @@
 
         items.forEach((tournament) => {
             const row = document.createElement("tr");
-            row.innerHTML = createRowMarkup(tournament);
+            row.innerHTML = createRowMarkup(tournament, sectionName);
             tableBody.appendChild(row);
         });
+    };
+
+    const joinTournament = (tournamentName) => {
+        const tournament = tournaments.find((item) => item.name === tournamentName);
+
+        if (!tournament || tournament.participants.length >= tournament.maxParticipants) {
+            renderTournaments();
+            return;
+        }
+
+        const nextParticipantNumber = tournament.participants.length + 1;
+        tournament.participants.push({
+            name: `New player ${nextParticipantNumber}`,
+            points: 0
+        });
+
+        renderTournaments();
     };
 
     const renderTournaments = () => {
@@ -251,10 +302,20 @@
             .filter((tournament) => new Date(tournament.endDate) < now)
             .sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
 
-        renderSection(scheduledTableBody, scheduledEmptyState, scheduledTournaments);
-        renderSection(currentTableBody, currentEmptyState, currentTournaments);
-        renderSection(pastTableBody, pastEmptyState, pastTournaments);
+        renderSection(scheduledTableBody, scheduledEmptyState, scheduledTournaments, "scheduled");
+        renderSection(currentTableBody, currentEmptyState, currentTournaments, "current");
+        renderSection(pastTableBody, pastEmptyState, pastTournaments, "past");
     };
+
+    scheduledTableBody.addEventListener("click", (event) => {
+        const joinButton = event.target.closest(".join-button");
+
+        if (!joinButton || joinButton.disabled) {
+            return;
+        }
+
+        joinTournament(joinButton.dataset.tournamentName);
+    });
 
     searchInput.addEventListener("input", renderTournaments);
     renderTournaments();
