@@ -5,9 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View tournaments</title>
     <link rel="stylesheet" href="../css/view_tournaments.css">
+    <link rel="stylesheet" href="../css/index.css">
 </head>
 <body>
+
 <main class="page-shell">
+    <button id="menuToggle" class="menu-button" aria-expanded="false" aria-controls="toolbar">
+        Menu
+    </button>
+    <div id="backdrop" class="backdrop" aria-hidden="true"></div>
+
+    <aside id="toolbar" class="toolbar">
+        <button id="closeToggle" class="close-button" aria-label="Close menu">X</button>
+        <h1>Turbocup</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="view_tournaments.html">Explore</a>
+            <a href="#">Favorites</a>
+            <a href="view_statistics.html">Statistics</a>
+            <a href="#">Profile</a>
+        </nav>
+    </aside>
+
+
+
+
+
     <section class="hero">
         <p class="eyebrow">Tournament Overview</p>
         <h1>View tournaments</h1>
@@ -259,5 +282,6 @@
     searchInput.addEventListener("input", renderTournaments);
     renderTournaments();
 </script>
+<script src="../js/toolbar.js"></script>
 </body>
 </html>
