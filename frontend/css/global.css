@@ -1,20 +1,82 @@
 :root {
     --bg: #444547;
-    --racecar-outline: #ff4fa3;
-    --racecar-outline-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 520'%3E%3Cg fill='none' stroke='%23ff4fa3' stroke-width='12' stroke-linecap='round' stroke-linejoin='round' opacity='0.84'%3E%3Cpath d='M70 370 L180 370 L245 305 L355 252 L530 220 L720 218 L865 238 L980 278 L1088 300 L1140 334 L1165 370'/%3E%3Cpath d='M245 305 L320 228 L500 175 L710 164 L860 180 L955 214'/%3E%3Cpath d='M365 248 L425 204 L590 170 L700 168 L792 176'/%3E%3Cpath d='M170 370 C182 312 230 272 286 272 C344 272 392 312 404 370'/%3E%3Ccircle cx='286' cy='370' r='82'/%3E%3Cpath d='M870 370 C882 312 930 272 986 272 C1044 272 1092 312 1104 370'/%3E%3Ccircle cx='986' cy='370' r='82'/%3E%3Cpath d='M540 222 L825 228'/%3E%3Cpath d='M80 280 L126 280 L176 302'/%3E%3Cpath d='M1018 300 L1106 300'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 html {
+    position: relative;
     background-color: var(--bg);
-    background-image: var(--racecar-outline-svg), var(--racecar-outline-svg);
-    background-repeat: no-repeat, no-repeat;
-    background-size: min(44vw, 680px) auto, min(46vw, 710px) auto;
-    background-position: calc(100% + 170px) -78px, -185px calc(100% + 125px);
-    background-attachment: fixed, fixed;
+}
+
+html::before,
+html::after {
+    content: "";
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(12px);
+    opacity: 0.08;
+}
+
+html::before {
+    width: 40vw;
+    height: 14vw;
+    top: 4vw;
+    right: -6vw;
+    background:
+        radial-gradient(130% 70% at 100% 50%, rgba(255, 79, 163, 0.16), rgba(255, 79, 163, 0) 70%),
+        linear-gradient(to right, rgba(255, 79, 163, 0.18), rgba(255, 79, 163, 0) 72%),
+        linear-gradient(to right, rgba(255, 183, 220, 0.12), rgba(255, 183, 220, 0) 66%);
+    transform: rotate(-6deg);
+}
+
+html::after {
+    width: 34vw;
+    height: 12vw;
+    left: -6vw;
+    bottom: 4vw;
+    background:
+        radial-gradient(130% 70% at 100% 50%, rgba(255, 79, 163, 0.14), rgba(255, 79, 163, 0) 72%),
+        linear-gradient(to right, rgba(255, 79, 163, 0.16), rgba(255, 79, 163, 0) 72%),
+        linear-gradient(to right, rgba(255, 183, 220, 0.1), rgba(255, 183, 220, 0) 64%);
+    transform: rotate(7deg);
 }
 
 body {
     min-height: 100vh;
+    position: relative;
     background: transparent !important;
     overflow-x: hidden;
+}
+
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+    background: url("../assets/racecar-bg-user.png") center / contain no-repeat;
+    opacity: 0.2;
+    filter: drop-shadow(0 0 12px rgba(255, 79, 163, 0.24));
+}
+
+body::before {
+    width: 60vw;
+    height: 60vw;
+    top: -15vw;
+    right: -20vw;
+    transform: none;
+}
+
+body::after {
+    width: 60vw;
+    height: 60vw;
+    left: -34vw;
+    bottom: -22vw;
+    background-position: right center;
+    transform: none;
+}
+
+body > * {
+    position: relative;
+    z-index: 1;
 }

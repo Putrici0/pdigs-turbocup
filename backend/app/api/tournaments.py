@@ -1,20 +1,11 @@
 from datetime import datetime
 
-from firebase_admin import credentials
-from flask import Blueprint, jsonify, Flask
-from firebase_admin import firestore
-import firebase_admin
-import json
+from flask import Blueprint, jsonify, request
+from backend.app.db import db
+from backend.app.models.tournament import Tournament
 
 
-
-tournaments_bp = Flask(__name__)
-
-if not firebase_admin._apps:
-    cred = credentials.Certificate("../../firebase-credentials.json")
-    firebase_admin.initialize_app(cred)
-
-db = firestore.client()
+tournaments_bp = Blueprint('tournaments', __name__)
 
 def serialize_firestore(doc):
     item = doc.to_dict()
@@ -27,7 +18,7 @@ def serialize_firestore(doc):
     return item
 
 
-@tournaments_bp.route("/tournaments", methods=["GET"])
+@tournaments_bp.route("/", methods=["GET"])
 def get_tournaments():
     tournaments = db.collection("tournaments").stream()
     data = [serialize_firestore(doc) for doc in tournaments]
@@ -37,7 +28,48 @@ def get_tournaments():
 
 @tournaments_bp.route('/', methods=['POST'])
 def create_tournament():
-    return jsonify({"message": "POST tournament working"}), 201
+    data = request.get_json()
+    if not data or not 'name' in data or not 'start_date' in data:
+        return jsonify({"message": "Missing name or start_date"}), 400
+    
+    try:
+        start_date = datetime.strptime(data['start_date'], "%Y-%m-%d")  # formato YYYY-MM-DD
+    except ValueError:
+        return jsonify({"message": "start_date must be a valid date in YYYY-MM-DD format"}), 400
 
-if __name__ == "__main__":
-    tournaments_bp.run(debug=True)
+    # Validar end_date si existe
+    end_date_str = data.get('end_date')
+    end_date = None
+    if end_date_str:
+        try:
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"message": "end_date must be a valid date in YYYY-MM-DD format"}), 400
+
+
+    now = datetime.now()
+
+    # Determinar status
+    if start_date > now:
+        status = "scheduled"
+    else:
+        # start_date pasado o hoy
+        if not end_date or end_date >= now:
+            status = "current"
+        else:
+            status = "past"
+
+    tournament = Tournament(
+        name=data['name'],
+        start_date=data['start_date'],
+        end_date=data.get('end_date'),
+        status=status
+    )
+
+    # Add the new tournament to Firestore
+    # The add method returns a tuple with a timestamp and the document reference
+    _, doc_ref = db.collection('tournaments').add(tournament.to_dict())
+
+    # Get the created tournament document and return it
+    created_tournament = doc_ref.get()
+    return jsonify(serialize_firestore(created_tournament)), 201
