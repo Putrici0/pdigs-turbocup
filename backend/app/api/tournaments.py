@@ -94,3 +94,19 @@ def create_tournament():
     return jsonify(serialize_firestore(created_tournament)), 201
 
 #TODO configurar la función de crear torneos para que solo puedan usarla los administradores(cuando tengamos los roles de administradores)
+
+@tournaments_bp.route('/<tournament_id>', methods=['DELETE'])
+def delete_tournament(tournament_id):
+    # 1. Creamos una referencia exacta al documento usando su ID
+    doc_ref = db.collection('tournaments').document(tournament_id)
+
+    # 2. Se comprueba si existe antes de borrarlo
+    doc = doc_ref.get()
+    if not doc.exists:
+        return jsonify({"message": f"No se encontró ningún torneo con el ID {tournament_id}"}), 404
+
+    # 3. Si existe, se borra de Firestore
+    doc_ref.delete()
+
+    # 4. Se devuelve el código 200, confirmando la destrucción
+    return jsonify({"message": f"Torneo {tournament_id} borrado con éxito"}), 200
