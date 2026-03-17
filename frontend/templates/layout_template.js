@@ -42,7 +42,7 @@
             <div id="backdrop" class="backdrop" aria-hidden="true"></div>
             <aside id="toolbar" class="toolbar">
                 <button id="closeToggle" class="close-button" aria-label="Close menu">X</button>
-                <h1>Turbocup</h1>
+                <h1>TurboCup</h1>
                 <nav>
                     ${navLinks}
                     <details class="account-menu"${isAccountCurrent ? " open" : ""}>
