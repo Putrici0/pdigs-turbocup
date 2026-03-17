@@ -1,15 +1,15 @@
 import sys
 import os
 
-# 1. Calculamos la ruta a la raíz de tu proyecto (pdigs-turbocup)
+# 1. Se calcula la ruta a la raíz del proyecto
 # __file__ es este archivo. Subimos dos niveles: tests -> backend -> pdigs-turbocup
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
 
-# 2. Obligamos a Python a incluir esa carpeta en su radar de búsquedas
+# 2. Se obliga a Python a incluir esa carpeta en su radar de búsquedas
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 
-# 3. Ahora ya podemos importar sin que Python entre en pánico
+# 3. Ahora se puede importar
 import unittest
 from backend.app import create_app
 

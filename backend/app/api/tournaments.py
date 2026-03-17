@@ -33,6 +33,17 @@ def get_current_tournaments():
 
     return jsonify(data), 200
 
+@tournaments_bp.route("/past", methods=["GET"])
+def get_past_tournaments():
+    # 1. Obtenemos solo los torneos pasados desde Firebase
+    query = db.collection("tournaments").where("status", "==", "past").stream()
+    data = [serialize_firestore(doc) for doc in query]
+
+    # De más reciente a más antiguo
+    data.sort(key=lambda x: x.get("end_date", ""), reverse=True)
+
+    return jsonify(data), 200
+
 
 @tournaments_bp.route('/', methods=['POST'])
 def create_tournament():
@@ -81,3 +92,5 @@ def create_tournament():
     # Get the created tournament document and return it
     created_tournament = doc_ref.get()
     return jsonify(serialize_firestore(created_tournament)), 201
+
+#TODO configurar la función de crear torneos para que solo puedan usarla los administradores(cuando tengamos los roles de administradores)
