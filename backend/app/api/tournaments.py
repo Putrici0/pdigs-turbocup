@@ -25,6 +25,14 @@ def get_tournaments():
 
     return jsonify(data), 200
 
+@tournaments_bp.route("/current", methods=["GET"])
+def get_current_tournaments():
+    query = db.collection("tournaments").where("status", "==", "current").stream()
+
+    data = [serialize_firestore(doc) for doc in query]
+
+    return jsonify(data), 200
+
 
 @tournaments_bp.route('/', methods=['POST'])
 def create_tournament():
