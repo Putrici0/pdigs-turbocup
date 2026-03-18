@@ -7,6 +7,21 @@
     <link rel="stylesheet" href="../css/toolbar.css">
     <link rel="stylesheet" href="../css/footer.css">
     <link rel="stylesheet" href="../css/view_tournaments.css">
+    <style>
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .tab-button.active {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            border-color: #007bff;
+        }
+    </style>
 </head>
 <body>
 <main class="page-shell">
@@ -21,306 +36,220 @@
     <label class="search-field page-search" for="tournament-search">
         <span>Search tournament</span>
         <input
-            id="tournament-search"
-            type="search"
-            placeholder="Search by tournament name"
-            autocomplete="off"
+                id="tournament-search"
+                type="search"
+                placeholder="Search by tournament name"
+                autocomplete="off"
         >
     </label>
 
-    <section class="panel" aria-labelledby="scheduled-tournaments-heading">
+    <div class="view-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button id="btn-scheduled" onclick="switchView('scheduled-section', 'btn-scheduled')" class="tab-button">Scheduled</button>
+        <button id="btn-current" onclick="switchView('current-section', 'btn-current')" class="tab-button active">Current</button>
+        <button id="btn-past" onclick="switchView('past-section', 'btn-past')" class="tab-button">Past</button>
+    </div>
+
+    <section id="scheduled-section" class="panel" aria-labelledby="scheduled-tournaments-heading" hidden>
         <div class="panel-header">
             <div>
                 <h2 id="scheduled-tournaments-heading">Scheduled tournaments</h2>
-                <p class="panel-copy">
-                    Tournaments that have not started yet.
-                </p>
+                <p class="panel-copy">Tournaments that have not started yet.</p>
             </div>
         </div>
-
         <div class="table-wrap">
             <table aria-describedby="scheduled-tournaments-heading">
                 <thead>
                 <tr>
                     <th scope="col">Tournament name</th>
-                    <th scope="col">Start date and time</th>
-                    <th scope="col">End date and time</th>
+                    <th scope="col">Start date</th>
+                    <th scope="col">End date</th>
+                    <th scope="col">Status</th>
                     <th scope="col">Participants</th>
-                    <th scope="col">Points achieved</th>
                     <th scope="col">Action</th>
                 </tr>
                 </thead>
                 <tbody id="scheduled-table-body"></tbody>
             </table>
         </div>
-
-        <p id="scheduled-empty-state" class="empty-state" hidden>
-            No scheduled tournaments are available.
-        </p>
+        <p id="scheduled-empty-state" class="empty-state" hidden>No scheduled tournaments are available.</p>
     </section>
 
-    <section class="panel" aria-labelledby="current-tournaments-heading">
+    <section id="current-section" class="panel" aria-labelledby="current-tournaments-heading">
         <div class="panel-header">
             <div>
                 <h2 id="current-tournaments-heading">Current tournaments</h2>
-                <p class="panel-copy">
-                    Tournaments that are currently in progress.
-                </p>
+                <p class="panel-copy">Tournaments that are currently in progress.</p>
             </div>
         </div>
-
         <div class="table-wrap">
             <table aria-describedby="current-tournaments-heading">
                 <thead>
                 <tr>
                     <th scope="col">Tournament name</th>
-                    <th scope="col">Start date and time</th>
-                    <th scope="col">End date and time</th>
+                    <th scope="col">Start date</th>
+                    <th scope="col">End date</th>
+                    <th scope="col">Status</th>
                     <th scope="col">Participants</th>
-                    <th scope="col">Points achieved</th>
                     <th scope="col">Action</th>
                 </tr>
                 </thead>
                 <tbody id="current-table-body"></tbody>
             </table>
         </div>
-
-        <p id="current-empty-state" class="empty-state" hidden>
-            No current tournaments are available.
-        </p>
+        <p id="current-empty-state" class="empty-state" hidden>No current tournaments are available.</p>
     </section>
 
-    <section class="panel" aria-labelledby="past-tournaments-heading">
+    <section id="past-section" class="panel" aria-labelledby="past-tournaments-heading" hidden>
         <div class="panel-header">
             <div>
                 <h2 id="past-tournaments-heading">Past tournaments</h2>
-                <p class="panel-copy">
-                    Tournaments are listed from newest to oldest using the tournament end date.
-                </p>
+                <p class="panel-copy">Tournaments are listed from newest to oldest.</p>
             </div>
         </div>
-
         <div class="table-wrap">
             <table aria-describedby="past-tournaments-heading">
                 <thead>
                 <tr>
                     <th scope="col">Tournament name</th>
-                    <th scope="col">Start date and time</th>
-                    <th scope="col">End date and time</th>
+                    <th scope="col">Start date</th>
+                    <th scope="col">End date</th>
+                    <th scope="col">Status</th>
                     <th scope="col">Participants</th>
-                    <th scope="col">Points achieved</th>
                     <th scope="col">Action</th>
                 </tr>
                 </thead>
                 <tbody id="past-table-body"></tbody>
             </table>
         </div>
-
-        <p id="past-empty-state" class="empty-state" hidden>
-            No completed tournaments are available.
-        </p>
+        <p id="past-empty-state" class="empty-state" hidden>No completed tournaments are available.</p>
     </section>
 </main>
 
 <script>
-    const tournaments = [
-        {
-            name: "Winter TurboCup Finals",
-            startDate: "2026-02-11T17:00:00",
-            endDate: "2026-02-13T20:30:00",
-            maxParticipants: 4,
-            participants: [
-                {name: "Berlin Blazers", points: 16},
-                {name: "Munich Meteors", points: 12},
-                {name: "Hamburg Hawks", points: 9}
-            ],
-            statisticsUrl: "view_statistics.html"
-        },
-        {
-            name: "January Invitational",
-            startDate: "2026-01-20T15:00:00",
-            endDate: "2026-01-21T19:00:00",
-            maxParticipants: 4,
-            participants: [
-                {name: "Rhine Rockets", points: 11},
-                {name: "Cologne Cyclones", points: 8},
-                {name: "Leipzig Lynx", points: 6}
-            ],
-            statisticsUrl: "view_statistics.html"
-        },
-        {
-            name: "City Clash Open",
-            startDate: "2026-03-10T09:30:00",
-            endDate: "2026-03-18T18:00:00",
-            maxParticipants: 4,
-            participants: [
-                {name: "Berlin Blazers", points: 7},
-                {name: "Cologne Cyclones", points: 5},
-                {name: "Dresden Dragons", points: 4}
-            ],
-            statisticsUrl: "view_statistics.html"
-        },
-        {
-            name: "Holiday Cup",
-            startDate: "2025-12-18T14:00:00",
-            endDate: "2025-12-19T18:00:00",
-            maxParticipants: 4,
-            participants: [
-                {name: "Stuttgart Sparks", points: 13},
-                {name: "Frankfurt Force", points: 10},
-                {name: "Dresden Dragons", points: 7}
-            ],
-            statisticsUrl: "view_statistics.html"
-        },
-        {
-            name: "Spring Qualifier",
-            startDate: "2026-04-04T12:00:00",
-            endDate: "2026-04-05T17:00:00",
-            maxParticipants: 3,
-            participants: [
-                {name: "Future Flyers", points: 0},
-                {name: "North Knights", points: 0}
-            ],
-            statisticsUrl: "view_statistics.html"
-        },
-        {
-            name: "Autumn Knockout",
-            startDate: "2026-04-12T10:00:00",
-            endDate: "2026-04-13T18:00:00",
-            maxParticipants: 2,
-            participants: [
-                {name: "South Strikers", points: 0},
-                {name: "West Wolves", points: 0}
-            ],
-            statisticsUrl: "view_statistics.html"
-        }
-    ];
+    let tournaments = [];
 
     const searchInput = document.getElementById("tournament-search");
     const scheduledTableBody = document.getElementById("scheduled-table-body");
     const currentTableBody = document.getElementById("current-table-body");
     const pastTableBody = document.getElementById("past-table-body");
+
     const scheduledEmptyState = document.getElementById("scheduled-empty-state");
     const currentEmptyState = document.getElementById("current-empty-state");
     const pastEmptyState = document.getElementById("past-empty-state");
 
-    const formatDateTime = (value) => new Intl.DateTimeFormat("en-GB", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-    }).format(new Date(value));
+    const switchView = (sectionId, buttonId) => {
+        document.getElementById('scheduled-section').hidden = true;
+        document.getElementById('current-section').hidden = true;
+        document.getElementById('past-section').hidden = true;
 
-    const createRowMarkup = (tournament, sectionName) => {
-        const participantNames = tournament.participants
-            .map((participant) => `<li>${participant.name}</li>`)
-            .join("");
-        const participantPoints = tournament.participants
-            .map((participant) => `<li><strong>${participant.name}:</strong> ${participant.points} pts</li>`)
-            .join("");
-        const participantSummary = `${tournament.participants.length}/${tournament.maxParticipants} joined`;
-        const isFull = tournament.participants.length >= tournament.maxParticipants;
-        const actionMarkup = sectionName === "scheduled"
-            ? `
-                <div class="action-stack">
-                    <button
-                        type="button"
-                        class="join-button"
-                        data-tournament-name="${tournament.name}"
-                        ${isFull ? "disabled" : ""}
-                    >
-                        ${isFull ? "Tournament full" : "Join tournament"}
-                    </button>
-                    <span class="capacity-note ${isFull ? "full-note" : ""}">${participantSummary}</span>
-                </div>
-            `
-            : `<a class="stats-link" href="${tournament.statisticsUrl}">View statistics</a>`;
+        document.getElementById('btn-scheduled').classList.remove('active');
+        document.getElementById('btn-current').classList.remove('active');
+        document.getElementById('btn-past').classList.remove('active');
 
+        document.getElementById(sectionId).hidden = false;
+        document.getElementById(buttonId).classList.add('active');
+    };
+
+    const formatDateTime = (value) => {
+        if (!value) return "N/A";
+        return new Intl.DateTimeFormat("en-GB", {
+            day: "2-digit", month: "short", year: "numeric"
+        }).format(new Date(value));
+    };
+
+    //Cambiar a "admin", "participant" o "guest" para ver cómo cambian los botones
+    const currentUserRole = "participant";
+
+    const createRowMarkup = (tournament) => {
+        // 1. Lógica de Participantes
+        const participantsList = tournament.participants || [];
+        const participantNames = participantsList.length > 0
+            ? participantsList.map(p => `<li>${p.name || p}</li>`).join("")
+            : "<li style='color: #666; font-style: italic;'>No participants yet</li>";
+
+        // 2. Lógica de Botones Dinámicos
+        let actionButtons = `<a class="stats-link" href="view_tournaments_statistic.html?id=${tournament.id}" style="display: block; margin-bottom: 5px;">View statistics</a>`;
+
+        // Botón de Join (solo para participantes en torneos futuros)
+        if (currentUserRole === "participant" && tournament.status === "scheduled") {
+            actionButtons += `<button class="join-button" style="padding: 5px 10px; cursor: pointer;">Join tournament</button>`;
+        }
+
+        // Botón de Manage (solo para admins)
+        if (currentUserRole === "admin") {
+            actionButtons += `<a class="manage-link" href="#" style="display: block; color: red; margin-top: 5px;">Manage (Admin)</a>`;
+        }
+
+        // 3. Devolvemos las 6 celdas (¡Ahora sí coinciden con el HTML!)
         return `
-            <td data-label="Tournament name">${tournament.name}</td>
-            <td data-label="Start date and time">${formatDateTime(tournament.startDate)}</td>
-            <td data-label="End date and time">${formatDateTime(tournament.endDate)}</td>
+            <td data-label="Tournament name"><strong>${tournament.name}</strong></td>
+            <td data-label="Start date">${formatDateTime(tournament.start_date)}</td>
+            <td data-label="End date">${formatDateTime(tournament.end_date)}</td>
+            <td data-label="Status" style="text-transform: capitalize;">${tournament.status}</td>
             <td data-label="Participants">
-                <p class="participant-count">${participantSummary}</p>
-                <ul class="compact-list">${participantNames}</ul>
-            </td>
-            <td data-label="Points achieved">
-                <ul class="compact-list">${participantPoints}</ul>
+                <ul class="compact-list" style="margin: 0; padding-left: 1rem;">
+                    ${participantNames}
+                </ul>
             </td>
             <td data-label="Action">
-                ${actionMarkup}
+                <div class="action-stack" style="display: flex; flex-direction: column; gap: 5px; align-items: flex-start;">
+                    ${actionButtons}
+                </div>
             </td>
         `;
     };
 
-    const renderSection = (tableBody, emptyState, items, sectionName) => {
+    const renderSection = (tableBody, emptyState, items) => {
         tableBody.innerHTML = "";
-
         if (items.length === 0) {
             emptyState.hidden = false;
             return;
         }
-
         emptyState.hidden = true;
-
         items.forEach((tournament) => {
             const row = document.createElement("tr");
-            row.innerHTML = createRowMarkup(tournament, sectionName);
+            row.innerHTML = createRowMarkup(tournament);
             tableBody.appendChild(row);
         });
     };
 
-    const joinTournament = (tournamentName) => {
-        const tournament = tournaments.find((item) => item.name === tournamentName);
-
-        if (!tournament || tournament.participants.length >= tournament.maxParticipants) {
-            renderTournaments();
-            return;
-        }
-
-        const nextParticipantNumber = tournament.participants.length + 1;
-        tournament.participants.push({
-            name: `New player ${nextParticipantNumber}`,
-            points: 0
-        });
-
-        renderTournaments();
-    };
-
     const renderTournaments = () => {
         const query = searchInput.value.trim().toLowerCase();
-        const now = new Date();
+
         const filteredTournaments = tournaments.filter((tournament) =>
             tournament.name.toLowerCase().includes(query)
         );
-        const scheduledTournaments = filteredTournaments
-            .filter((tournament) => new Date(tournament.startDate) > now)
-            .sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-        const currentTournaments = filteredTournaments
-            .filter((tournament) => new Date(tournament.startDate) <= now && new Date(tournament.endDate) >= now)
-            .sort((a, b) => new Date(a.endDate) - new Date(b.endDate));
-        const pastTournaments = filteredTournaments
-            .filter((tournament) => new Date(tournament.endDate) < now)
-            .sort((a, b) => new Date(b.endDate) - new Date(a.endDate));
 
-        renderSection(scheduledTableBody, scheduledEmptyState, scheduledTournaments, "scheduled");
-        renderSection(currentTableBody, currentEmptyState, currentTournaments, "current");
-        renderSection(pastTableBody, pastEmptyState, pastTournaments, "past");
+        const scheduledTournaments = filteredTournaments.filter((t) => t.status === "scheduled");
+        const currentTournaments = filteredTournaments.filter((t) => t.status === "current");
+        const pastTournaments = filteredTournaments.filter((t) => t.status === "past");
+
+        renderSection(scheduledTableBody, scheduledEmptyState, scheduledTournaments);
+        renderSection(currentTableBody, currentEmptyState, currentTournaments);
+        renderSection(pastTableBody, pastEmptyState, pastTournaments);
     };
 
-    scheduledTableBody.addEventListener("click", (event) => {
-        const joinButton = event.target.closest(".join-button");
+    const loadTournamentsFromBackend = async () => {
+        try {
+            const response = await fetch('http://127.0.0.1:5000/api/tournaments/');
 
-        if (!joinButton || joinButton.disabled) {
-            return;
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            tournaments = await response.json();
+            renderTournaments();
+
+        } catch (error) {
+            console.error("Error conectando con la base de datos:", error);
+            currentEmptyState.innerHTML = "No se pudo conectar con el servidor. ¿Está Flask encendido?";
+            currentEmptyState.hidden = false;
         }
-
-        joinTournament(joinButton.dataset.tournamentName);
-    });
+    };
 
     searchInput.addEventListener("input", renderTournaments);
-    renderTournaments();
+
+    loadTournamentsFromBackend();
 </script>
 <script src="../js/auth.js" defer></script>
 <script src="../templates/layout_template.js" defer></script>
