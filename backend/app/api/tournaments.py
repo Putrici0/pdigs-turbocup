@@ -110,3 +110,55 @@ def delete_tournament(tournament_id):
 
     # 4. Se devuelve el código 200, confirmando la destrucción
     return jsonify({"message": f"Torneo {tournament_id} borrado con éxito"}), 200
+
+@tournaments_bp.route("/admin/<admin_id>", methods=["GET"])
+def get_admin_tournaments(admin_id):
+    query = db.collection("tournaments").where("creator_id", "==", admin_id).stream()
+
+    data = [serialize_firestore(doc) for doc in query]
+
+    return jsonify(data), 200
+
+@tournaments_bp.route("/<tournament_id>/details", methods=["GET"])
+def get_tournament_detailed(tournament_id):
+
+    tourn_ref = db.collection("tournaments").document(tournament_id).get()
+    if not tourn_ref.exists:
+        return jsonify({"message": "Torneo no encontrado"}), 404
+
+    detailed_data = serialize_firestore(tourn_ref)
+
+    matches_query = db.collection("matches").where("tournament_id", "==", tournament_id).stream()
+
+    matches_list = []
+    team_ids = set()
+
+    for match in matches_query:
+        match_dict = match.to_dict()
+        match_dict["id"] = match.id
+        matches_list.append(match_dict)
+
+        if match_dict.get("team_a_id"):
+            team_ids.add(match_dict["team_a_id"])
+        if match_dict.get("team_b_id"):
+            team_ids.add(match_dict["team_b_id"])
+
+    # 3. resolucón de IDs de los equipos
+    teams_dict = {}
+    for t_id in team_ids:
+        t_ref = db.collection("teams").document(t_id).get()
+        if t_ref.exists:
+            # Se guarda el nombre en un diccionario usando la ID como llave
+            teams_dict[t_id] = t_ref.to_dict().get("name", "Equipo Desconocido")
+
+    # 4. Se inyectan los nombres reales dentro de cada match para facilitar el frontend
+    for match in matches_list:
+        match["team_a_name"] = teams_dict.get(match.get("team_a_id"), "TBD (Por definir)")
+        match["team_b_name"] = teams_dict.get(match.get("team_b_id"), "TBD (Por definir)")
+
+    detailed_data["matches"] = matches_list
+
+    # Se manda el diccionario de equipos a Angular por si fuera necesario para pintar una tabla
+    detailed_data["teams_involved"] = teams_dict
+
+    return jsonify(detailed_data), 200
