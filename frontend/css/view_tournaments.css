@@ -72,6 +72,47 @@ body {
     max-width: 360px;
 }
 
+.view-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding: 6px;
+    width: fit-content;
+    border: 1px solid rgba(229, 231, 235, 0.14);
+    border-radius: 16px;
+    background: linear-gradient(145deg, rgba(31, 41, 55, 0.9), rgba(17, 24, 39, 0.88));
+}
+
+.tab-button {
+    padding: 10px 16px;
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    border-radius: 12px;
+    background: rgba(55, 65, 81, 0.58);
+    color: #dbe4f0;
+    font: inherit;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: transform 180ms ease, border-color 180ms ease, background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+
+.tab-button:hover,
+.tab-button:focus-visible {
+    outline: none;
+    color: #ffffff;
+    border-color: rgba(220, 36, 126, 0.62);
+    background: rgba(75, 85, 99, 0.7);
+    transform: translateY(-1px);
+}
+
+.tab-button.active {
+    color: #ffffff;
+    border-color: rgba(249, 168, 212, 0.5);
+    background: linear-gradient(145deg, rgba(220, 36, 126, 0.95), rgba(190, 24, 93, 0.92));
+    box-shadow: 0 10px 20px rgba(220, 36, 126, 0.28);
+}
+
 .panel-header {
     display: flex;
     align-items: end;
@@ -222,6 +263,14 @@ tbody tr:last-child td {
 
     .page-search {
         max-width: none;
+    }
+
+    .view-tabs {
+        width: 100%;
+    }
+
+    .tab-button {
+        flex: 1 1 120px;
     }
 
     .panel-header {
