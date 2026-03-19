@@ -153,7 +153,7 @@
             : "<li style='color: #666; font-style: italic;'>No participants yet</li>";
 
         // 2. Lógica de Botones Dinámicos
-        let actionButtons = `<a class="stats-link" href="view_tournaments_statistic.html?id=${tournament.id}" style="display: block; margin-bottom: 5px;">View statistics</a>`;
+        let actionButtons = `<a class="stats-link" href="view_tournament.html?id=${tournament.id}" style="display: block; margin-bottom: 5px;">View tournament</a>`;
 
         // Botón de Join (solo para participantes en torneos futuros)
         if (currentUserRole === "participant" && tournament.status === "scheduled") {
