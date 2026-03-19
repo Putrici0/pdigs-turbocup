@@ -34,12 +34,57 @@
             return;
         }
 
-        form.addEventListener("submit", function (event) {
-            event.preventDefault();
-            const success = createNotice("Tournament created in fake mode. You can connect this to Firebase later.");
-            success.querySelector("h2").textContent = "Created";
-            pageShell.insertBefore(success, form);
-            form.reset();
+        form.addEventListener("submit", async function (event) {
+            event.preventDefault(); // Esto evita que la página se recargue
+
+            // 1. Se recopilan todos los datos que el administrador ha escrito en el formulario
+            const formData = new FormData(form);
+
+            // 2. Se formatean las fechas
+            const rawStartDate = formData.get("startDate");
+            const rawEndDate = formData.get("endDate");
+            const cleanStartDate = rawStartDate ? rawStartDate.split('T')[0] : "";
+            const cleanEndDate = rawEndDate ? rawEndDate.split('T')[0] : "";
+
+            // 3. Se crean los datos para pasarselos a Flask
+            const payload = {
+                name: formData.get("tournamentName"),
+                start_date: cleanStartDate,
+                end_date: cleanEndDate,
+                max_participants: parseInt(formData.get("maxParticipants"), 10),
+                statistics_url: formData.get("statisticsUrl")
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/api/tournaments/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || "Error al crear el torneo");
+                }
+
+                // 4. Caso de éxito
+                const successNotice = createNotice("Tournament successfully saved to database!");
+                successNotice.querySelector("h2").textContent = "Created successfully";
+                successNotice.style.borderLeft = "4px solid #10b981"; // Un toque verde de éxito
+                pageShell.insertBefore(successNotice, form);
+
+                form.reset();
+
+            } catch (error) {
+                // Si Flask devuelve un error 400 o el servidor está apagado
+                const errorNotice = createNotice(error.message);
+                errorNotice.querySelector("h2").textContent = "Error saving tournament";
+                errorNotice.style.borderLeft = "4px solid #ef4444"; // Rojo
+                pageShell.insertBefore(errorNotice, form);
+                console.error("Error backend:", error);
+            }
         });
     });
 })();
