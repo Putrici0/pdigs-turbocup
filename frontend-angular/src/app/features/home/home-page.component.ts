@@ -1,0 +1,70 @@
+import { CommonModule } from '@angular/common';
+import { Component, OnDestroy, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+
+type Slide = {
+  kicker: string;
+  title: string;
+  description: string;
+  visualClass: string;
+  visualLabel: string;
+};
+
+@Component({
+  selector: 'app-home-page',
+  imports: [CommonModule, RouterLink],
+  templateUrl: './home-page.component.html',
+  styleUrl: './home-page.component.css'
+})
+export class HomePageComponent implements OnInit, OnDestroy {
+  readonly slides: Slide[] = [
+    {
+      kicker: 'TurboCup Platform',
+      title: 'Build 1v1 rally tournaments in minutes',
+      description: 'Create brackets, assign teams, and keep every race organized from qualification to final.',
+      visualClass: 'visual-one',
+      visualLabel: 'Rally cars on neon city track'
+    },
+    {
+      kicker: 'Live Management',
+      title: 'Track stages, points and winners',
+      description: 'Keep each head-to-head race clear with simple tournament views and quick updates.',
+      visualClass: 'visual-two',
+      visualLabel: 'Mountain rally stage with dynamic colors'
+    },
+    {
+      kicker: 'Ready for Growth',
+      title: 'Prepared for Firebase integration',
+      description: 'Start with preload data now, then connect your backend and Firestore with minimal changes.',
+      visualClass: 'visual-three',
+      visualLabel: 'Sunset desert rally route'
+    }
+  ];
+
+  readonly activeSlideIndex = signal(0);
+  private autoPlayId?: number;
+
+  ngOnInit(): void {
+    this.autoPlayId = window.setInterval(() => this.nextSlide(), 6000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.autoPlayId) {
+      window.clearInterval(this.autoPlayId);
+    }
+  }
+
+  previousSlide(): void {
+    const nextIndex = (this.activeSlideIndex() - 1 + this.slides.length) % this.slides.length;
+    this.activeSlideIndex.set(nextIndex);
+  }
+
+  nextSlide(): void {
+    const nextIndex = (this.activeSlideIndex() + 1) % this.slides.length;
+    this.activeSlideIndex.set(nextIndex);
+  }
+
+  goToSlide(index: number): void {
+    this.activeSlideIndex.set(index);
+  }
+}

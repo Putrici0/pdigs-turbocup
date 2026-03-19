@@ -1,0 +1,24 @@
+<button class="menu-button" type="button" [attr.aria-expanded]="isOpen()" aria-controls="toolbar" (click)="openToolbar()">
+  Menu
+</button>
+
+<div class="backdrop" [class.is-open]="isOpen()" aria-hidden="true" (click)="closeToolbar()"></div>
+
+<aside id="toolbar" class="toolbar" [class.is-open]="isOpen()">
+  <button class="close-button" type="button" aria-label="Close menu" (click)="closeToolbar()">X</button>
+  <h1>TurboCup</h1>
+
+  <nav>
+    <a routerLink="/" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="is-current" (click)="closeToolbar()">Home</a>
+    <a routerLink="/view-tournaments" routerLinkActive="is-current" (click)="closeToolbar()">Explore</a>
+    <a routerLink="/view-statistics" routerLinkActive="is-current" (click)="closeToolbar()">Statistics</a>
+
+    <details class="account-menu" [class.is-open]="isAccountOpen()" [open]="isAccountOpen()">
+      <summary (click)="$event.preventDefault(); toggleAccount()" class="account-summary">Account</summary>
+      <div class="account-dropdown">
+        <a routerLink="/login" routerLinkActive="is-current" (click)="closeToolbar()">Login</a>
+        <a routerLink="/register" routerLinkActive="is-current" (click)="closeToolbar()">Register</a>
+      </div>
+    </details>
+  </nav>
+</aside>
