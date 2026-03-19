@@ -300,10 +300,16 @@
             const winnerName = match.winner_id ? safeText((tournament.teams_involved || {})[match.winner_id], "TBD") : "TBD";
             const bestTime = match.winner_id === match.team_a_id ? formatTime(match.team_a_time)
                 : (match.winner_id === match.team_b_id ? formatTime(match.team_b_time) : "N/A");
+            const teamALink = match.team_a_id
+                ? `<a href="view_team.html?team=${encodeURIComponent(match.team_a_id)}">${safeText(match.team_a_name, "TBD")}</a>`
+                : safeText(match.team_a_name, "TBD");
+            const teamBLink = match.team_b_id
+                ? `<a href="view_team.html?team=${encodeURIComponent(match.team_b_id)}">${safeText(match.team_b_name, "TBD")}</a>`
+                : safeText(match.team_b_name, "TBD");
 
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${safeText(match.team_a_name, "TBD")} vs ${safeText(match.team_b_name, "TBD")}</td>
+                <td>${teamALink} vs ${teamBLink}</td>
                 <td><span class="${statusClass(match.status)}">${getBracketMatchStatus(match.status)}</span></td>
                 <td>${safeText(tournament.category, "N/A")}</td>
                 <td>${bestTime}</td>
