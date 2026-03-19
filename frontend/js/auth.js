@@ -1,9 +1,16 @@
 (function () {
     const USERS_KEY = "turbocup_users";
     const SESSION_KEY = "turbocup_session";
+    const ROLE_PARTICIPANT = "participant";
+    const ROLE_TOURNAMENT_ADMIN = "tournament_admin";
+    const VALID_ROLES = [ROLE_PARTICIPANT, ROLE_TOURNAMENT_ADMIN];
     const DEFAULT_USER = {
+        firstName: "Turbo",
+        lastName: "Admin",
+        username: "turboadmin",
         name: "Turbo Admin",
         email: "demo@turbocup.app",
+        role: ROLE_TOURNAMENT_ADMIN,
         password: "TurboCup123!"
     };
 
@@ -28,10 +35,30 @@
         return String(email || "").trim().toLowerCase();
     }
 
+    function normalizeText(value) {
+        return String(value || "").trim();
+    }
+
+    function normalizeUsername(username) {
+        return normalizeText(username).toLowerCase();
+    }
+
+    function normalizeRole(role) {
+        const normalizedRole = normalizeText(role).toLowerCase();
+        return VALID_ROLES.includes(normalizedRole) ? normalizedRole : "";
+    }
+
+    function composeDisplayName(firstName, lastName) {
+        return `${normalizeText(firstName)} ${normalizeText(lastName)}`.trim();
+    }
+
     function sanitizeUser(user) {
+        const displayName = normalizeText(user.name) || composeDisplayName(user.firstName, user.lastName) || normalizeText(user.username) || "Account";
         return {
-            name: user.name,
-            email: user.email
+            name: displayName,
+            email: user.email,
+            username: user.username || "",
+            role: normalizeRole(user.role) || ROLE_PARTICIPANT
         };
     }
 
@@ -77,16 +104,35 @@
         return { ok: true, user: sanitizeUser(user) };
     }
 
-    function register(name, email, password) {
-        const normalizedEmail = normalizeEmail(email);
-        const normalizedName = String(name || "").trim();
+    function register(payloadOrName, email, password) {
+        const payload = typeof payloadOrName === "object" && payloadOrName !== null
+            ? payloadOrName
+            : { firstName: payloadOrName, email, password, role: ROLE_PARTICIPANT };
 
-        if (!normalizedName) {
-            return { ok: false, error: "Name is required." };
+        const firstName = normalizeText(payload.firstName);
+        const lastName = normalizeText(payload.lastName);
+        const username = normalizeUsername(payload.username);
+        const normalizedEmail = normalizeEmail(payload.email);
+        const normalizedRole = normalizeRole(payload.role);
+
+        if (!firstName) {
+            return { ok: false, error: "First name is required." };
+        }
+
+        if (!lastName) {
+            return { ok: false, error: "Last name is required." };
+        }
+
+        if (!username) {
+            return { ok: false, error: "Username is required." };
         }
 
         if (!normalizedEmail) {
             return { ok: false, error: "Email is required." };
+        }
+
+        if (!normalizedRole) {
+            return { ok: false, error: "Role must be Participant or Tournament Admin." };
         }
 
         if (!password || password.length < 6) {
@@ -94,14 +140,24 @@
         }
 
         const users = getUsers();
-        const exists = users.some((user) => normalizeEmail(user.email) === normalizedEmail);
-        if (exists) {
+        const emailExists = users.some((user) => normalizeEmail(user.email) === normalizedEmail);
+        if (emailExists) {
             return { ok: false, error: "This email is already registered." };
         }
 
+        const usernameExists = users.some((user) => normalizeUsername(user.username) === username);
+        if (usernameExists) {
+            return { ok: false, error: "This username is already taken." };
+        }
+
+        const fullName = composeDisplayName(firstName, lastName);
         const newUser = {
-            name: normalizedName,
+            firstName,
+            lastName,
+            username,
+            name: fullName,
             email: normalizedEmail,
+            role: normalizedRole,
             password: password
         };
         users.push(newUser);
