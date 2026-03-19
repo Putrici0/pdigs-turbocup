@@ -1,16 +1,18 @@
 class User:
-    def __init__(self, username, email, role="participant", profile_img_url=None):
+    def __init__(self, name, surname, username, email, password, role="participant"):
+        self.name = name
+        self.surname = surname
         self.username = username
         self.email = email
+        self.password = password
         self.role = role
-        self.profile_img_url = profile_img_url
-        self.is_active = True
 
     def to_dict(self):
         return {
+            "name": self.name,
+            "surname": self.surname,
             "username": self.username,
             "email": self.email,
-            "role": self.role,
-            "profile_img_url": self.profile_img_url,
-            "is_active": self.is_active
+            "password": self.password,
+            "role": self.role
         }
