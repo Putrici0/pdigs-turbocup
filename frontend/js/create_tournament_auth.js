@@ -1,10 +1,10 @@
 (function () {
     function createNotice(message) {
         const notice = document.createElement("section");
-        notice.className = "panel";
+        notice.className = "panel dynamic-notice";
         notice.style.marginBottom = "14px";
         notice.innerHTML = `
-            <h2 style="margin: 0 0 8px;">Authentication required</h2>
+            <h2 style="margin: 0 0 8px;">Notice</h2>
             <p style="margin: 0; color: #d1d5db;">${message}</p>
         `;
         return notice;
@@ -25,7 +25,9 @@
         if (!isAuthed) {
             const loginUrl = `login.html?next=${encodeURIComponent("create_tournament.html")}`;
             const message = `You must be logged in to create tournaments. Please <a href="${loginUrl}" style="color:#f9a8d4;">log in</a>.`;
-            pageShell.insertBefore(createNotice(message), form);
+            const authNotice = createNotice(message);
+            authNotice.querySelector("h2").textContent = "Authentication required";
+            pageShell.insertBefore(authNotice, form);
 
             const controls = form.querySelectorAll("input, button, textarea, select");
             controls.forEach((control) => {
@@ -35,7 +37,10 @@
         }
 
         form.addEventListener("submit", async function (event) {
-            event.preventDefault(); // Esto evita que la página se recargue
+            event.preventDefault(); // Evitamos que la página se recargue
+
+            const oldNotices = document.querySelectorAll(".dynamic-notice");
+            oldNotices.forEach(notice => notice.remove());
 
             // 1. Se recopilan todos los datos que el administrador ha escrito en el formulario
             const formData = new FormData(form);
@@ -50,9 +55,7 @@
             const payload = {
                 name: formData.get("tournamentName"),
                 start_date: cleanStartDate,
-                end_date: cleanEndDate,
-                max_participants: parseInt(formData.get("maxParticipants"), 10),
-                statistics_url: formData.get("statisticsUrl")
+                end_date: cleanEndDate
             };
 
             try {
