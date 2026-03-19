@@ -113,7 +113,24 @@ body {
     font: inherit;
 }
 
+.field select {
+    width: 100%;
+    padding: 13px 14px;
+    border: 1px solid rgba(229, 231, 235, 0.18);
+    border-radius: 14px;
+    background: var(--surface-strong);
+    color: var(--text);
+    font: inherit;
+    appearance: none;
+    cursor: pointer;
+}
+
 .field input:focus {
+    outline: 2px solid rgba(220, 36, 126, 0.22);
+    border-color: var(--accent);
+}
+
+.field select:focus {
     outline: 2px solid rgba(220, 36, 126, 0.22);
     border-color: var(--accent);
 }
