@@ -1,6 +1,8 @@
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
+from unicodedata import category
+
 from backend.app.db import db
 from backend.app.models.tournament import Tournament
 
@@ -48,15 +50,16 @@ def get_past_tournaments():
 @tournaments_bp.route('/', methods=['POST'])
 def create_tournament():
     data = request.get_json()
-    if not data or not 'name' in data or not 'start_date' in data:
-        return jsonify({"message": "Missing name or start_date"}), 400
-    
+
+    # Añadimos 'category' a la validación
+    if not data or 'name' not in data or 'start_date' not in data or 'category' not in data:
+        return jsonify({"message": "Missing name, start_date, or category"}), 400
+
     try:
-        start_date = datetime.strptime(data['start_date'], "%Y-%m-%d")  # formato YYYY-MM-DD
+        start_date = datetime.strptime(data['start_date'], "%Y-%m-%d")
     except ValueError:
         return jsonify({"message": "start_date must be a valid date in YYYY-MM-DD format"}), 400
 
-    # Validar end_date si existe
     end_date_str = data.get('end_date')
     end_date = None
     if end_date_str:
@@ -65,35 +68,33 @@ def create_tournament():
         except ValueError:
             return jsonify({"message": "end_date must be a valid date in YYYY-MM-DD format"}), 400
 
-
     now = datetime.now()
 
-    # Determinar status
     if start_date > now:
         status = "scheduled"
     else:
-        # start_date pasado o hoy
         if not end_date or end_date >= now:
             status = "current"
         else:
             status = "past"
 
-    tournament = Tournament(
-        name=data['name'],
-        start_date=data['start_date'],
-        end_date=data.get('end_date'),
-        status=status
-    )
+    # En tu modelo Tournament (si lo tienes definido con clases), deberás asegurarte
+    # de que acepta este nuevo parámetro. Si usas diccionarios directos, sería así:
+    tournament_data = {
+        "name": data['name'],
+        "category": data['category'],  # <-- NUEVO CAMPO AÑADIDO
+        "start_date": data['start_date'],
+        "end_date": data.get('end_date'),
+        "max_participants": data.get('max_participants', 0),
+        "statistics_url": data.get('statistics_url', ""),
+        "status": status,
+        "participants": [] # Inicializamos la lista de participantes vacía para el futuro
+    }
 
-    # Add the new tournament to Firestore
-    # The add method returns a tuple with a timestamp and the document reference
-    _, doc_ref = db.collection('tournaments').add(tournament.to_dict())
-
-    # Get the created tournament document and return it
+    _, doc_ref = db.collection('tournaments').add(tournament_data)
     created_tournament = doc_ref.get()
-    return jsonify(serialize_firestore(created_tournament)), 201
 
-#TODO configurar la función de crear torneos para que solo puedan usarla los administradores(cuando tengamos los roles de administradores)
+    return jsonify(serialize_firestore(created_tournament)), 201
 
 @tournaments_bp.route('/<tournament_id>', methods=['DELETE'])
 def delete_tournament(tournament_id):
