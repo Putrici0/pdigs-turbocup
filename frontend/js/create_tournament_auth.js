@@ -52,10 +52,12 @@
             const cleanEndDate = rawEndDate ? rawEndDate.split('T')[0] : "";
 
             // 3. Se crean los datos para pasarselos a Flask
+            // Montamos el JSON incluyendo la nueva categoría
             const payload = {
                 name: formData.get("tournamentName"),
+                category: formData.get("category"),
                 start_date: cleanStartDate,
-                end_date: cleanEndDate
+                end_date: cleanEndDate,
             };
 
             try {

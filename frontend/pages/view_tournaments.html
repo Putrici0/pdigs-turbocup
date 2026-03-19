@@ -46,11 +46,13 @@
                 <thead>
                 <tr>
                     <th scope="col">Tournament name</th>
+                    <th scope="col">Category</th>
                     <th scope="col">Start date</th>
                     <th scope="col">End date</th>
                     <th scope="col">Status</th>
                     <th scope="col">Participants</th>
                     <th scope="col">Action</th>
+
                 </tr>
                 </thead>
                 <tbody id="scheduled-table-body"></tbody>
@@ -71,11 +73,13 @@
                 <thead>
                 <tr>
                     <th scope="col">Tournament name</th>
+                    <th scope="col">Category</th>
                     <th scope="col">Start date</th>
                     <th scope="col">End date</th>
                     <th scope="col">Status</th>
                     <th scope="col">Participants</th>
                     <th scope="col">Action</th>
+
                 </tr>
                 </thead>
                 <tbody id="current-table-body"></tbody>
@@ -96,11 +100,13 @@
                 <thead>
                 <tr>
                     <th scope="col">Tournament name</th>
+                    <th scope="col">Category</th>
                     <th scope="col">Start date</th>
                     <th scope="col">End date</th>
                     <th scope="col">Status</th>
                     <th scope="col">Participants</th>
                     <th scope="col">Action</th>
+
                 </tr>
                 </thead>
                 <tbody id="past-table-body"></tbody>
@@ -165,10 +171,9 @@
             actionButtons += `<a class="manage-link" href="#" style="display: block; color: red; margin-top: 5px;">Manage (Admin)</a>`;
         }
 
-        // 3. Devolvemos las 6 celdas (¡Ahora sí coinciden con el HTML!)
         return `
             <td data-label="Tournament name"><strong>${tournament.name}</strong></td>
-            <td data-label="Start date">${formatDateTime(tournament.start_date)}</td>
+            <td data-label="Category"><span style="background: #4f46e5; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.85em;">${tournament.category || "General"}</span></td> <td data-label="Start date">${formatDateTime(tournament.start_date)}</td>
             <td data-label="End date">${formatDateTime(tournament.end_date)}</td>
             <td data-label="Status" style="text-transform: capitalize;">${tournament.status}</td>
             <td data-label="Participants">
