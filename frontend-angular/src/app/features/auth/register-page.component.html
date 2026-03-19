@@ -1,0 +1,61 @@
+<main class="auth-page">
+  <section class="auth-card" aria-labelledby="register-title">
+    <h1 id="register-title">Register</h1>
+
+    @if (message()) {
+      <p class="auth-message" [class.is-error]="isError()">{{ message() }}</p>
+    }
+
+    <form (ngSubmit)="submit()">
+      <label for="register-first-name">First name</label>
+      <input id="register-first-name" name="firstName" type="text" [(ngModel)]="firstName" autocomplete="given-name" required />
+
+      <label for="register-last-name">Last name</label>
+      <input id="register-last-name" name="lastName" type="text" [(ngModel)]="lastName" autocomplete="family-name" required />
+
+      <label for="register-username">Username</label>
+      <input id="register-username" name="username" type="text" [(ngModel)]="username" autocomplete="username" required />
+
+      <label for="register-email">Email</label>
+      <input id="register-email" name="email" type="email" [(ngModel)]="email" autocomplete="email" required />
+
+      <label for="register-role">Role</label>
+      <select id="register-role" name="role" [(ngModel)]="role" required>
+        <option value="participant">Participant</option>
+        <option value="tournament_admin">Tournament Admin</option>
+      </select>
+
+      <label for="register-password">Password</label>
+      <div class="password-field">
+        <input
+          id="register-password"
+          name="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          [(ngModel)]="password"
+          autocomplete="new-password"
+          required />
+        <button type="button" class="password-toggle" (click)="togglePassword()">
+          {{ showPassword() ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+
+      <label for="register-confirm-password">Confirm password</label>
+      <div class="password-field">
+        <input
+          id="register-confirm-password"
+          name="confirmPassword"
+          [type]="showConfirmPassword() ? 'text' : 'password'"
+          [(ngModel)]="confirmPassword"
+          autocomplete="new-password"
+          required />
+        <button type="button" class="password-toggle" (click)="toggleConfirmPassword()">
+          {{ showConfirmPassword() ? 'Hide' : 'Show' }}
+        </button>
+      </div>
+
+      <button type="submit">Create account</button>
+    </form>
+
+    <p class="auth-link-row">Already have an account? <a routerLink="/login">Login</a></p>
+  </section>
+</main>

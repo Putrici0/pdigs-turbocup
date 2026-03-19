@@ -14,10 +14,18 @@
     <a routerLink="/view-statistics" routerLinkActive="is-current" (click)="closeToolbar()">Statistics</a>
 
     <details class="account-menu" [class.is-open]="isAccountOpen()" [open]="isAccountOpen()">
-      <summary (click)="$event.preventDefault(); toggleAccount()" class="account-summary">Account</summary>
+      <summary (click)="$event.preventDefault(); toggleAccount()" class="account-summary">
+        {{ authService.session()?.name || 'Account' }}
+      </summary>
       <div class="account-dropdown">
-        <a routerLink="/login" routerLinkActive="is-current" (click)="closeToolbar()">Login</a>
-        <a routerLink="/register" routerLinkActive="is-current" (click)="closeToolbar()">Register</a>
+        @if (authService.session()) {
+          <a routerLink="/profile" routerLinkActive="is-current" (click)="closeToolbar()">Account</a>
+          <a routerLink="/create-tournament" routerLinkActive="is-current" (click)="closeToolbar()">Create tournament</a>
+          <button type="button" class="account-logout" (click)="logout()">Logout</button>
+        } @else {
+          <a routerLink="/login" routerLinkActive="is-current" (click)="closeToolbar()">Login</a>
+          <a routerLink="/register" routerLinkActive="is-current" (click)="closeToolbar()">Register</a>
+        }
       </div>
     </details>
   </nav>
