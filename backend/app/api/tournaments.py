@@ -5,6 +5,8 @@ from unicodedata import category
 
 from backend.app.db import db
 from backend.app.models.tournament import Tournament
+from google.cloud.firestore_v1.base_query import FieldFilter
+from google.cloud import firestore
 
 
 tournaments_bp = Blueprint('tournaments', __name__)
@@ -122,44 +124,106 @@ def get_admin_tournaments(admin_id):
 
 @tournaments_bp.route("/<tournament_id>/details", methods=["GET"])
 def get_tournament_detailed(tournament_id):
+    """Devuelve el torneo, los equipos inscritos y los matches generados"""
 
+    # 1. Buscamos el torneo base
     tourn_ref = db.collection("tournaments").document(tournament_id).get()
     if not tourn_ref.exists:
         return jsonify({"message": "Torneo no encontrado"}), 404
 
     detailed_data = serialize_firestore(tourn_ref)
 
-    matches_query = db.collection("matches").where("tournament_id", "==", tournament_id).stream()
+    # --- NUEVA LÓGICA: EQUIPOS INDEPENDIENTES ---
+    # 2. Obtenemos los equipos que ya se han unido (asumiendo que guardaremos sus IDs en un array)
+    # Si el torneo es nuevo y no tiene el campo, usamos una lista vacía por defecto
+    team_ids = detailed_data.get("registered_team_ids", [])
+
+    registered_teams = []
+    teams_dictionary = {} # Lo usaremos luego para traducir IDs a nombres rápido
+
+    # Buscamos los detalles de cada equipo inscrito
+    for t_id in team_ids:
+        t_doc = db.collection("teams").document(t_id).get()
+        if t_doc.exists:
+            t_data = t_doc.to_dict()
+            t_data["id"] = t_doc.id
+            registered_teams.append(t_data)
+            # Guardamos el nombre para usarlo en los matches
+            teams_dictionary[t_id] = t_data.get("name", "Equipo Desconocido")
+
+    # 3. Buscamos los enfrentamientos (matches)
+    matches_query = db.collection("matches").where(filter=FieldFilter("tournament_id", "==", tournament_id)).stream()
 
     matches_list = []
-    team_ids = set()
-
     for match in matches_query:
         match_dict = match.to_dict()
         match_dict["id"] = match.id
+        # Como ya tenemos el diccionario de equipos inscritos, traducimos los nombres directamente
+        match_dict["team_a_name"] = teams_dictionary.get(match_dict.get("team_a_id"), "TBD (Por definir)")
+        match_dict["team_b_name"] = teams_dictionary.get(match_dict.get("team_b_id"), "TBD (Por definir)")
         matches_list.append(match_dict)
 
-        if match_dict.get("team_a_id"):
-            team_ids.add(match_dict["team_a_id"])
-        if match_dict.get("team_b_id"):
-            team_ids.add(match_dict["team_b_id"])
-
-    # 3. resolucón de IDs de los equipos
-    teams_dict = {}
-    for t_id in team_ids:
-        t_ref = db.collection("teams").document(t_id).get()
-        if t_ref.exists:
-            # Se guarda el nombre en un diccionario usando la ID como llave
-            teams_dict[t_id] = t_ref.to_dict().get("name", "Equipo Desconocido")
-
-    # 4. Se inyectan los nombres reales dentro de cada match para facilitar el frontend
-    for match in matches_list:
-        match["team_a_name"] = teams_dict.get(match.get("team_a_id"), "TBD (Por definir)")
-        match["team_b_name"] = teams_dict.get(match.get("team_b_id"), "TBD (Por definir)")
-
+    detailed_data["registered_teams"] = registered_teams
     detailed_data["matches"] = matches_list
 
-    # Se manda el diccionario de equipos a Angular por si fuera necesario para pintar una tabla
-    detailed_data["teams_involved"] = teams_dict
-
     return jsonify(detailed_data), 200
+
+@tournaments_bp.route('/<tournament_id>/join', methods=['POST'])
+def join_tournament(tournament_id):
+    data = request.get_json()
+
+    # 1. Comprobamos que nos envían la ID del equipo
+    if not data or 'team_id' not in data:
+        return jsonify({"message": "Falta el team_id en la petición"}), 400
+
+    team_id = data['team_id']
+
+    # 2. Buscamos el Torneo en la base de datos
+    tourn_ref = db.collection('tournaments').document(tournament_id)
+    tourn_doc = tourn_ref.get()
+
+    if not tourn_doc.exists:
+        return jsonify({"message": "Torneo no encontrado"}), 404
+
+    tourn_data = tourn_doc.to_dict()
+
+    # 3. Buscamos el Equipo en la base de datos
+    team_ref = db.collection('teams').document(team_id)
+    team_doc = team_ref.get()
+
+    if not team_doc.exists:
+        return jsonify({"message": "Equipo no encontrado"}), 404
+
+    team_data = team_doc.to_dict()
+
+    # 4. REGLA DE NEGOCIO: ¿Coinciden las categorías?
+    if tourn_data.get('category') != team_data.get('category'):
+        return jsonify({
+            "message": f"Incompatibilidad de categoría. El torneo es de {tourn_data.get('category')}, pero el equipo es de {team_data.get('category')}."
+        }), 400
+
+    # 5. REGLA DE NEGOCIO: ¿El torneo está lleno?
+    registered_teams = tourn_data.get('registered_team_ids', [])
+    max_participants = 32
+
+    if len(registered_teams) >= max_participants:
+        return jsonify({"message": "El torneo ya ha alcanzado el límite máximo de participantes."}), 400
+
+    # 6. REGLA DE NEGOCIO: ¿El equipo ya estaba inscrito?
+    if team_id in registered_teams:
+        return jsonify({"message": "El equipo ya está inscrito en este torneo."}), 400
+
+    # 7. Preparamos el objeto del participante para el frontend
+    participant_data = {
+        "id": team_id,
+        "name": team_data.get('name', 'Equipo Desconocido')
+    }
+
+    # 8. Si pasa todas las pruebas, lo inscribimos usando ArrayUnion
+    # Actualizamos TANTO la lista de IDs (para la lógica) COMO la de participantes (para la vista HTML)
+    tourn_ref.update({
+        "registered_team_ids": firestore.ArrayUnion([team_id]),
+        "participants": firestore.ArrayUnion([participant_data])
+    })
+
+    return jsonify({"message": f"El equipo {team_data.get('name')} se ha unido al torneo con éxito."}), 200
