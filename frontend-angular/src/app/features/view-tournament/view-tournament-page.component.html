@@ -80,6 +80,26 @@
 
   <section class="panel">
     <div class="panel-header">
+      <h2>Teams</h2>
+      <p class="panel-copy">Registered teams with pilot and co-pilot.</p>
+    </div>
+    @if (registeredTeams().length > 0) {
+      <div class="teams-columns">
+        @for (team of registeredTeams(); track team.id + team.name) {
+          <article class="teams-card">
+            <h3><a [routerLink]="['/view-team', teamRouteId(team)]">{{ team.name }}</a></h3>
+            <p class="member-line"><strong>Pilot:</strong> {{ pilotLabel(team) }}</p>
+            <p class="member-line"><strong>Co-pilot:</strong> {{ copilotLabel(team) }}</p>
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="empty-state">No registered teams yet.</p>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
       <h2>Tournament statistics</h2>
       <p class="panel-copy">Overview of matches, teams and lap-time results.</p>
     </div>

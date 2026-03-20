@@ -15,6 +15,15 @@ interface BracketMatch {
   state: BracketMatchState;
 }
 
+interface TeamItem {
+  id: string;
+  name: string;
+  pilot_name?: string;
+  copilot_name?: string;
+  pilot_id?: string;
+  copilot_id?: string;
+}
+
 @Component({
   selector: 'app-view-tournament-page',
   imports: [CommonModule, RouterLink],
@@ -33,6 +42,13 @@ export class ViewTournamentPageComponent {
   readonly quarterfinals = computed(() => this.buildQuarterfinals(this.tournament(), this.roundOf16()));
   readonly semifinals = computed(() => this.buildSemifinals(this.quarterfinals()));
   readonly final = computed(() => this.buildFinal(this.semifinals()));
+  readonly registeredTeams = computed<TeamItem[]>(() => {
+    const tournament = this.tournament();
+    if (tournament.registered_teams.length > 0) {
+      return tournament.registered_teams;
+    }
+    return Object.entries(tournament.teams_involved).map(([id, name]) => ({ id, name }));
+  });
 
   readonly statsCards = computed(() => {
     const tournament = this.tournament();
@@ -92,6 +108,29 @@ export class ViewTournamentPageComponent {
 
   winnerName(match: Match): string {
     return match.winner_id ? this.tournamentDataService.getTeamName(match.winner_id) : 'TBD';
+  }
+
+  teamRouteId(team: TeamItem): string {
+    if (team.id && team.id.trim().length > 0) {
+      return team.id;
+    }
+    const safeName = (team.name || 'unknown-team')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+    return `unknown-${safeName || 'team'}`;
+  }
+
+  pilotLabel(team: TeamItem): string {
+    if (team.pilot_name && team.pilot_name.trim().length > 0) return team.pilot_name;
+    if (team.pilot_id && team.pilot_id.trim().length > 0) return team.pilot_id;
+    return 'TBD';
+  }
+
+  copilotLabel(team: TeamItem): string {
+    if (team.copilot_name && team.copilot_name.trim().length > 0) return team.copilot_name;
+    if (team.copilot_id && team.copilot_id.trim().length > 0) return team.copilot_id;
+    return 'TBD';
   }
 
   private formatTime(value: number | null): string {

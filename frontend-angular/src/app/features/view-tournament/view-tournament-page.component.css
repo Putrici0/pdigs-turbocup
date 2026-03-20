@@ -194,6 +194,63 @@
   color: #fbcfe8;
 }
 
+.teams-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.teams-card {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 14px;
+  background: rgba(17, 24, 39, 0.72);
+  padding: 14px;
+}
+
+.teams-card h3 {
+  margin: 0 0 10px;
+}
+
+.teams-card h3 a {
+  color: #f9a8d4;
+  text-decoration: none;
+}
+
+.teams-card h3 a:hover {
+  color: #fbcfe8;
+}
+
+.teams-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.teams-list li {
+  color: #e2e8f0;
+}
+
+.teams-list a {
+  color: #e2e8f0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.teams-list a:hover {
+  color: #fbcfe8;
+}
+
+.member-line {
+  margin: 0;
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+.member-line + .member-line {
+  margin-top: 4px;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -281,6 +338,10 @@ tbody tr:last-child td {
   }
 
   .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teams-columns {
     grid-template-columns: 1fr;
   }
 }

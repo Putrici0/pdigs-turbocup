@@ -26,6 +26,15 @@ export interface Tournament {
   end_date: string;
   status: TournamentStatus;
   teams_involved: Record<string, string>;
+  participants: Array<{ id: string; name: string }>;
+  registered_teams: Array<{
+    id: string;
+    name: string;
+    pilot_id?: string;
+    copilot_id?: string;
+    pilot_name?: string;
+    copilot_name?: string;
+  }>;
   matches: Match[];
 }
 
@@ -77,7 +86,14 @@ interface ApiTournament {
   status?: string;
   matches?: Array<Partial<Match>>;
   participants?: Array<{ id?: string; name?: string }>;
-  registered_teams?: Array<{ id?: string; name?: string }>;
+  registered_teams?: Array<{
+    id?: string;
+    name?: string;
+    pilot_id?: string;
+    copilot_id?: string;
+    pilot_name?: string;
+    copilot_name?: string;
+  }>;
   teams_involved?: Record<string, string>;
 }
 
@@ -178,6 +194,18 @@ export class TournamentDataService {
       end_date: item.end_date || '',
       status: this.normalizeStatus(item.status),
       teams_involved: teamsInvolved,
+      participants: (item.participants || []).map((participant) => ({
+        id: participant.id || '',
+        name: participant.name || 'Unknown team'
+      })),
+      registered_teams: (item.registered_teams || []).map((team) => ({
+        id: team.id || '',
+        name: team.name || 'Unknown team',
+        pilot_id: team.pilot_id,
+        copilot_id: team.copilot_id,
+        pilot_name: team.pilot_name,
+        copilot_name: team.copilot_name
+      })),
       matches
     };
   }
@@ -220,6 +248,8 @@ export class TournamentDataService {
       end_date: '2026-06-20T18:00:00',
       status: 'current',
       teams_involved: teamsInvolved,
+      participants: Object.entries(teamsInvolved).map(([id, name]) => ({ id, name })),
+      registered_teams: Object.entries(teamsInvolved).map(([id, name]) => ({ id, name })),
       matches: [
         { id: 'm-001', category: '150cc', status: 'past', team_a_id: 'team-01', team_a_name: 'Los Rapidillos', team_b_id: 'team-02', team_b_name: 'Los Lentillos', team_a_time: 78.421, team_b_time: 79.118, winner_id: 'team-01' },
         { id: 'm-002', category: '150cc', status: 'past', team_a_id: 'team-03', team_a_name: 'Nitro Squad', team_b_id: 'team-04', team_b_name: 'Curva Final', team_a_time: 80.102, team_b_time: 79.774, winner_id: 'team-04' },
@@ -242,6 +272,8 @@ export class TournamentDataService {
         end_date: '2026-09-15T18:00:00',
         status: 'scheduled',
         teams_involved: {},
+        participants: [],
+        registered_teams: [],
         matches: []
       },
       {
@@ -252,6 +284,8 @@ export class TournamentDataService {
         end_date: '2025-11-08T23:00:00',
         status: 'past',
         teams_involved: {},
+        participants: [],
+        registered_teams: [],
         matches: []
       }
     ];

@@ -14,7 +14,7 @@ export class ViewTeamPageComponent {
   private readonly tournamentDataService = inject(TournamentDataService);
   readonly team = computed(() => {
     const id = this.route.snapshot.paramMap.get('teamId') || 'team-01';
-    return this.tournamentDataService.getTeamProfile(id) ?? this.tournamentDataService.getTeamProfile('team-01');
+    return this.tournamentDataService.getTeamProfile(id) ?? this.buildEmptyTeamProfile(id);
   });
 
   readonly statsEntries = computed(() => {
@@ -53,5 +53,50 @@ export class ViewTeamPageComponent {
 
   statusClass(status: TeamProfile['status']): string {
     return `status-badge ${status}`;
+  }
+
+  private buildEmptyTeamProfile(teamId: string): TeamProfile {
+    const name = this.nameFromUnknownId(teamId);
+    return {
+      id: teamId,
+      name,
+      category: 'N/A',
+      status: 'scheduled',
+      homeBase: 'N/A',
+      bio: 'No team data available yet. This team is registered but profile details are still empty.',
+      crew: {
+        driver: { name: 'TBD', age: 0, nationality: 'N/A', style: 'N/A' },
+        codriver: { name: 'TBD', age: 0, nationality: 'N/A', notes: 'N/A' }
+      },
+      car: {
+        model: 'N/A',
+        drivetrain: 'N/A',
+        tirePreference: 'N/A',
+        topSpeed: 'N/A',
+        accel: 'N/A',
+        setupBias: 'N/A'
+      },
+      stats: {
+        events: 0,
+        podiums: 0,
+        stageWins: 0,
+        bestResult: 'N/A',
+        avgStageTime: 'N/A',
+        dnfRate: 'N/A',
+        penalties: 'N/A',
+        points2026: 0
+      },
+      tournaments: []
+    };
+  }
+
+  private nameFromUnknownId(teamId: string): string {
+    if (!teamId.startsWith('unknown-')) {
+      return teamId;
+    }
+    const raw = teamId.replace(/^unknown-/, '');
+    const spaced = raw.replace(/-/g, ' ').trim();
+    if (!spaced) return 'Unknown Team';
+    return spaced.replace(/\b\w/g, (match) => match.toUpperCase());
   }
 }
