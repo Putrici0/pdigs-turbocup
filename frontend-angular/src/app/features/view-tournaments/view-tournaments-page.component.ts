@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
@@ -13,10 +13,12 @@ type TabKey = TournamentStatus;
   templateUrl: './view-tournaments-page.component.html',
   styleUrl: './view-tournaments-page.component.css'
 })
-export class ViewTournamentsPageComponent {
+export class ViewTournamentsPageComponent implements OnInit {
   private readonly tournamentDataService = inject(TournamentDataService);
   readonly activeTab = signal<TabKey>('current');
   readonly query = signal('');
+  readonly isLoading = signal(true);
+  readonly errorMessage = signal('');
   readonly tournaments = this.tournamentDataService.tournaments;
   readonly filtered = computed(() => {
     const text = this.query().trim().toLowerCase();
@@ -24,6 +26,19 @@ export class ViewTournamentsPageComponent {
   });
 
   constructor(public readonly authService: AuthService) {}
+
+  ngOnInit(): void {
+    this.tournamentDataService.refreshTournaments().subscribe({
+      next: () => {
+        this.isLoading.set(false);
+        this.errorMessage.set('');
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.errorMessage.set('Could not load tournaments from backend.');
+      }
+    });
+  }
 
   setTab(tab: TabKey): void {
     this.activeTab.set(tab);

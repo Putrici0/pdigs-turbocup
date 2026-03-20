@@ -6,6 +6,10 @@
   </section>
 
   <form class="panel form-layout" (ngSubmit)="submit()">
+    @if (!canCreate()) {
+      <p class="notice is-error">Only Tournament Admin can create tournaments from this page.</p>
+    }
+
     @if (message()) {
       <p class="notice" [class.is-error]="isError()">{{ message() }}</p>
     }
@@ -15,17 +19,19 @@
       <div class="field-grid">
         <label class="field">
           <span>Tournament name</span>
-          <input type="text" name="name" [(ngModel)]="name" required />
+          <input type="text" name="name" [(ngModel)]="name" [disabled]="!canCreate()" required />
         </label>
 
         <label class="field">
           <span>Racing category</span>
-          <select name="category" [(ngModel)]="category" required>
-            <option value="" disabled>Select category</option>
-            <option value="100cc">100cc</option>
-            <option value="125cc">125cc</option>
-            <option value="150cc">150cc</option>
-            <option value="200cc">200cc</option>
+          <select name="category" [(ngModel)]="category" [disabled]="!canCreate()" required>
+            <option value="" disabled selected>Select a category</option>
+            <option value="Formula">Formula (Open Wheel)</option>
+            <option value="Rally">Rally</option>
+            <option value="GT Racing">GT (Grand Touring)</option>
+            <option value="Touring Car">Touring Car</option>
+            <option value="Karting">Karting</option>
+            <option value="Stock Car">Stock Car</option>
           </select>
         </label>
       </div>
@@ -36,19 +42,19 @@
       <div class="field-grid">
         <label class="field">
           <span>Start date and time</span>
-          <input type="datetime-local" name="startDate" [(ngModel)]="startDate" required />
+          <input type="datetime-local" name="startDate" [(ngModel)]="startDate" [disabled]="!canCreate()" required />
         </label>
 
         <label class="field">
           <span>End date and time</span>
-          <input type="datetime-local" name="endDate" [(ngModel)]="endDate" required />
+          <input type="datetime-local" name="endDate" [(ngModel)]="endDate" [disabled]="!canCreate()" required />
         </label>
       </div>
     </section>
 
     <div class="actions">
-      <button type="submit" class="primary-action">Create tournament</button>
-      <button type="reset" class="secondary-action">Clear</button>
+      <button type="submit" class="primary-action" [disabled]="isSubmitting() || !canCreate()">{{ isSubmitting() ? 'Creating...' : 'Create tournament' }}</button>
+      <button type="reset" class="secondary-action" [disabled]="!canCreate()">Clear</button>
     </div>
   </form>
 </main>

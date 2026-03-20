@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { AuthService } from '../../core/auth.service';
 import { TournamentDataService } from '../../core/tournament-data.service';
 
 @Component({
@@ -15,10 +16,24 @@ export class CreateTournamentPageComponent {
   endDate = '';
   readonly message = signal('');
   readonly isError = signal(false);
+  readonly isSubmitting = signal(false);
 
-  constructor(private readonly tournamentDataService: TournamentDataService) {}
+  constructor(
+    private readonly tournamentDataService: TournamentDataService,
+    private readonly authService: AuthService
+  ) {}
+
+  canCreate(): boolean {
+    return this.authService.session()?.role === 'tournament_admin';
+  }
 
   submit(): void {
+    if (!this.canCreate()) {
+      this.message.set('Only Tournament Admin can create tournaments.');
+      this.isError.set(true);
+      return;
+    }
+
     if (!this.name || !this.category || !this.startDate || !this.endDate) {
       this.message.set('Please complete all fields before creating the tournament.');
       this.isError.set(true);
@@ -31,18 +46,27 @@ export class CreateTournamentPageComponent {
       return;
     }
 
+    this.isSubmitting.set(true);
     this.tournamentDataService.createTournament({
       name: this.name.trim(),
       category: this.category,
       startDate: this.startDate,
       endDate: this.endDate
+    }).subscribe({
+      next: () => {
+        this.message.set('Tournament created successfully.');
+        this.isError.set(false);
+        this.name = '';
+        this.category = '';
+        this.startDate = '';
+        this.endDate = '';
+        this.isSubmitting.set(false);
+      },
+      error: () => {
+        this.message.set('Could not create tournament. Check backend is running on 127.0.0.1:5000.');
+        this.isError.set(true);
+        this.isSubmitting.set(false);
+      }
     });
-
-    this.message.set('Tournament created successfully.');
-    this.isError.set(false);
-    this.name = '';
-    this.category = '';
-    this.startDate = '';
-    this.endDate = '';
   }
 }

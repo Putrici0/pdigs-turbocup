@@ -1,4 +1,6 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 
 export type TournamentStatus = 'scheduled' | 'current' | 'past';
 export type UserRole = 'participant' | 'tournament_admin';
@@ -66,10 +68,28 @@ export interface TeamProfile {
   }>;
 }
 
+interface ApiTournament {
+  id: string;
+  name?: string;
+  category?: string;
+  start_date?: string;
+  end_date?: string;
+  status?: string;
+  matches?: Array<Partial<Match>>;
+  participants?: Array<{ id?: string; name?: string }>;
+  registered_teams?: Array<{ id?: string; name?: string }>;
+  teams_involved?: Record<string, string>;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TournamentDataService {
+  private readonly apiBase = 'http://127.0.0.1:5000/api/tournaments';
   readonly tournaments = signal<Tournament[]>(this.createMockTournaments());
   private readonly teamProfiles = this.createMockTeamProfiles();
+
+  constructor(private readonly http: HttpClient) {
+    this.refreshTournaments();
+  }
 
   getTournamentById(id: string): Tournament | undefined {
     return this.tournaments().find((item) => item.id === id);
@@ -92,19 +112,84 @@ export class TournamentDataService {
     category: string;
     startDate: string;
     endDate: string;
-  }): void {
-    const nowId = `t-${Date.now()}`;
-    const newTournament: Tournament = {
-      id: nowId,
+  }): Observable<Tournament> {
+    const body = {
       name: payload.name,
       category: payload.category,
-      start_date: payload.startDate,
-      end_date: payload.endDate,
-      status: 'scheduled',
-      teams_involved: {},
-      matches: []
+      start_date: this.toDateOnly(payload.startDate),
+      end_date: this.toDateOnly(payload.endDate),
+      max_participants: 0,
+      statistics_url: ''
     };
-    this.tournaments.set([newTournament, ...this.tournaments()]);
+    return this.http.post<ApiTournament>(`${this.apiBase}/`, body).pipe(
+      map((created) => this.normalizeTournament(created)),
+      tap((createdTournament) => {
+        this.tournaments.set([createdTournament, ...this.tournaments()]);
+      })
+    );
+  }
+
+  refreshTournaments(): Observable<Tournament[]> {
+    return this.http.get<ApiTournament[]>(`${this.apiBase}/`).pipe(
+      map((items) => items.map((item) => this.normalizeTournament(item))),
+      tap((items) => this.tournaments.set(items)),
+      catchError(() => of(this.tournaments()))
+    );
+  }
+
+  private normalizeTournament(item: ApiTournament): Tournament {
+    const teamsFromMap = item.teams_involved || {};
+    const teamsFromParticipants = (item.participants || []).reduce<Record<string, string>>((acc, participant) => {
+      if (participant.id && participant.name) {
+        acc[participant.id] = participant.name;
+      }
+      return acc;
+    }, {});
+    const teamsFromRegistered = (item.registered_teams || []).reduce<Record<string, string>>((acc, team) => {
+      if (team.id && team.name) {
+        acc[team.id] = team.name;
+      }
+      return acc;
+    }, {});
+    const teamsInvolved = {
+      ...teamsFromMap,
+      ...teamsFromParticipants,
+      ...teamsFromRegistered
+    };
+
+    const matches = (item.matches || []).map((match, index) => ({
+      id: match.id || `m-${index + 1}`,
+      category: match.category || item.category || 'N/A',
+      status: this.normalizeStatus(match.status),
+      team_a_id: match.team_a_id || '',
+      team_a_name: match.team_a_name || teamsInvolved[match.team_a_id || ''] || 'TBD',
+      team_b_id: match.team_b_id || '',
+      team_b_name: match.team_b_name || teamsInvolved[match.team_b_id || ''] || 'TBD',
+      team_a_time: match.team_a_time ?? null,
+      team_b_time: match.team_b_time ?? null,
+      winner_id: match.winner_id ?? null
+    }));
+
+    return {
+      id: item.id || `t-${Date.now()}`,
+      name: item.name || 'Unnamed tournament',
+      category: item.category || 'N/A',
+      start_date: item.start_date || '',
+      end_date: item.end_date || '',
+      status: this.normalizeStatus(item.status),
+      teams_involved: teamsInvolved,
+      matches
+    };
+  }
+
+  private normalizeStatus(value: string | undefined): TournamentStatus {
+    if (value === 'current' || value === 'past' || value === 'scheduled') return value;
+    return 'scheduled';
+  }
+
+  private toDateOnly(value: string): string {
+    if (!value) return '';
+    return value.includes('T') ? value.split('T')[0] : value;
   }
 
   private createMockTournaments(): Tournament[] {
