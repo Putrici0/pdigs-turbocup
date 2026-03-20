@@ -53,11 +53,14 @@
 
             // 3. Se crean los datos para pasarselos a Flask
             // Montamos el JSON incluyendo la nueva categoría
+            // 2 y 3. Cogemos las fechas exactas (con la "T" y la hora) y montamos el JSON
             const payload = {
                 name: formData.get("tournamentName"),
                 category: formData.get("category"),
-                start_date: cleanStartDate,
-                end_date: cleanEndDate,
+                start_date: formData.get("startDate"),
+                end_date: formData.get("endDate") || null,
+                max_participants: parseInt(formData.get("maxParticipants"), 10),
+                statistics_url: formData.get("statisticsUrl")
             };
 
             try {
