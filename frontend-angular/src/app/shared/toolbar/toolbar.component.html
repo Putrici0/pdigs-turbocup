@@ -20,7 +20,9 @@
       <div class="account-dropdown">
         @if (authService.session()) {
           <a routerLink="/profile" routerLinkActive="is-current" (click)="closeToolbar()">Account</a>
-          <a routerLink="/create-tournament" routerLinkActive="is-current" (click)="closeToolbar()">Create tournament</a>
+          @if (authService.session()?.role === 'tournament_admin') {
+            <a routerLink="/create-tournament" routerLinkActive="is-current" (click)="closeToolbar()">Create tournament</a>
+          }
           <button type="button" class="account-logout" (click)="logout()">Logout</button>
         } @else {
           <a routerLink="/login" routerLinkActive="is-current" (click)="closeToolbar()">Login</a>
