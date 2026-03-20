@@ -1,0 +1,70 @@
+<main class="page-shell">
+  <section class="hero panel">
+    <p class="eyebrow">Tournament Metrics</p>
+    <h1>{{ tournament().name }}</h1>
+    <p class="hero-copy">Detailed per-match results and leaderboard snapshot.</p>
+    <a class="link-button" [routerLink]="['/view-tournament', tournament().id]">Back to bracket</a>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Match results</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Match</th>
+          <th>Team A</th>
+          <th>Team B</th>
+          <th>Winner</th>
+          <th>Best time</th>
+          <th>Status</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (match of tournament().matches; track match.id) {
+            <tr>
+              <td>{{ match.id }}</td>
+              <td>{{ match.team_a_name }}</td>
+              <td>{{ match.team_b_name }}</td>
+              <td>{{ match.winner_id ? (match.winner_id === match.team_a_id ? match.team_a_name : match.team_b_name) : 'TBD' }}</td>
+              <td>{{ formatTime(bestTime(match)) }}</td>
+              <td>{{ match.status === 'current' ? 'On going' : (match.status === 'past' ? 'Completed' : 'Scheduled') }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Fastest winners</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Team</th>
+          <th>Winning time</th>
+          <th>From match</th>
+          <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (item of ranking(); track item.matchId) {
+            <tr>
+              <td>{{ $index + 1 }}</td>
+              <td>{{ item.name }}</td>
+              <td>{{ formatTime(item.time) }}</td>
+              <td>{{ item.matchId }}</td>
+              <td><a class="link-button" [routerLink]="['/view-team', item.teamId]">Team page</a></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>

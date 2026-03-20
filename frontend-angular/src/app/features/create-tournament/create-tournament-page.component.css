@@ -1,0 +1,146 @@
+:host {
+  display: block;
+}
+
+.page-shell {
+  width: min(980px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 56px 0 72px;
+}
+
+.hero {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #dc247e;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+}
+
+.hero-copy {
+  margin: 12px 0 0;
+  color: #9ca3af;
+}
+
+.panel {
+  border: 1px solid rgba(229, 231, 235, 0.14);
+  border-radius: 28px;
+  background: #1f2937;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.form-layout {
+  display: grid;
+  gap: 20px;
+  padding: 28px;
+}
+
+.form-section {
+  padding: 22px;
+  border: 1px solid rgba(229, 231, 235, 0.14);
+  border-radius: 22px;
+  background: rgba(55, 65, 81, 0.42);
+}
+
+.form-section h2 {
+  margin: 0 0 14px;
+  font-size: 1.35rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field span {
+  font-size: 0.92rem;
+  color: #cbd5e1;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid rgba(229, 231, 235, 0.18);
+  border-radius: 14px;
+  background: #374151;
+  color: #e5e7eb;
+  font: inherit;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 2px solid rgba(220, 36, 126, 0.22);
+  border-color: #dc247e;
+}
+
+.notice {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.45);
+  background: rgba(22, 101, 52, 0.25);
+  color: #bbf7d0;
+}
+
+.notice.is-error {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.25);
+  color: #fecaca;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.primary-action,
+.secondary-action {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.primary-action {
+  background: #dc247e;
+  color: #ffffff;
+}
+
+.secondary-action {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+@media (max-width: 760px) {
+  .page-shell {
+    width: min(100% - 20px, 980px);
+    padding-top: 32px;
+  }
+
+  .form-layout {
+    padding: 20px;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+}

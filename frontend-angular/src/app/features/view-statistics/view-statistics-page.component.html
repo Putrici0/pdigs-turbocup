@@ -1,0 +1,68 @@
+<main class="page-shell">
+  <section class="hero panel">
+    <p class="eyebrow">Global Statistics</p>
+    <h1>View statistics</h1>
+    <p class="hero-copy">Quick overview of tournaments and team performance.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Platform highlights</h2>
+    </div>
+    <div class="cards-grid">
+      @for (item of highlights(); track item[0]) {
+        <article class="stat-card">
+          <p class="stat-label">{{ item[0] }}</p>
+          <p class="stat-value">{{ item[1] }}</p>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Top teams (2026 points)</h2>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Team</th>
+          <th>Points</th>
+          <th>Podiums</th>
+          <th>Stage wins</th>
+          <th>Average time</th>
+          <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+          @for (team of teams(); track team.id) {
+            <tr>
+              <td>{{ team.name }}</td>
+              <td>{{ team.stats.points2026 }}</td>
+              <td>{{ team.stats.podiums }}</td>
+              <td>{{ team.stats.stageWins }}</td>
+              <td>{{ team.stats.avgStageTime }}</td>
+              <td><a class="link-button" [routerLink]="['/view-team', team.id]">Team page</a></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Tournament quick access</h2>
+    </div>
+    <div class="list-grid">
+      @for (tournament of tournaments(); track tournament.id) {
+        <article class="list-card">
+          <h3>{{ tournament.name }}</h3>
+          <p>{{ tournament.category }} - {{ tournament.status }}</p>
+          <a class="link-button" [routerLink]="['/view-tournament-statistic', tournament.id]">View details</a>
+        </article>
+      }
+    </div>
+  </section>
+</main>

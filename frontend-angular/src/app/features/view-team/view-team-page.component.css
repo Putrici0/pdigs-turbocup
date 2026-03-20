@@ -1,0 +1,226 @@
+:host {
+  display: block;
+}
+
+.page-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 56px 0 72px;
+  display: grid;
+  gap: 22px;
+}
+
+.panel {
+  padding: 28px;
+  border: 1px solid rgba(229, 231, 235, 0.14);
+  border-radius: 28px;
+  background: #1f2937;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #dc247e;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+}
+
+.hero-copy,
+.panel-copy {
+  margin: 10px 0 0;
+  color: #9ca3af;
+}
+
+.hero-meta {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.meta-chip,
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(55, 65, 81, 0.75);
+}
+
+.status-pill {
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #bae6fd;
+  background: rgba(3, 105, 161, 0.3);
+}
+
+.panel-header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+.crew-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.crew-card,
+.spec-card,
+.stat-card {
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 14px;
+  background: rgba(17, 24, 39, 0.72);
+  padding: 14px;
+}
+
+.role-label {
+  margin: 0 0 8px;
+  color: #f9a8d4;
+  text-transform: uppercase;
+  font-size: 0.74rem;
+}
+
+.person-name {
+  margin: 0 0 6px;
+  font-size: 1.12rem;
+}
+
+.person-meta {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.car-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stat-label,
+.spec-label {
+  margin: 0 0 6px;
+  color: #9ca3af;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.spec-value {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+thead th {
+  padding: 13px 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.14);
+  color: #9ca3af;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+tbody td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.08);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+}
+
+.status-badge.ongoing {
+  border-color: rgba(56, 189, 248, 0.6);
+  color: #bae6fd;
+  background: rgba(14, 116, 144, 0.25);
+}
+
+.status-badge.completed {
+  border-color: rgba(134, 239, 172, 0.5);
+  color: #bbf7d0;
+  background: rgba(22, 101, 52, 0.25);
+}
+
+.status-badge.scheduled {
+  border-color: rgba(251, 191, 36, 0.5);
+  color: #fde68a;
+  background: rgba(146, 64, 14, 0.28);
+}
+
+@media (max-width: 980px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .car-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .page-shell {
+    width: min(100% - 20px, 1180px);
+    padding-top: 32px;
+  }
+
+  .panel {
+    padding: 20px;
+  }
+
+  .panel-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .crew-grid,
+  .stats-grid,
+  .car-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,100 @@
+@if (team(); as profile) {
+  <main class="page-shell">
+    <section class="hero panel">
+      <p class="eyebrow">Rally Team Profile</p>
+      <h1>{{ profile.name }}</h1>
+      <p class="hero-copy">{{ profile.bio }}</p>
+      <div class="hero-meta">
+        <span class="status-pill">{{ formatStatus(profile.status) }}</span>
+        <span class="meta-chip">Category: {{ profile.category }}</span>
+        <span class="meta-chip">Base: {{ profile.homeBase }}</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Crew</h2>
+        <p class="panel-copy">Pilot and co-pilot lineup for current season.</p>
+      </div>
+      <div class="crew-grid">
+        <article class="crew-card">
+          <p class="role-label">Pilot</p>
+          <h3 class="person-name">{{ profile.crew.driver.name }}</h3>
+          <p class="person-meta">Age: {{ profile.crew.driver.age }}</p>
+          <p class="person-meta">Nationality: {{ profile.crew.driver.nationality }}</p>
+          <p class="person-meta">Driving style: {{ profile.crew.driver.style }}</p>
+        </article>
+        <article class="crew-card">
+          <p class="role-label">Co-pilot</p>
+          <h3 class="person-name">{{ profile.crew.codriver.name }}</h3>
+          <p class="person-meta">Age: {{ profile.crew.codriver.age }}</p>
+          <p class="person-meta">Nationality: {{ profile.crew.codriver.nationality }}</p>
+          <p class="person-meta">Notes: {{ profile.crew.codriver.notes }}</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Performance overview</h2>
+        <p class="panel-copy">Key stats based on recent events and stage times.</p>
+      </div>
+      <div class="stats-grid">
+        @for (entry of statsEntries(); track entry[0]) {
+          <article class="stat-card">
+            <p class="stat-label">{{ entry[0] }}</p>
+            <p class="stat-value">{{ entry[1] }}</p>
+          </article>
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Car and setup</h2>
+        <p class="panel-copy">Current rally car and baseline setup profile.</p>
+      </div>
+      <div class="car-grid">
+        @for (entry of carEntries(); track entry[0]) {
+          <article class="spec-card">
+            <p class="spec-label">{{ entry[0] }}</p>
+            <p class="spec-value">{{ entry[1] }}</p>
+          </article>
+        }
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-header">
+        <h2>Tournament history</h2>
+        <p class="panel-copy">Current and past tournaments where the team competed.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Tournament</th>
+            <th>Season</th>
+            <th>Category</th>
+            <th>Status</th>
+            <th>Result</th>
+            <th>Best stage</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (item of profile.tournaments; track item.name + item.season) {
+              <tr>
+                <td>{{ item.name }}</td>
+                <td>{{ item.season }}</td>
+                <td>{{ item.category }}</td>
+                <td><span [class]="statusClass(item.status)">{{ formatStatus(item.status) }}</span></td>
+                <td>{{ item.result }}</td>
+                <td>{{ item.bestStage }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+}

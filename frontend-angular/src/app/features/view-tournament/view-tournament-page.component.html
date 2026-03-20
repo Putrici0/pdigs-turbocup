@@ -1,0 +1,126 @@
+<main class="page-shell">
+  <section class="hero panel">
+    <p class="eyebrow">Tournament Detail</p>
+    <h1>{{ tournament().name }}</h1>
+    <p class="hero-copy">{{ formatDateTime(tournament().start_date) }} - {{ formatDateTime(tournament().end_date) }}</p>
+    <div class="hero-meta">
+      <span class="status-pill" [class]="stateClass(tournament().status === 'past' ? 'completed' : (tournament().status === 'current' ? 'ongoing' : 'scheduled'))">
+        {{ formatTournamentStatus(tournament().status) }}
+      </span>
+      <span class="meta-chip">{{ tournament().category }} - ID: {{ tournament().id }}</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Bracket</h2>
+      <p class="panel-copy">Read-only bracket view for participants and guests.</p>
+    </div>
+    <div class="status-legend">
+      <span class="legend-item"><span class="legend-dot scheduled"></span>Scheduled</span>
+      <span class="legend-item"><span class="legend-dot waiting"></span>Waiting</span>
+      <span class="legend-item"><span class="legend-dot tbd"></span>TBD</span>
+      <span class="legend-item"><span class="legend-dot ongoing"></span>On going</span>
+      <span class="legend-item"><span class="legend-dot completed"></span>Completed</span>
+    </div>
+    <div class="bracket-scroll">
+      <div class="bracket-grid">
+        <section class="bracket-round">
+          <h3>Round of 16</h3>
+          @for (item of roundOf16(); track item.id) {
+            <article class="match-card">
+              <div class="teams-row">
+                <a [routerLink]="['/view-team', item.leftTeamId || 'team-01']">{{ item.leftName }}</a>
+                <a [routerLink]="['/view-team', item.rightTeamId || 'team-01']">{{ item.rightName }}</a>
+              </div>
+              <span [class]="stateClass(item.state)">{{ formatMatchState(item.state) }}</span>
+            </article>
+          }
+        </section>
+
+        <section class="bracket-round">
+          <h3>Quarterfinals</h3>
+          @for (item of quarterfinals(); track item.id) {
+            <article class="match-card">
+              <div class="teams-row">
+                <p>{{ item.leftName }}</p>
+                <p>{{ item.rightName }}</p>
+              </div>
+              <span [class]="stateClass(item.state)">{{ formatMatchState(item.state) }}</span>
+            </article>
+          }
+        </section>
+
+        <section class="bracket-round">
+          <h3>Semifinals</h3>
+          @for (item of semifinals(); track item.id) {
+            <article class="match-card">
+              <div class="teams-row">
+                <p>{{ item.leftName }}</p>
+                <p>{{ item.rightName }}</p>
+              </div>
+              <span [class]="stateClass(item.state)">{{ formatMatchState(item.state) }}</span>
+            </article>
+          }
+        </section>
+
+        <section class="bracket-round">
+          <h3>Final</h3>
+          <article class="match-card">
+            <div class="teams-row">
+              <p>{{ final().leftName }}</p>
+              <p>{{ final().rightName }}</p>
+            </div>
+            <span [class]="stateClass(final().state)">{{ formatMatchState(final().state) }}</span>
+          </article>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Tournament statistics</h2>
+      <p class="panel-copy">Overview of matches, teams and lap-time results.</p>
+    </div>
+    <div class="stats-grid">
+      @for (card of statsCards(); track card.label) {
+        <article class="stat-card">
+          <p class="stat-label">{{ card.label }}</p>
+          <p class="stat-value">{{ card.value }}</p>
+        </article>
+      }
+    </div>
+
+    <div class="subsection">
+      <h3>Matches</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Match</th>
+            <th>Status</th>
+            <th>Category</th>
+            <th>Best time</th>
+            <th>Winner</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (match of tournament().matches; track match.id) {
+              <tr>
+                <td>{{ match.team_a_name }} vs {{ match.team_b_name }}</td>
+                <td><span [class]="stateClass(match.status === 'past' ? 'completed' : (match.status === 'current' ? 'ongoing' : 'scheduled'))">{{ formatTournamentStatus(match.status) }}</span></td>
+                <td>{{ match.category }}</td>
+                <td>{{ bestTime(match) }}</td>
+                <td>{{ winnerName(match) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (tournament().matches.length === 0) {
+        <p class="empty-state">No matches were found for this tournament.</p>
+      }
+    </div>
+  </section>
+</main>

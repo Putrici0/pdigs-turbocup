@@ -1,0 +1,54 @@
+<main class="page-shell">
+  <section class="hero">
+    <p class="eyebrow">Tournament Setup</p>
+    <h1>Create tournament</h1>
+    <p class="hero-copy">Enter the core information to publish a new rally tournament.</p>
+  </section>
+
+  <form class="panel form-layout" (ngSubmit)="submit()">
+    @if (message()) {
+      <p class="notice" [class.is-error]="isError()">{{ message() }}</p>
+    }
+
+    <section class="form-section">
+      <h2>Tournament details</h2>
+      <div class="field-grid">
+        <label class="field">
+          <span>Tournament name</span>
+          <input type="text" name="name" [(ngModel)]="name" required />
+        </label>
+
+        <label class="field">
+          <span>Racing category</span>
+          <select name="category" [(ngModel)]="category" required>
+            <option value="" disabled>Select category</option>
+            <option value="100cc">100cc</option>
+            <option value="125cc">125cc</option>
+            <option value="150cc">150cc</option>
+            <option value="200cc">200cc</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h2>Schedule</h2>
+      <div class="field-grid">
+        <label class="field">
+          <span>Start date and time</span>
+          <input type="datetime-local" name="startDate" [(ngModel)]="startDate" required />
+        </label>
+
+        <label class="field">
+          <span>End date and time</span>
+          <input type="datetime-local" name="endDate" [(ngModel)]="endDate" required />
+        </label>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button type="submit" class="primary-action">Create tournament</button>
+      <button type="reset" class="secondary-action">Clear</button>
+    </div>
+  </form>
+</main>
