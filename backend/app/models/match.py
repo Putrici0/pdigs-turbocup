@@ -3,7 +3,7 @@ class Match:
         self.tournament_id = tournament_id
         self.team_a_id = team_a_id
         self.team_b_id = team_b_id
-        self.category = category # Ej: "100cc", "Pro", etc.
+        self.category = category
         self.status = "scheduled"
         self.winner_id = None
 

@@ -3,7 +3,6 @@ class MatchStats:
         self.match_id = match_id
         self.team_id = team_id
         self.average_speed = average_speed # Average speeds
-        # Lista o diccionario con los tiempos de cada sector de la pista
         self.section_times = section_times
 
     def to_dict(self):

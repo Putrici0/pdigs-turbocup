@@ -11,5 +11,6 @@ class Tournament:
             "name": self.name,
             "start_date": self.start_date,
             "end_date": self.end_date,
-            "status": self.status
+            "status": self.status,
+            "category": self.category
         }

@@ -7,7 +7,6 @@ from backend.app.api.tournaments import tournaments_bp
 def create_app():
     app = Flask(__name__)
 
-    # 2. Activamos CORS para que el navegador confíe en nuestra API
     CORS(app)
 
     app.register_blueprint(tournaments_bp, url_prefix='/api/tournaments')

@@ -15,31 +15,27 @@ class TestDeleteTournamentAPI(unittest.TestCase):
         self.client = self.app.test_client()
 
     def test_delete_existing_tournament(self):
-        # 1. Creación de un torneo temporal
         mock_data = {
-            "name": "Torneo Temporal a Borrar",
+            "name": "Temporal tournament",
             "start_date": "2026-10-01",
             "end_date": "2026-10-05"
         }
         create_response = self.client.post('/api/tournaments/', json=mock_data)
 
-        # Si se ha creado correctamente, se extrae el ID
         self.assertEqual(create_response.status_code, 201)
         tournament_id = create_response.get_json()['id']
 
-        # 2. Se borra el torneo mediante el ID obtenido
         delete_response = self.client.delete(f'/api/tournaments/{tournament_id}')
 
-        self.assertEqual(delete_response.status_code, 200, "El servidor debería devolver 200 al borrar")
+        self.assertEqual(delete_response.status_code, 200, "Server must return 200")
 
-        # 3. Se intenta borrar el torneo borrado
         delete_again_response = self.client.delete(f'/api/tournaments/{tournament_id}')
 
-        self.assertEqual(delete_again_response.status_code, 404, "El servidor debería devolver 404 si el torneo ya no existe")
+        self.assertEqual(delete_again_response.status_code, 404, "Server must return 404")
 
     def test_delete_nonexistent_tournament(self):
         response = self.client.delete('/api/tournaments/random_ID_999')
-        self.assertEqual(response.status_code, 404, "El servidor debe devolver 404 para IDs que no existen")
+        self.assertEqual(response.status_code, 404, "Server must return 404")
 
 if __name__ == '__main__':
     unittest.main()
