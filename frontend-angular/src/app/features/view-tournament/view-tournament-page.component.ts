@@ -66,6 +66,8 @@ export class ViewTournamentPageComponent {
     ];
   });
 
+  readonly effectiveTournamentStatus = computed<Tournament['status']>(() => this.resolveTournamentStatus(this.tournament()));
+
   formatDateTime(value: string): string {
     if (!value) return 'N/A';
     return new Intl.DateTimeFormat('en-GB', {
@@ -136,6 +138,17 @@ export class ViewTournamentPageComponent {
   private formatTime(value: number | null): string {
     if (value === null || value === undefined) return 'N/A';
     return `${Number(value).toFixed(3)} s`;
+  }
+
+  private resolveTournamentStatus(tournament: Tournament): Tournament['status'] {
+    const start = new Date(tournament.start_date);
+    const end = new Date(tournament.end_date);
+    const now = new Date();
+
+    if (!Number.isNaN(start.getTime()) && now < start) return 'scheduled';
+    if (!Number.isNaN(end.getTime()) && now > end) return 'past';
+    if (!Number.isNaN(start.getTime())) return 'current';
+    return tournament.status;
   }
 
   private buildRoundOf16(tournament: Tournament): BracketMatch[] {

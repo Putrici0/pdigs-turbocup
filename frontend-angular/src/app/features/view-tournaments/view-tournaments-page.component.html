@@ -50,9 +50,9 @@
               <tr>
                 <td data-label="Tournament name"><strong>{{ tournament.name }}</strong></td>
                 <td data-label="Category"><span class="category-pill">{{ tournament.category }}</span></td>
-                <td data-label="Start date">{{ formatDate(tournament.start_date) }}</td>
-                <td data-label="End date">{{ formatDate(tournament.end_date) }}</td>
-                <td data-label="Status"><span class="status-pill scheduled">Scheduled</span></td>
+                <td data-label="Start date">{{ formatDateTime(tournament.start_date) }}</td>
+                <td data-label="End date">{{ formatDateTime(tournament.end_date) }}</td>
+                <td data-label="Status"><span class="status-pill" [class]="effectiveStatus(tournament)">{{ statusLabel(effectiveStatus(tournament)) }}</span></td>
                 <td data-label="Participants">{{ participantCount(tournament) }}</td>
                 <td data-label="Action"><a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a></td>
               </tr>
@@ -92,9 +92,9 @@
               <tr>
                 <td data-label="Tournament name"><strong>{{ tournament.name }}</strong></td>
                 <td data-label="Category"><span class="category-pill">{{ tournament.category }}</span></td>
-                <td data-label="Start date">{{ formatDate(tournament.start_date) }}</td>
-                <td data-label="End date">{{ formatDate(tournament.end_date) }}</td>
-                <td data-label="Status"><span class="status-pill current">On going</span></td>
+                <td data-label="Start date">{{ formatDateTime(tournament.start_date) }}</td>
+                <td data-label="End date">{{ formatDateTime(tournament.end_date) }}</td>
+                <td data-label="Status"><span class="status-pill" [class]="effectiveStatus(tournament)">{{ statusLabel(effectiveStatus(tournament)) }}</span></td>
                 <td data-label="Participants">{{ participantCount(tournament) }}</td>
                 <td data-label="Action"><a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a></td>
               </tr>
@@ -134,9 +134,9 @@
               <tr>
                 <td data-label="Tournament name"><strong>{{ tournament.name }}</strong></td>
                 <td data-label="Category"><span class="category-pill">{{ tournament.category }}</span></td>
-                <td data-label="Start date">{{ formatDate(tournament.start_date) }}</td>
-                <td data-label="End date">{{ formatDate(tournament.end_date) }}</td>
-                <td data-label="Status"><span class="status-pill past">Completed</span></td>
+                <td data-label="Start date">{{ formatDateTime(tournament.start_date) }}</td>
+                <td data-label="End date">{{ formatDateTime(tournament.end_date) }}</td>
+                <td data-label="Status"><span class="status-pill" [class]="effectiveStatus(tournament)">{{ statusLabel(effectiveStatus(tournament)) }}</span></td>
                 <td data-label="Participants">{{ participantCount(tournament) }}</td>
                 <td data-label="Action"><a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a></td>
               </tr>

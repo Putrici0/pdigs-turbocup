@@ -4,8 +4,8 @@
     <h1>{{ tournament().name }}</h1>
     <p class="hero-copy">{{ formatDateTime(tournament().start_date) }} - {{ formatDateTime(tournament().end_date) }}</p>
     <div class="hero-meta">
-      <span class="status-pill" [class]="stateClass(tournament().status === 'past' ? 'completed' : (tournament().status === 'current' ? 'ongoing' : 'scheduled'))">
-        {{ formatTournamentStatus(tournament().status) }}
+      <span class="status-pill" [class]="stateClass(effectiveTournamentStatus() === 'past' ? 'completed' : (effectiveTournamentStatus() === 'current' ? 'ongoing' : 'scheduled'))">
+        {{ formatTournamentStatus(effectiveTournamentStatus()) }}
       </span>
       <span class="meta-chip">{{ tournament().category }} - ID: {{ tournament().id }}</span>
     </div>

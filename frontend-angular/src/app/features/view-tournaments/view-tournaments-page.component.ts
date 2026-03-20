@@ -49,16 +49,27 @@ export class ViewTournamentsPageComponent implements OnInit {
   }
 
   tournamentsByStatus(status: TournamentStatus): Tournament[] {
-    return this.filtered().filter((item) => item.status === status);
+    return this.filtered().filter((item) => this.effectiveStatus(item) === status);
   }
 
-  formatDate(value: string): string {
+  formatDateTime(value: string): string {
     if (!value) return 'N/A';
-    return new Intl.DateTimeFormat('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    }).format(new Date(value));
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    const hasTime = value.includes('T') || value.includes(':');
+    return new Intl.DateTimeFormat('en-GB', hasTime
+      ? {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }
+      : {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        }).format(date);
   }
 
   participantCount(tournament: Tournament): number {
@@ -67,5 +78,23 @@ export class ViewTournamentsPageComponent implements OnInit {
 
   canCreateTournament(): boolean {
     return this.authService.session()?.role === 'tournament_admin';
+  }
+
+  effectiveStatus(tournament: Tournament): TournamentStatus {
+    const start = new Date(tournament.start_date);
+    const end = new Date(tournament.end_date);
+    const now = new Date();
+
+    if (!Number.isNaN(start.getTime()) && now < start) return 'scheduled';
+    if (!Number.isNaN(end.getTime()) && now > end) return 'past';
+    if (!Number.isNaN(start.getTime())) return 'current';
+
+    return tournament.status;
+  }
+
+  statusLabel(status: TournamentStatus): string {
+    if (status === 'current') return 'On going';
+    if (status === 'past') return 'Completed';
+    return 'Scheduled';
   }
 }

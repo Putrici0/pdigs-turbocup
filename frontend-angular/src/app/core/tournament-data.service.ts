@@ -132,8 +132,8 @@ export class TournamentDataService {
     const body = {
       name: payload.name,
       category: payload.category,
-      start_date: this.toDateOnly(payload.startDate),
-      end_date: this.toDateOnly(payload.endDate),
+      start_date: this.toApiDateTime(payload.startDate),
+      end_date: this.toApiDateTime(payload.endDate),
       max_participants: 0,
       statistics_url: ''
     };
@@ -215,9 +215,9 @@ export class TournamentDataService {
     return 'scheduled';
   }
 
-  private toDateOnly(value: string): string {
+  private toApiDateTime(value: string): string {
     if (!value) return '';
-    return value.includes('T') ? value.split('T')[0] : value;
+    return value;
   }
 
   private createMockTournaments(): Tournament[] {
