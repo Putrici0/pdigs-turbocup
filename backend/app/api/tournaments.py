@@ -55,17 +55,17 @@ def create_tournament():
         return jsonify({"message": "Missing name, start_date, or category"}), 400
 
     try:
-        start_date = datetime.strptime(data['start_date'], "%Y-%m-%d")
+        start_date = datetime.fromisoformat(data['start_date'])
     except ValueError:
-        return jsonify({"message": "start_date must be a valid date in YYYY-MM-DD format"}), 400
+        return jsonify({"message": "start_date must be a valid datetime in YYYY-MM-DDTHH:MM format"}), 400
 
     end_date_str = data.get('end_date')
     end_date = None
     if end_date_str:
         try:
-            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+            end_date = datetime.fromisoformat(end_date_str)
         except ValueError:
-            return jsonify({"message": "end_date must be a valid date in YYYY-MM-DD format"}), 400
+            return jsonify({"message": "end_date must be a valid datetime in YYYY-MM-DDTHH:MM format"}), 400
 
     now = datetime.now()
 
