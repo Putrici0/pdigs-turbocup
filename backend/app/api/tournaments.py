@@ -1,25 +1,14 @@
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
-from unicodedata import category
 
 from backend.app.db import db
-from backend.app.models.tournament import Tournament
 from google.cloud.firestore_v1.base_query import FieldFilter
 from google.cloud import firestore
 
+from backend.app.utils import serialize_firestore
 
 tournaments_bp = Blueprint('tournaments', __name__)
-
-def serialize_firestore(doc):
-    item = doc.to_dict()
-
-    for key, value in item.items():
-        if isinstance(value, datetime):
-            item[key] = value.isoformat()
-
-    item["id"] = doc.id
-    return item
 
 
 @tournaments_bp.route("/", methods=["GET"])
@@ -181,7 +170,7 @@ def join_tournament(tournament_id):
         }), 400
 
     registered_teams = tourn_data.get('registered_team_ids', [])
-    max_participants = 32
+    max_participants = 16
 
     if len(registered_teams) >= max_participants:
         return jsonify({"message": "Tournament has already reached it's maximum capacity."}), 400

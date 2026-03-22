@@ -37,23 +37,18 @@
         }
 
         form.addEventListener("submit", async function (event) {
-            event.preventDefault(); // Evitamos que la página se recargue
+            event.preventDefault();
 
             const oldNotices = document.querySelectorAll(".dynamic-notice");
             oldNotices.forEach(notice => notice.remove());
 
-            // 1. Se recopilan todos los datos que el administrador ha escrito en el formulario
             const formData = new FormData(form);
 
-            // 2. Se formatean las fechas
             const rawStartDate = formData.get("startDate");
             const rawEndDate = formData.get("endDate");
             const cleanStartDate = rawStartDate ? rawStartDate.split('T')[0] : "";
             const cleanEndDate = rawEndDate ? rawEndDate.split('T')[0] : "";
 
-            // 3. Se crean los datos para pasarselos a Flask
-            // Montamos el JSON incluyendo la nueva categoría
-            // 2 y 3. Cogemos las fechas exactas (con la "T" y la hora) y montamos el JSON
             const payload = {
                 name: formData.get("tournamentName"),
                 category: formData.get("category"),
@@ -74,22 +69,21 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || "Error al crear el torneo");
+                    throw new Error(errorData.message || "Error creating the tournament");
                 }
 
                 // 4. Caso de éxito
                 const successNotice = createNotice("Tournament successfully saved to database!");
                 successNotice.querySelector("h2").textContent = "Created successfully";
-                successNotice.style.borderLeft = "4px solid #10b981"; // Un toque verde de éxito
+                successNotice.style.borderLeft = "4px solid #10b981";
                 pageShell.insertBefore(successNotice, form);
 
                 form.reset();
 
             } catch (error) {
-                // Si Flask devuelve un error 400 o el servidor está apagado
                 const errorNotice = createNotice(error.message);
                 errorNotice.querySelector("h2").textContent = "Error saving tournament";
-                errorNotice.style.borderLeft = "4px solid #ef4444"; // Rojo
+                errorNotice.style.borderLeft = "4px solid #ef4444"; // Red
                 pageShell.insertBefore(errorNotice, form);
                 console.error("Error backend:", error);
             }

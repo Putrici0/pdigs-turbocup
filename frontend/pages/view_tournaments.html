@@ -79,7 +79,6 @@
                     <th scope="col">Status</th>
                     <th scope="col">Participants</th>
                     <th scope="col">Action</th>
-
                 </tr>
                 </thead>
                 <tbody id="current-table-body"></tbody>
@@ -148,8 +147,7 @@
         }).format(new Date(value));
     };
 
-    //Cambiar a "admin", "participant" o "guest" para ver cómo cambian los botones
-    const currentUserRole = "admin";
+    const currentUserRole = "admin"; // Change between "admin", "participant" or "guest" to see the differences.
 
     const createRowMarkup = (tournament) => {
         const participantsList = tournament.participants || [];
@@ -222,20 +220,19 @@
         if (!isConfirmed) return;
 
         try {
-            // 2. Hacemos la llamada DELETE a tu API de Flask
             const response = await fetch(`http://127.0.0.1:5000/api/tournaments/${tournamentId}`, {
                 method: 'DELETE'
             });
 
             if (!response.ok) {
-                throw new Error("No se pudo borrar el torneo del servidor.");
+                throw new Error("Tournament could not be deleted.");
             }
 
             alert("Tournament deleted successfully.");
-            loadTournamentsFromBackend(); // Esta función vuelve a pedir los datos y pinta la tabla actualizada
+            loadTournamentsFromBackend();
 
         } catch (error) {
-            console.error("Error al borrar:", error);
+            console.error("Error deleting:", error);
             alert("Error: Could not delete the tournament.");
         }
     };
@@ -246,7 +243,6 @@
             deleteTournament(tournamentId);
         }
     });
-
 
     const loadTournamentsFromBackend = async () => {
         try {
@@ -260,8 +256,8 @@
             renderTournaments();
 
         } catch (error) {
-            console.error("Error conectando con la base de datos:", error);
-            currentEmptyState.innerHTML = "No se pudo conectar con el servidor. ¿Está Flask encendido?";
+            console.error("Error connecting to the database:", error);
+            currentEmptyState.innerHTML = "Server could not be reached";
             currentEmptyState.hidden = false;
         }
     };
