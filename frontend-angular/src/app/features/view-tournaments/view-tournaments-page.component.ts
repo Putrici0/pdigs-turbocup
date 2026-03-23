@@ -28,6 +28,37 @@ export class ViewTournamentsPageComponent implements OnInit {
   constructor(public readonly authService: AuthService) {}
 
   ngOnInit(): void {
+    const adminId = this.authService.session()?.role === 'tournament_admin'
+      ? this.authService.session()?.username
+      : undefined;
+
+    if (adminId) {
+      this.tournamentDataService.refreshTournaments(adminId).subscribe({
+        next: (items) => {
+          if (items.length === 0) {
+            this.tournamentDataService.refreshTournaments().subscribe({
+              next: () => {
+                this.isLoading.set(false);
+                this.errorMessage.set('');
+              },
+              error: () => {
+                this.isLoading.set(false);
+                this.errorMessage.set('Could not load tournaments from backend.');
+              }
+            });
+            return;
+          }
+          this.isLoading.set(false);
+          this.errorMessage.set('');
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.errorMessage.set('Could not load tournaments from backend.');
+        }
+      });
+      return;
+    }
+
     this.tournamentDataService.refreshTournaments().subscribe({
       next: () => {
         this.isLoading.set(false);
@@ -78,6 +109,31 @@ export class ViewTournamentsPageComponent implements OnInit {
 
   canCreateTournament(): boolean {
     return this.authService.session()?.role === 'tournament_admin';
+  }
+
+  canDeleteTournament(tournament: Tournament): boolean {
+    if (this.authService.session()?.role !== 'tournament_admin') {
+      return false;
+    }
+    const currentUsername = this.authService.session()?.username || '';
+    return !tournament.creator_id || tournament.creator_id === currentUsername;
+  }
+
+  deleteTournament(tournament: Tournament): void {
+    if (!this.canDeleteTournament(tournament)) {
+      return;
+    }
+
+    const confirmed = window.confirm('Are you sure you want to delete this tournament? This action cannot be undone.');
+    if (!confirmed) {
+      return;
+    }
+
+    this.tournamentDataService.deleteTournament(tournament.id).subscribe({
+      error: () => {
+        this.errorMessage.set('Could not delete tournament. Please try again.');
+      }
+    });
   }
 
   effectiveStatus(tournament: Tournament): TournamentStatus {
