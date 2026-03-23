@@ -6,7 +6,7 @@
 
 :root {
   --bg: #444547;
-  --bg-image: url('https://picsum.photos/1920/1080?random=42');
+  --bg-image: url('frontend/assets/racecar-bg-custom-2.png');
 }
 
 html,
