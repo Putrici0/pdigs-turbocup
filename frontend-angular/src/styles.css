@@ -6,7 +6,7 @@
 
 :root {
   --bg: #444547;
-  --bg-image: url('frontend/assets/racecar-bg-custom-2.png');
+  --bg-image: url('/bg/racecar-bg-custom-2.png');
 }
 
 html,

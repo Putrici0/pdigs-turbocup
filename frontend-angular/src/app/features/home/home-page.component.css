@@ -2,9 +2,11 @@
   display: block;
   min-height: 100vh;
   background:
+    linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+    var(--bg-image) center / cover no-repeat fixed,
     radial-gradient(circle at 15% 12%, rgba(220, 36, 126, 0.2), transparent 34%),
     radial-gradient(circle at 90% 82%, rgba(17, 24, 39, 0.7), transparent 40%),
-    #444547;
+    var(--bg);
   color: #e5e7eb;
 }
 
