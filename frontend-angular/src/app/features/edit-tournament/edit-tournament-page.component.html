@@ -1,0 +1,71 @@
+<main class="page-shell">
+  <section class="hero">
+    <p class="eyebrow">Tournament Setup</p>
+    <h1>Edit tournament</h1>
+    <p class="hero-copy">Update tournament name and schedule. Category is locked.</p>
+  </section>
+
+  @if (message()) {
+    <p class="notice" [class.is-error]="isError()" [class.is-success]="!isError()">{{ message() }}</p>
+  }
+
+  <form class="panel form-layout" (ngSubmit)="submit()">
+    <section class="form-section">
+      <div class="section-copy">
+        <h2>Tournament details</h2>
+        <p>Edit only the fields allowed by the admin flow.</p>
+      </div>
+
+      <div class="field-grid">
+        <label class="field">
+          <span>Tournament name</span>
+          <input type="text" name="name" [(ngModel)]="name" required />
+        </label>
+
+        <label class="field">
+          <span>Racing category</span>
+          <input type="text" name="category" [(ngModel)]="category" disabled class="locked-input" />
+        </label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="section-copy">
+        <h2>Schedule</h2>
+        <p>Adjust start/end date and time.</p>
+      </div>
+
+      <div class="field-grid">
+        <label class="field">
+          <span>Start date and time</span>
+          <input type="datetime-local" name="startDate" [(ngModel)]="startDate" required />
+        </label>
+
+        <label class="field">
+          <span>End date and time</span>
+          <input type="datetime-local" name="endDate" [(ngModel)]="endDate" required />
+        </label>
+      </div>
+    </section>
+
+    <section class="panel teams-panel">
+      <h2>Registered teams</h2>
+      @if (registeredTeams().length === 0) {
+        <p class="empty-teams">No teams enrolled yet.</p>
+      } @else {
+        <ul class="teams-list">
+          @for (teamName of registeredTeams(); track teamName) {
+            <li>{{ teamName }}</li>
+          }
+        </ul>
+      }
+    </section>
+
+    <div class="actions">
+      <button type="submit" class="primary-action" [disabled]="isSubmitting() || !canEdit()">
+        {{ isSubmitting() ? 'Saving...' : 'Save changes' }}
+      </button>
+      <a class="secondary-action" [routerLink]="['/view-tournaments']">Back</a>
+    </div>
+  </form>
+</main>

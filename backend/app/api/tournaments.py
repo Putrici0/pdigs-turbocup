@@ -94,6 +94,51 @@ def delete_tournament(tournament_id):
 
     return jsonify({"message": f"Tournament {tournament_id} was deleted successfully"}), 200
 
+
+@tournaments_bp.route('/<tournament_id>', methods=['PUT'])
+def update_tournament(tournament_id):
+    data = request.get_json()
+    if not data or 'name' not in data or 'start_date' not in data:
+        return jsonify({"message": "Missing name or start_date"}), 400
+
+    doc_ref = db.collection('tournaments').document(tournament_id)
+    doc = doc_ref.get()
+    if not doc.exists:
+        return jsonify({"message": f"No tournament with id {tournament_id} was found"}), 404
+
+    try:
+        start_date = datetime.fromisoformat(data['start_date'])
+    except ValueError:
+        return jsonify({"message": "start_date must be a valid datetime in YYYY-MM-DDTHH:MM format"}), 400
+
+    end_date_str = data.get('end_date')
+    end_date = None
+    if end_date_str:
+        try:
+            end_date = datetime.fromisoformat(end_date_str)
+        except ValueError:
+            return jsonify({"message": "end_date must be a valid datetime in YYYY-MM-DDTHH:MM format"}), 400
+
+    now = datetime.now()
+    if start_date > now:
+        status = "scheduled"
+    else:
+        if not end_date or end_date >= now:
+            status = "current"
+        else:
+            status = "past"
+
+    update_data = {
+        "name": data['name'],
+        "start_date": data['start_date'],
+        "end_date": data.get('end_date'),
+        "status": status
+    }
+
+    doc_ref.update(update_data)
+    updated_tournament = doc_ref.get()
+    return jsonify(serialize_firestore(updated_tournament)), 200
+
 @tournaments_bp.route("/admin/<admin_id>", methods=["GET"])
 def get_admin_tournaments(admin_id):
     query = db.collection("tournaments").where("creator_id", "==", admin_id).stream()

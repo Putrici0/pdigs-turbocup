@@ -166,6 +166,28 @@ export class TournamentDataService {
     );
   }
 
+  updateTournament(payload: {
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  }): Observable<Tournament> {
+    const body = {
+      name: payload.name,
+      start_date: this.toApiDateTime(payload.startDate),
+      end_date: this.toApiDateTime(payload.endDate)
+    };
+
+    return this.http.put<ApiTournament>(`${this.apiBase}/${payload.id}`, body).pipe(
+      map((updated) => this.normalizeTournament(updated)),
+      tap((updatedTournament) => {
+        this.tournaments.set(
+          this.tournaments().map((item) => (item.id === updatedTournament.id ? updatedTournament : item))
+        );
+      })
+    );
+  }
+
   private normalizeTournament(item: ApiTournament): Tournament {
     const teamsFromMap = item.teams_involved || {};
     const teamsFromParticipants = (item.participants || []).reduce<Record<string, string>>((acc, participant) => {
