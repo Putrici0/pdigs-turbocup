@@ -17,7 +17,45 @@ body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background:
     linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
-    var(--bg-image) center / cover no-repeat fixed,
     var(--bg);
   color: #e5e7eb;
+}
+
+body {
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  background-image: var(--bg-image);
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  opacity: 1;
+  filter: saturate(0.85) drop-shadow(0 0 12px rgba(255, 79, 163, 0.24));
+}
+
+body::before {
+  width: 60vw;
+  height: 60vw;
+  top: -15vw;
+  right: -20vw;
+  background-position: left center;
+}
+
+body::after {
+  width: 60vw;
+  height: 60vw;
+  left: -34vw;
+  bottom: -22vw;
+  background-position: right center;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
 }
