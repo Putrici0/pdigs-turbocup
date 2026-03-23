@@ -1,0 +1,163 @@
+:host {
+  display: block;
+}
+
+.page-shell {
+  width: min(980px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 56px 0 72px;
+}
+
+.hero {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #dc247e;
+}
+
+.hero h1 {
+  margin: 0;
+}
+
+.hero-copy {
+  margin: 12px 0 0;
+  color: #9ca3af;
+}
+
+.panel {
+  padding: 26px;
+  border: 1px solid rgba(229, 231, 235, 0.14);
+  border-radius: 24px;
+  background: #1f2937;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+}
+
+.form-layout {
+  display: grid;
+  gap: 20px;
+}
+
+.form-section {
+  display: grid;
+  gap: 16px;
+}
+
+.section-copy h2 {
+  margin: 0;
+}
+
+.section-copy p {
+  margin: 8px 0 0;
+  color: #9ca3af;
+}
+
+.field-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid rgba(229, 231, 235, 0.18);
+  border-radius: 12px;
+  background: #374151;
+  color: #e5e7eb;
+  font: inherit;
+}
+
+.locked-input {
+  background: #4b5563 !important;
+  color: #9ca3af !important;
+  cursor: not-allowed;
+}
+
+.teams-panel h2 {
+  margin: 0 0 12px;
+}
+
+.teams-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.empty-teams {
+  margin: 0;
+  color: #9ca3af;
+}
+
+.notice {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.notice.is-success {
+  border-color: rgba(16, 185, 129, 0.5);
+  background: rgba(22, 101, 52, 0.25);
+}
+
+.notice.is-error {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(127, 29, 29, 0.25);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.primary-action,
+.secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 16px;
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primary-action {
+  background: #dc247e;
+  color: #fff;
+}
+
+.primary-action:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.secondary-action {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+@media (max-width: 860px) {
+  .page-shell {
+    width: min(100% - 20px, 980px);
+    padding-top: 32px;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr;
+  }
+}

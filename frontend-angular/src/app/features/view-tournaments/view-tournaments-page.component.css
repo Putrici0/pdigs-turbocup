@@ -228,6 +228,23 @@ tbody tr:last-child td {
   background: #b91c1c;
 }
 
+.edit-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #ffffff;
+  border: 0;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.edit-link:hover {
+  background: #1d4ed8;
+}
+
 .empty-state {
   margin: 24px 0 0;
   padding: 18px 20px;
