@@ -234,3 +234,54 @@ def join_tournament(tournament_id):
     })
 
     return jsonify({"message": f"Team  {team_data.get('name')} has joined the tournament successfully."}), 200
+
+@tournaments_bp.route('/<tournament_id>', methods=['PUT'])
+def update_tournament(tournament_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({"message": "No data provided"}), 400
+
+    tourn_ref = db.collection('tournaments').document(tournament_id)
+    tourn_doc = tourn_ref.get()
+
+    if not tourn_doc.exists:
+        return jsonify({"message": "Tournament not found"}), 404
+
+    existing_data = tourn_doc.to_dict()
+
+    new_name = data.get('name', existing_data.get('name'))
+    start_date_str = data.get('start_date', existing_data.get('start_date'))
+    end_date_str = data.get('end_date', existing_data.get('end_date'))
+
+    try:
+        start_date = datetime.fromisoformat(start_date_str)
+    except ValueError:
+        return jsonify({"message": "start_date must be in YYYY-MM-DDTHH:MM format"}), 400
+
+    end_date = None
+    if end_date_str:
+        try:
+            end_date = datetime.fromisoformat(end_date_str)
+        except ValueError:
+            return jsonify({"message": "end_date must be in YYYY-MM-DDTHH:MM format"}), 400
+
+    now = datetime.now()
+    if start_date > now:
+        status = "scheduled"
+    else:
+        if not end_date or end_date >= now:
+            status = "current"
+        else:
+            status = "past"
+
+    update_data = {
+        "name": new_name,
+        "start_date": start_date_str,
+        "end_date": end_date_str,
+        "status": status
+    }
+
+    tourn_ref.update(update_data)
+
+    updated_doc = tourn_ref.get()
+    return jsonify(serialize_firestore(updated_doc)), 200
