@@ -54,7 +54,9 @@ body::after {
     position: fixed;
     pointer-events: none;
     z-index: 0;
-    background: url("../assets/racecar-bg-custom-2.png") center / contain no-repeat;
+    background-image: url("../assets/racecar-bg-custom-2.png");
+    background-repeat: no-repeat;
+    background-size: 200% 100%;
     opacity: 1;
     filter: saturate(0.85) drop-shadow(0 0 12px rgba(255, 79, 163, 0.24));
 }
@@ -64,6 +66,7 @@ body::before {
     height: 60vw;
     top: -15vw;
     right: -20vw;
+    background-position: left center;
     transform: none;
 }
 
