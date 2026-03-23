@@ -21,6 +21,7 @@ export interface Match {
 export interface Tournament {
   id: string;
   name: string;
+  creator_id?: string;
   category: string;
   start_date: string;
   end_date: string;
@@ -80,6 +81,7 @@ export interface TeamProfile {
 interface ApiTournament {
   id: string;
   name?: string;
+  creator_id?: string;
   category?: string;
   start_date?: string;
   end_date?: string;
@@ -128,6 +130,7 @@ export class TournamentDataService {
     category: string;
     startDate: string;
     endDate: string;
+    creatorId?: string;
   }): Observable<Tournament> {
     const body = {
       name: payload.name,
@@ -135,7 +138,8 @@ export class TournamentDataService {
       start_date: this.toApiDateTime(payload.startDate),
       end_date: this.toApiDateTime(payload.endDate),
       max_participants: 0,
-      statistics_url: ''
+      statistics_url: '',
+      creator_id: payload.creatorId || ''
     };
     return this.http.post<ApiTournament>(`${this.apiBase}/`, body).pipe(
       map((created) => this.normalizeTournament(created)),
@@ -145,11 +149,42 @@ export class TournamentDataService {
     );
   }
 
-  refreshTournaments(): Observable<Tournament[]> {
-    return this.http.get<ApiTournament[]>(`${this.apiBase}/`).pipe(
+  refreshTournaments(adminId?: string): Observable<Tournament[]> {
+    const endpoint = adminId ? `${this.apiBase}/admin/${encodeURIComponent(adminId)}` : `${this.apiBase}/`;
+    return this.http.get<ApiTournament[]>(endpoint).pipe(
       map((items) => items.map((item) => this.normalizeTournament(item))),
       tap((items) => this.tournaments.set(items)),
       catchError(() => of(this.tournaments()))
+    );
+  }
+
+  deleteTournament(tournamentId: string): Observable<void> {
+    return this.http.delete<void>(`${this.apiBase}/${tournamentId}`).pipe(
+      tap(() => {
+        this.tournaments.set(this.tournaments().filter((item) => item.id !== tournamentId));
+      })
+    );
+  }
+
+  updateTournament(payload: {
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  }): Observable<Tournament> {
+    const body = {
+      name: payload.name,
+      start_date: this.toApiDateTime(payload.startDate),
+      end_date: this.toApiDateTime(payload.endDate)
+    };
+
+    return this.http.put<ApiTournament>(`${this.apiBase}/${payload.id}`, body).pipe(
+      map((updated) => this.normalizeTournament(updated)),
+      tap((updatedTournament) => {
+        this.tournaments.set(
+          this.tournaments().map((item) => (item.id === updatedTournament.id ? updatedTournament : item))
+        );
+      })
     );
   }
 
@@ -189,6 +224,7 @@ export class TournamentDataService {
     return {
       id: item.id || `t-${Date.now()}`,
       name: item.name || 'Unnamed tournament',
+      creator_id: item.creator_id || '',
       category: item.category || 'N/A',
       start_date: item.start_date || '',
       end_date: item.end_date || '',

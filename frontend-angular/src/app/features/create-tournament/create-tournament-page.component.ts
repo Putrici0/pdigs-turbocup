@@ -51,7 +51,8 @@ export class CreateTournamentPageComponent {
       name: this.name.trim(),
       category: this.category,
       startDate: this.startDate,
-      endDate: this.endDate
+      endDate: this.endDate,
+      creatorId: this.authService.session()?.username || ''
     }).subscribe({
       next: () => {
         this.message.set('Tournament created successfully.');

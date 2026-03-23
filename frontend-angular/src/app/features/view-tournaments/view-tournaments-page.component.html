@@ -54,7 +54,17 @@
                 <td data-label="End date">{{ formatDateTime(tournament.end_date) }}</td>
                 <td data-label="Status"><span class="status-pill" [class]="effectiveStatus(tournament)">{{ statusLabel(effectiveStatus(tournament)) }}</span></td>
                 <td data-label="Participants">{{ participantCount(tournament) }}</td>
-                <td data-label="Action"><a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a></td>
+                <td data-label="Action">
+                  <div class="action-buttons">
+                    <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
+                    @if (canDeleteTournament(tournament)) {
+                      <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>
+                    }
+                    @if (canDeleteTournament(tournament)) {
+                      <button type="button" class="delete-link" (click)="deleteTournament(tournament)">Delete</button>
+                    }
+                  </div>
+                </td>
               </tr>
             }
           </tbody>
@@ -96,7 +106,17 @@
                 <td data-label="End date">{{ formatDateTime(tournament.end_date) }}</td>
                 <td data-label="Status"><span class="status-pill" [class]="effectiveStatus(tournament)">{{ statusLabel(effectiveStatus(tournament)) }}</span></td>
                 <td data-label="Participants">{{ participantCount(tournament) }}</td>
-                <td data-label="Action"><a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a></td>
+                <td data-label="Action">
+                  <div class="action-buttons">
+                    <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
+                    @if (canDeleteTournament(tournament)) {
+                      <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>
+                    }
+                    @if (canDeleteTournament(tournament)) {
+                      <button type="button" class="delete-link" (click)="deleteTournament(tournament)">Delete</button>
+                    }
+                  </div>
+                </td>
               </tr>
             }
           </tbody>
@@ -138,7 +158,17 @@
                 <td data-label="End date">{{ formatDateTime(tournament.end_date) }}</td>
                 <td data-label="Status"><span class="status-pill" [class]="effectiveStatus(tournament)">{{ statusLabel(effectiveStatus(tournament)) }}</span></td>
                 <td data-label="Participants">{{ participantCount(tournament) }}</td>
-                <td data-label="Action"><a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a></td>
+                <td data-label="Action">
+                  <div class="action-buttons">
+                    <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
+                    @if (canDeleteTournament(tournament)) {
+                      <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>
+                    }
+                    @if (canDeleteTournament(tournament)) {
+                      <button type="button" class="delete-link" (click)="deleteTournament(tournament)">Delete</button>
+                    }
+                  </div>
+                </td>
               </tr>
             }
           </tbody>
