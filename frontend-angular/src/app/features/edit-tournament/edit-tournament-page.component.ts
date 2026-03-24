@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http'; // <-- 1. Importamos HttpClient
 import { AuthService } from '../../core/auth.service';
 import { Tournament, TournamentDataService } from '../../core/tournament-data.service';
 
@@ -26,7 +27,8 @@ export class EditTournamentPageComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly authService: AuthService,
-    private readonly tournamentDataService: TournamentDataService
+    private readonly tournamentDataService: TournamentDataService,
+    private readonly http: HttpClient // <-- 2. Inyectamos HttpClient
   ) {}
 
   ngOnInit(): void {
@@ -51,21 +53,24 @@ export class EditTournamentPageComponent implements OnInit {
     return !creatorId || creatorId === currentUsername;
   }
 
-  registeredTeams(): string[] {
+  // <-- 3. Ahora devolvemos objetos con ID y Name para que el HTML no se queje -->
+  registeredTeams(): { id: string, name: string }[] {
     const current = this.tournament();
     if (!current) return [];
 
-    const fromParticipants = (current.participants || [])
-      .map((item) => item.name)
-      .filter((name) => !!name);
-
-    if (fromParticipants.length > 0) {
-      return fromParticipants;
+    if (current.participants && current.participants.length > 0) {
+      return current.participants
+        .filter((item: any) => !!item.name && !!item.id)
+        .map((item: any) => ({ id: item.id, name: item.name }));
     }
 
-    return (current.registered_teams || [])
-      .map((item) => item.name)
-      .filter((name) => !!name);
+    if (current.registered_teams && current.registered_teams.length > 0) {
+      return current.registered_teams
+        .filter((item: any) => !!item.name && !!item.id)
+        .map((item: any) => ({ id: item.id, name: item.name }));
+    }
+
+    return [];
   }
 
   submit(): void {
@@ -106,6 +111,30 @@ export class EditTournamentPageComponent implements OnInit {
         this.isSubmitting.set(false);
       }
     });
+  }
+
+  removeTeam(teamId: string) {
+    if (!confirm('Are you sure you want to remove this team?')) return;
+
+    this.http.delete(`http://127.0.0.1:5000/api/tournaments/${this.tournamentId}/participants/${teamId}`)
+      .subscribe({
+        // <-- 4. Añadimos ': any' para solucionar los errores TS7006 -->
+        next: (response: any) => {
+          this.message.set('Team removed successfully');
+          this.isError.set(false);
+
+          // <-- 5. En lugar de mutar un Signal que no existe, le pedimos a nuestro servicio
+          // que recargue los datos reales desde el backend y sincronice la vista -->
+          this.tournamentDataService.refreshTournaments().subscribe({
+            next: () => this.syncFromStore()
+          });
+        },
+        error: (err: any) => {
+          this.message.set('Error removing team');
+          this.isError.set(true);
+          console.error(err);
+        }
+      });
   }
 
   private syncFromStore(): void {

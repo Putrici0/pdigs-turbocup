@@ -50,12 +50,26 @@
 
     <section class="panel teams-panel">
       <h2>Registered teams</h2>
+      <p style="color: #a1a1aa; font-size: 0.9em; margin-bottom: 1rem;">
+        Click "Remove" to kick a team out of the tournament.
+      </p>
+
       @if (registeredTeams().length === 0) {
         <p class="empty-teams">No teams enrolled yet.</p>
       } @else {
-        <ul class="teams-list">
-          @for (teamName of registeredTeams(); track teamName) {
-            <li>{{ teamName }}</li>
+        <ul class="teams-list" style="list-style: none; padding: 0; margin: 0;">
+          @for (team of registeredTeams(); track team.id) {
+            <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #3f3f46;">
+              <span>{{ team.name }}</span>
+
+              <button
+                type="button"
+                (click)="removeTeam(team.id)"
+                style="background-color: #ef4444; color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;"
+                [disabled]="!canEdit()">
+                Remove
+              </button>
+            </li>
           }
         </ul>
       }

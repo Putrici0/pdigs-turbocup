@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { Match, Tournament, TournamentDataService } from '../../core/tournament-data.service';
 
 type BracketMatchState = 'scheduled' | 'waiting' | 'tbd' | 'ongoing' | 'completed';
@@ -13,6 +14,7 @@ interface BracketMatch {
   rightName: string;
   winnerId: string | null;
   state: BracketMatchState;
+  round?: number;
 }
 
 interface TeamItem {
@@ -22,6 +24,12 @@ interface TeamItem {
   copilot_name?: string;
   pilot_id?: string;
   copilot_id?: string;
+  registered_team_ids?: string[];
+  registered_teams: any[];
+  participants: any[];
+  matches: Match[];
+  teams_involved?: Record<string, string>;
+  creator_id?: string;
 }
 
 @Component({
@@ -30,24 +38,55 @@ interface TeamItem {
   templateUrl: './view-tournament-page.component.html',
   styleUrl: './view-tournament-page.component.css'
 })
-export class ViewTournamentPageComponent {
+export class ViewTournamentPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly tournamentDataService = inject(TournamentDataService);
-  readonly tournament = computed(() => {
-    const id = this.route.snapshot.paramMap.get('id') || '5vdGkUSsaRYUnB9FBiiQ';
-    return this.tournamentDataService.getTournamentById(id) ?? this.tournamentDataService.tournaments()[0];
+  private readonly http = inject(HttpClient);
+
+  readonly tournamentRaw = signal<any | null>(null);
+
+  readonly tournament = computed<Tournament>(() => {
+    const raw = this.tournamentRaw();
+    if (raw) return raw as Tournament;
+
+    // Fallback de seguridad mientras carga
+    return {
+      id: '', name: 'Loading...', category: '', start_date: '', end_date: '',
+      status: 'scheduled', registered_team_ids: [], participants: [],
+      registered_teams: [], matches: [], teams_involved: {}
+    } as unknown as Tournament;
   });
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      // Obligamos a pedir los detalles frescos al backend (esto dispara el Lazy Loading)
+      this.http.get(`http://127.0.0.1:5000/api/tournaments/${id}/details`).subscribe({
+        next: (data) => {
+          this.tournamentRaw.set(data);
+        },
+        error: (err) => {
+          console.error('Error fetching fresh tournament details:', err);
+        }
+      });
+    }
+  }
 
   readonly roundOf16 = computed(() => this.buildRoundOf16(this.tournament()));
   readonly quarterfinals = computed(() => this.buildQuarterfinals(this.tournament(), this.roundOf16()));
   readonly semifinals = computed(() => this.buildSemifinals(this.quarterfinals()));
   readonly final = computed(() => this.buildFinal(this.semifinals()));
-  readonly registeredTeams = computed<TeamItem[]>(() => {
+  readonly registeredTeams = computed<any[]>(() => {
     const tournament = this.tournament();
-    if (tournament.registered_teams.length > 0) {
+
+    if (tournament.registered_teams && tournament.registered_teams.length > 0) {
       return tournament.registered_teams;
     }
-    return Object.entries(tournament.teams_involved).map(([id, name]) => ({ id, name }));
+
+    return Object.entries(tournament.teams_involved || {}).map(([id, name]) => ({
+      id: id,
+      name: name
+    }));
   });
 
   readonly statsCards = computed(() => {
@@ -56,9 +95,10 @@ export class ViewTournamentPageComponent {
     const played = matches.filter((item) => item.status === 'past').length;
     const ongoing = matches.filter((item) => item.status === 'current').length;
     const pending = matches.length - played - ongoing;
+
     return [
-      { label: 'Category', value: tournament.category },
-      { label: 'Teams', value: Object.keys(tournament.teams_involved || {}).length },
+      { label: 'Category', value: tournament.category || 'N/A' },
+      { label: 'Teams', value: (tournament.registered_team_ids || []).length },
       { label: 'Total matches', value: matches.length },
       { label: 'Completed', value: played },
       { label: 'On going', value: ongoing },
@@ -70,13 +110,17 @@ export class ViewTournamentPageComponent {
 
   formatDateTime(value: string): string {
     if (!value) return 'N/A';
-    return new Intl.DateTimeFormat('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(new Date(value));
+    try {
+      return new Intl.DateTimeFormat('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(new Date(value));
+    } catch {
+      return value;
+    }
   }
 
   formatMatchState(state: BracketMatchState): string {
@@ -93,7 +137,7 @@ export class ViewTournamentPageComponent {
     return 'Scheduled';
   }
 
-  stateClass(state: BracketMatchState): string {
+  stateClass(state: BracketMatchState | string): string {
     return `status-pill ${state}`;
   }
 
@@ -135,12 +179,13 @@ export class ViewTournamentPageComponent {
     return 'TBD';
   }
 
-  private formatTime(value: number | null): string {
+  private formatTime(value: number | null | undefined): string {
     if (value === null || value === undefined) return 'N/A';
     return `${Number(value).toFixed(3)} s`;
   }
 
   private resolveTournamentStatus(tournament: Tournament): Tournament['status'] {
+    if (!tournament || !tournament.start_date) return 'scheduled';
     const start = new Date(tournament.start_date);
     const end = new Date(tournament.end_date);
     const now = new Date();
@@ -152,7 +197,13 @@ export class ViewTournamentPageComponent {
   }
 
   private buildRoundOf16(tournament: Tournament): BracketMatch[] {
-    const base = tournament.matches.slice(0, 8);
+    if (!tournament.matches) return [];
+
+    // Nos quedamos con los matches que tengan el round 1 (si tu backend los guarda así)
+    // o simplemente pillamos los de la primera fase.
+    const baseMatches = tournament.matches.filter(m => m.round === 1 || !m.round);
+    const base = baseMatches.slice(0, 8);
+
     while (base.length < 8) {
       base.push({
         id: `placeholder-${base.length + 1}`,
@@ -164,7 +215,8 @@ export class ViewTournamentPageComponent {
         team_b_name: 'TBD',
         team_a_time: null,
         team_b_time: null,
-        winner_id: null
+        winner_id: null,
+        round: 1
       });
     }
     return base.map((match, index) => ({

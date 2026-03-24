@@ -16,6 +16,7 @@ export interface Match {
   team_a_time: number | null;
   team_b_time: number | null;
   winner_id: string | null;
+  round?: number; // <-- AÑADIDO
 }
 
 export interface Tournament {
@@ -28,6 +29,7 @@ export interface Tournament {
   status: TournamentStatus;
   teams_involved: Record<string, string>;
   participants: Array<{ id: string; name: string }>;
+  registered_team_ids?: string[]; // <-- AÑADIDO
   registered_teams: Array<{
     id: string;
     name: string;
@@ -86,6 +88,7 @@ interface ApiTournament {
   start_date?: string;
   end_date?: string;
   status?: string;
+  registered_team_ids?: string[]; // <-- AÑADIDO
   matches?: Array<Partial<Match>>;
   participants?: Array<{ id?: string; name?: string }>;
   registered_teams?: Array<{
@@ -218,7 +221,8 @@ export class TournamentDataService {
       team_b_name: match.team_b_name || teamsInvolved[match.team_b_id || ''] || 'TBD',
       team_a_time: match.team_a_time ?? null,
       team_b_time: match.team_b_time ?? null,
-      winner_id: match.winner_id ?? null
+      winner_id: match.winner_id ?? null,
+      round: match.round ?? 1 // <-- AÑADIDO: Mapeamos el round (por defecto 1 si no viene)
     }));
 
     return {
@@ -229,6 +233,7 @@ export class TournamentDataService {
       start_date: item.start_date || '',
       end_date: item.end_date || '',
       status: this.normalizeStatus(item.status),
+      registered_team_ids: item.registered_team_ids || [], // <-- AÑADIDO: Mapeamos el array
       teams_involved: teamsInvolved,
       participants: (item.participants || []).map((participant) => ({
         id: participant.id || '',
@@ -283,18 +288,19 @@ export class TournamentDataService {
       start_date: '2026-06-15T09:00:00',
       end_date: '2026-06-20T18:00:00',
       status: 'current',
+      registered_team_ids: Object.keys(teamsInvolved), // <-- AÑADIDO AL MOCK
       teams_involved: teamsInvolved,
       participants: Object.entries(teamsInvolved).map(([id, name]) => ({ id, name })),
       registered_teams: Object.entries(teamsInvolved).map(([id, name]) => ({ id, name })),
       matches: [
-        { id: 'm-001', category: '150cc', status: 'past', team_a_id: 'team-01', team_a_name: 'Los Rapidillos', team_b_id: 'team-02', team_b_name: 'Los Lentillos', team_a_time: 78.421, team_b_time: 79.118, winner_id: 'team-01' },
-        { id: 'm-002', category: '150cc', status: 'past', team_a_id: 'team-03', team_a_name: 'Nitro Squad', team_b_id: 'team-04', team_b_name: 'Curva Final', team_a_time: 80.102, team_b_time: 79.774, winner_id: 'team-04' },
-        { id: 'm-003', category: '150cc', status: 'past', team_a_id: 'team-05', team_a_name: 'Pista Roja', team_b_id: 'team-06', team_b_name: 'Drift Kings', team_a_time: 77.923, team_b_time: 78.210, winner_id: 'team-05' },
-        { id: 'm-004', category: '150cc', status: 'past', team_a_id: 'team-07', team_a_name: 'Turbo Amigos', team_b_id: 'team-08', team_b_name: 'Meta Rota', team_a_time: 81.320, team_b_time: 80.114, winner_id: 'team-08' },
-        { id: 'm-005', category: '150cc', status: 'current', team_a_id: 'team-09', team_a_name: 'Los Relampago', team_b_id: 'team-10', team_b_name: 'Box Box', team_a_time: null, team_b_time: null, winner_id: null },
-        { id: 'm-006', category: '150cc', status: 'current', team_a_id: 'team-11', team_a_name: 'Apex Team', team_b_id: 'team-12', team_b_name: 'Los Del Nitro', team_a_time: null, team_b_time: null, winner_id: null },
-        { id: 'm-007', category: '150cc', status: 'past', team_a_id: 'team-13', team_a_name: 'Rayo Verde', team_b_id: 'team-14', team_b_name: 'Combustion FC', team_a_time: 78.991, team_b_time: 78.761, winner_id: 'team-14' },
-        { id: 'm-008', category: '150cc', status: 'past', team_a_id: 'team-15', team_a_name: 'Escuderia Luna', team_b_id: 'team-16', team_b_name: 'Neon Racers', team_a_time: 79.404, team_b_time: 79.922, winner_id: 'team-15' }
+        { id: 'm-001', category: '150cc', status: 'past', team_a_id: 'team-01', team_a_name: 'Los Rapidillos', team_b_id: 'team-02', team_b_name: 'Los Lentillos', team_a_time: 78.421, team_b_time: 79.118, winner_id: 'team-01', round: 1 },
+        { id: 'm-002', category: '150cc', status: 'past', team_a_id: 'team-03', team_a_name: 'Nitro Squad', team_b_id: 'team-04', team_b_name: 'Curva Final', team_a_time: 80.102, team_b_time: 79.774, winner_id: 'team-04', round: 1 },
+        { id: 'm-003', category: '150cc', status: 'past', team_a_id: 'team-05', team_a_name: 'Pista Roja', team_b_id: 'team-06', team_b_name: 'Drift Kings', team_a_time: 77.923, team_b_time: 78.210, winner_id: 'team-05', round: 1 },
+        { id: 'm-004', category: '150cc', status: 'past', team_a_id: 'team-07', team_a_name: 'Turbo Amigos', team_b_id: 'team-08', team_b_name: 'Meta Rota', team_a_time: 81.320, team_b_time: 80.114, winner_id: 'team-08', round: 1 },
+        { id: 'm-005', category: '150cc', status: 'current', team_a_id: 'team-09', team_a_name: 'Los Relampago', team_b_id: 'team-10', team_b_name: 'Box Box', team_a_time: null, team_b_time: null, winner_id: null, round: 1 },
+        { id: 'm-006', category: '150cc', status: 'current', team_a_id: 'team-11', team_a_name: 'Apex Team', team_b_id: 'team-12', team_b_name: 'Los Del Nitro', team_a_time: null, team_b_time: null, winner_id: null, round: 1 },
+        { id: 'm-007', category: '150cc', status: 'past', team_a_id: 'team-13', team_a_name: 'Rayo Verde', team_b_id: 'team-14', team_b_name: 'Combustion FC', team_a_time: 78.991, team_b_time: 78.761, winner_id: 'team-14', round: 1 },
+        { id: 'm-008', category: '150cc', status: 'past', team_a_id: 'team-15', team_a_name: 'Escuderia Luna', team_b_id: 'team-16', team_b_name: 'Neon Racers', team_a_time: 79.404, team_b_time: 79.922, winner_id: 'team-15', round: 1 }
       ]
     };
 
@@ -307,6 +313,7 @@ export class TournamentDataService {
         start_date: '2026-09-10T10:00:00',
         end_date: '2026-09-15T18:00:00',
         status: 'scheduled',
+        registered_team_ids: [], // <-- AÑADIDO AL MOCK
         teams_involved: {},
         participants: [],
         registered_teams: [],
@@ -319,6 +326,7 @@ export class TournamentDataService {
         start_date: '2025-11-03T18:00:00',
         end_date: '2025-11-08T23:00:00',
         status: 'past',
+        registered_team_ids: [], // <-- AÑADIDO AL MOCK
         teams_involved: {},
         participants: [],
         registered_teams: [],
@@ -328,6 +336,7 @@ export class TournamentDataService {
   }
 
   private createMockTeamProfiles(): Record<string, TeamProfile> {
+    // ... (El resto del código se queda exactamente igual) ...
     const ids = Array.from({ length: 16 }, (_, index) => `team-${String(index + 1).padStart(2, '0')}`);
     const names: Record<string, string> = {
       'team-01': 'Los Rapidillos',
