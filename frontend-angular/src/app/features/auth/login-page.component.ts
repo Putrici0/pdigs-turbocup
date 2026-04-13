@@ -26,8 +26,8 @@ export class LoginPageComponent {
     this.showPassword.set(!this.showPassword());
   }
 
-  submit(): void {
-    const result = this.authService.login(this.email, this.password);
+  async submit(): Promise<void> {
+    const result = await this.authService.login(this.email, this.password);
     if (!result.ok) {
       this.message.set(result.error ?? 'Login failed.');
       this.isError.set(true);

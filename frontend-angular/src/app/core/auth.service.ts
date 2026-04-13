@@ -1,148 +1,248 @@
 import { Injectable, signal } from '@angular/core';
+import {
+  User as FirebaseUser,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+} from 'firebase/auth';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+} from 'firebase/firestore';
+import { auth, db } from './firebase';
 
-export type UserRole = 'participant' | 'tournament_admin';
+export type UserRole = 'participant_pilot' | 'participant_copilot' | 'tournament_admin';
 
-export interface StoredUser {
-  firstName: string;
-  lastName: string;
-  username: string;
+export interface UserProfile {
+  uid: string;
   name: string;
+  surname: string;
+  username: string;
+  usernameLowercase: string;
+  fullName: string;
   email: string;
   role: UserRole;
-  password: string;
+  createdAt: string;
 }
 
 export interface SessionUser {
-  name: string;
+  uid: string;
+  fullName: string;
   email: string;
   username: string;
   role: UserRole;
 }
 
-const USERS_KEY = 'turbocup_users';
-const SESSION_KEY = 'turbocup_session';
-
-const DEFAULT_USER: StoredUser = {
-  firstName: 'Turbo',
-  lastName: 'Admin',
-  username: 'turboadmin',
-  name: 'Turbo Admin',
-  email: 'demo@turbocup.app',
-  role: 'tournament_admin',
-  password: 'TurboCup123!'
-};
+export interface RegisterPayload {
+  name: string;
+  surname: string;
+  username: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   readonly session = signal<SessionUser | null>(null);
-  readonly defaultCredentials = {
-    email: DEFAULT_USER.email,
-    password: DEFAULT_USER.password
-  };
+  readonly loading = signal(true);
+
+  private readyResolved = false;
+  private resolveReady!: () => void;
+  private readonly readyPromise = new Promise<void>((resolve) => {
+    this.resolveReady = resolve;
+  });
 
   constructor() {
-    this.seedDefaultUser();
-    this.session.set(this.readJson<SessionUser | null>(SESSION_KEY, null));
+    onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (!firebaseUser) {
+          this.session.set(null);
+          return;
+        }
+
+        const profile = await this.getOrCreateUserProfile(firebaseUser);
+        this.session.set(this.toSession(profile));
+      } catch (error) {
+        console.error('Error restoring auth state:', error);
+        this.session.set(null);
+      } finally {
+        if (!this.readyResolved) {
+          this.readyResolved = true;
+          this.loading.set(false);
+          this.resolveReady();
+        }
+      }
+    });
   }
 
-  login(email: string, password: string): { ok: boolean; error?: string } {
+  waitUntilReady(): Promise<void> {
+    return this.readyPromise;
+  }
+
+  async login(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
     const normalizedEmail = this.normalizeEmail(email);
-    const users = this.getUsers();
-    const user = users.find((item) => this.normalizeEmail(item.email) === normalizedEmail);
-    if (!user || user.password !== password) {
-      return { ok: false, error: 'Invalid email or password.' };
+
+    if (!normalizedEmail) {
+      return { ok: false, error: 'El email es obligatorio.' };
     }
-    this.setSession(user);
-    return { ok: true };
+
+    if (!password) {
+      return { ok: false, error: 'La contraseña es obligatoria.' };
+    }
+
+    try {
+      const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      const profile = await this.getOrCreateUserProfile(credential.user);
+      this.session.set(this.toSession(profile));
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: this.mapAuthError(error) };
+    }
   }
 
-  register(payload: {
-    firstName: string;
-    lastName: string;
-    username: string;
-    email: string;
-    role: string;
-    password: string;
-  }): { ok: boolean; error?: string } {
-    const firstName = this.normalizeText(payload.firstName);
-    const lastName = this.normalizeText(payload.lastName);
+  async register(payload: RegisterPayload): Promise<{ ok: boolean; error?: string }> {
+    const name = this.normalizeText(payload.name);
+    const surname = this.normalizeText(payload.surname);
     const username = this.normalizeUsername(payload.username);
     const email = this.normalizeEmail(payload.email);
+    const password = String(payload.password || '');
     const role = this.normalizeRole(payload.role);
 
-    if (!firstName) return { ok: false, error: 'First name is required.' };
-    if (!lastName) return { ok: false, error: 'Last name is required.' };
-    if (!username) return { ok: false, error: 'Username is required.' };
-    if (!email) return { ok: false, error: 'Email is required.' };
-    if (!role) return { ok: false, error: 'Role must be Participant or Tournament Admin.' };
-    if (!payload.password || payload.password.length < 6) {
-      return { ok: false, error: 'Password must be at least 6 characters.' };
+    if (!name) return { ok: false, error: 'El nombre es obligatorio.' };
+    if (!surname) return { ok: false, error: 'Los apellidos son obligatorios.' };
+    if (!username) return { ok: false, error: 'El nombre de usuario es obligatorio.' };
+    if (!email) return { ok: false, error: 'El email es obligatorio.' };
+    if (!role) return { ok: false, error: 'El rol no es válido.' };
+    if (password.length < 6) {
+      return { ok: false, error: 'La contraseña debe tener al menos 6 caracteres.' };
     }
 
-    const users = this.getUsers();
-    if (users.some((item) => this.normalizeEmail(item.email) === email)) {
-      return { ok: false, error: 'This email is already registered.' };
-    }
-    if (users.some((item) => this.normalizeUsername(item.username) === username)) {
-      return { ok: false, error: 'This username is already taken.' };
-    }
+    try {
+      const usernameTaken = await this.isUsernameTaken(username);
+      if (usernameTaken) {
+        return { ok: false, error: 'Ese nombre de usuario ya está en uso.' };
+      }
 
-    const name = `${firstName} ${lastName}`.trim();
-    const newUser: StoredUser = {
-      firstName,
-      lastName,
-      username,
-      name,
-      email,
-      role,
-      password: payload.password
-    };
-    users.push(newUser);
-    this.saveUsers(users);
-    this.setSession(newUser);
-    return { ok: true };
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = credential.user;
+
+      const fullName = `${name} ${surname}`.trim();
+
+      await updateProfile(firebaseUser, { displayName: fullName });
+
+      const profile: UserProfile = {
+        uid: firebaseUser.uid,
+        name,
+        surname,
+        username,
+        usernameLowercase: username.toLowerCase(),
+        fullName,
+        email,
+        role,
+        createdAt: new Date().toISOString(),
+      };
+
+      await setDoc(doc(db, 'users', firebaseUser.uid), profile);
+
+      this.session.set(this.toSession(profile));
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: this.mapAuthError(error) };
+    }
   }
 
-  logout(): void {
-    localStorage.removeItem(SESSION_KEY);
+  async logout(): Promise<void> {
+    await signOut(auth);
     this.session.set(null);
   }
 
-  private setSession(user: StoredUser): void {
-    const sessionUser: SessionUser = {
-      name: user.name,
-      email: user.email,
-      username: user.username,
-      role: user.role
-    };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
-    this.session.set(sessionUser);
+  private async isUsernameTaken(username: string): Promise<boolean> {
+    const normalized = username.toLowerCase();
+    const usersRef = collection(db, 'users');
+    const usernameQuery = query(usersRef, where('usernameLowercase', '==', normalized));
+    const snapshot = await getDocs(usernameQuery);
+    return !snapshot.empty;
   }
 
-  private seedDefaultUser(): void {
-    const users = this.getUsers();
-    const exists = users.some((item) => this.normalizeEmail(item.email) === this.normalizeEmail(DEFAULT_USER.email));
-    if (!exists) {
-      users.push(DEFAULT_USER);
-      this.saveUsers(users);
+  private async getOrCreateUserProfile(firebaseUser: FirebaseUser): Promise<UserProfile> {
+    const userRef = doc(db, 'users', firebaseUser.uid);
+    const snapshot = await getDoc(userRef);
+
+    if (snapshot.exists()) {
+      return snapshot.data() as UserProfile;
     }
+
+    const displayName = firebaseUser.displayName?.trim() || '';
+    const [name, ...rest] = displayName.split(/\s+/).filter(Boolean);
+    const surname = rest.join(' ').trim();
+    const fallbackUsername = this.buildFallbackUsername(firebaseUser);
+
+    const fallbackProfile: UserProfile = {
+      uid: firebaseUser.uid,
+      name: name || 'Usuario',
+      surname: surname || '',
+      username: fallbackUsername,
+      usernameLowercase: fallbackUsername.toLowerCase(),
+      fullName: displayName || firebaseUser.email?.split('@')[0] || 'Usuario',
+      email: firebaseUser.email?.toLowerCase() || '',
+      role: 'participant_pilot',
+      createdAt: new Date().toISOString(),
+    };
+
+    await setDoc(userRef, fallbackProfile);
+    return fallbackProfile;
   }
 
-  private getUsers(): StoredUser[] {
-    return this.readJson<StoredUser[]>(USERS_KEY, []);
+  private buildFallbackUsername(firebaseUser: FirebaseUser): string {
+    const emailPrefix = firebaseUser.email?.split('@')[0]?.trim().toLowerCase();
+    if (emailPrefix) {
+      return emailPrefix;
+    }
+    return `user_${firebaseUser.uid.slice(0, 8).toLowerCase()}`;
   }
 
-  private saveUsers(users: StoredUser[]): void {
-    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+  private toSession(profile: UserProfile): SessionUser {
+    return {
+      uid: profile.uid,
+      fullName: profile.fullName,
+      email: profile.email,
+      username: profile.username,
+      role: profile.role,
+    };
   }
 
-  private readJson<T>(key: string, fallback: T): T {
-    try {
-      const raw = localStorage.getItem(key);
-      if (!raw) return fallback;
-      return (JSON.parse(raw) as T) ?? fallback;
-    } catch {
-      return fallback;
+  private mapAuthError(error: unknown): string {
+    const code =
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      typeof (error as { code?: unknown }).code === 'string'
+        ? (error as { code: string }).code
+        : '';
+
+    switch (code) {
+      case 'auth/email-already-in-use':
+        return 'Ese email ya está registrado.';
+      case 'auth/invalid-email':
+        return 'El email no es válido.';
+      case 'auth/weak-password':
+        return 'La contraseña es demasiado débil.';
+      case 'auth/invalid-credential':
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+        return 'Email o contraseña incorrectos.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos. Prueba más tarde.';
+      default:
+        return 'La autenticación ha fallado. Inténtalo de nuevo.';
     }
   }
 
@@ -155,13 +255,16 @@ export class AuthService {
   }
 
   private normalizeUsername(value: string): string {
-    return this.normalizeText(value).toLowerCase();
+    return this.normalizeText(value).toLowerCase().replace(/\s+/g, '');
   }
 
   private normalizeRole(value: string): UserRole | '' {
     const normalized = this.normalizeText(value).toLowerCase();
-    if (normalized === 'participant') return 'participant';
+
+    if (normalized === 'participant_pilot') return 'participant_pilot';
+    if (normalized === 'participant_copilot') return 'participant_copilot';
     if (normalized === 'tournament_admin') return 'tournament_admin';
+
     return '';
   }
 }

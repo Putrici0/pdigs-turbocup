@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../core/auth.service';
+import { AuthService, UserRole } from '../../core/auth.service';
 
 @Component({
   selector: 'app-register-page',
@@ -15,7 +15,7 @@ export class RegisterPageComponent {
   lastName = '';
   username = '';
   email = '';
-  role = 'participant';
+  role: UserRole = 'participant_pilot';
   password = '';
   confirmPassword = '';
 
@@ -37,16 +37,16 @@ export class RegisterPageComponent {
     this.showConfirmPassword.set(!this.showConfirmPassword());
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
     if (this.password !== this.confirmPassword) {
       this.message.set('Passwords do not match.');
       this.isError.set(true);
       return;
     }
 
-    const result = this.authService.register({
-      firstName: this.firstName,
-      lastName: this.lastName,
+    const result = await this.authService.register({
+      name: this.firstName,
+      surname: this.lastName,
       username: this.username,
       email: this.email,
       role: this.role,

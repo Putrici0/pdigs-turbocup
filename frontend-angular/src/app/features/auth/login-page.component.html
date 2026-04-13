@@ -1,7 +1,6 @@
 <main class="auth-page">
   <section class="auth-card" aria-labelledby="login-title">
     <h1 id="login-title">Login</h1>
-    <p class="form-hint">Demo: {{ authService.defaultCredentials.email }} / {{ authService.defaultCredentials.password }}</p>
 
     @if (message()) {
       <p class="auth-message" [class.is-error]="isError()">{{ message() }}</p>

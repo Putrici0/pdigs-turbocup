@@ -19,7 +19,7 @@ export class ProfilePageComponent {
   preferredRole = 'Organizer';
 
   readonly initials = computed(() => {
-    const sessionName = this.authService.session()?.name || this.profileName;
+    const sessionName = this.authService.session()?.fullName || this.profileName;
     const words = sessionName.trim().split(/\s+/).filter(Boolean);
     if (words.length < 2) return sessionName.slice(0, 2).toUpperCase();
     return `${words[0][0]}${words[1][0]}`.toUpperCase();
@@ -28,7 +28,7 @@ export class ProfilePageComponent {
   constructor(public readonly authService: AuthService) {
     const session = authService.session();
     if (session) {
-      this.profileName = session.name;
+      this.profileName = session.fullName;
       this.username = session.username;
       this.email = session.email;
       this.preferredRole = session.role === 'tournament_admin' ? 'Tournament Admin' : 'Participant';

@@ -16,7 +16,7 @@
 
     <details class="account-menu" [class.is-open]="isAccountOpen()" [open]="isAccountOpen()">
       <summary (click)="$event.preventDefault(); toggleAccount()" class="account-summary">
-        {{ authService.session()?.name || 'Account' }}
+        {{ authService.session()?.fullName || 'Account' }}
       </summary>
       <div class="account-dropdown">
         @if (authService.session()) {
