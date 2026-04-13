@@ -11,6 +11,10 @@ import { AuthService } from '../../core/auth.service';
 export class ToolbarComponent {
   readonly isOpen = signal(false);
   readonly isAccountOpen = signal(false);
+  readonly isLoggingOut = signal(false);
+  readonly showLogoutDialog = signal(false);
+  readonly logoutMessage = signal('');
+  readonly isLogoutError = signal(false);
 
   constructor(public readonly authService: AuthService) {}
 
@@ -26,8 +30,31 @@ export class ToolbarComponent {
     this.isAccountOpen.set(!this.isAccountOpen());
   }
 
-  logout(): void {
-    this.authService.logout();
+  async logout(): Promise<void> {
+    if (this.isLoggingOut()) return;
+
+    this.isLoggingOut.set(true);
+    this.isLogoutError.set(false);
+    this.logoutMessage.set('');
+
+    try {
+      await this.authService.logout();
+      this.closeToolbar();
+      this.logoutMessage.set('Has salido correctamente de la sesion.');
+      this.showLogoutDialog.set(true);
+    } catch {
+      this.logoutMessage.set('No se pudo cerrar sesion. Intentalo de nuevo.');
+      this.isLogoutError.set(true);
+      this.showLogoutDialog.set(true);
+    } finally {
+      this.isLoggingOut.set(false);
+    }
+  }
+
+  closeLogoutDialog(): void {
+    this.showLogoutDialog.set(false);
+    this.logoutMessage.set('');
+    this.isLogoutError.set(false);
     this.closeToolbar();
   }
 }

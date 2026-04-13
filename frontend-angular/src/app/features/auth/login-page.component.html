@@ -32,9 +32,26 @@
         </button>
       </div>
 
-      <button type="submit">Sign in</button>
+      <button type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Signing in...' : 'Sign in' }}
+      </button>
     </form>
 
     <p class="auth-link-row">Need an account? <a routerLink="/register">Register</a></p>
   </section>
 </main>
+
+@if (showSuccessDialog()) {
+  <div class="auth-dialog-backdrop" (click)="continueAfterSuccess()">
+    <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="login-success-title" (click)="$event.stopPropagation()">
+      <div class="auth-dialog-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 12.5l4.2 4.2L19 7.5" />
+        </svg>
+      </div>
+      <h2 id="login-success-title">Login successful</h2>
+      <p>Sesion iniciada correctamente. Bienvenido.</p>
+      <button type="button" class="auth-dialog-primary" (click)="continueAfterSuccess()">Continuar</button>
+    </section>
+  </div>
+}

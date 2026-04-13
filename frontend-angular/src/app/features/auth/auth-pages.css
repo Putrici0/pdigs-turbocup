@@ -129,6 +129,11 @@ button[type='submit']:hover {
   background: #be185d;
 }
 
+button[type='submit']:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .auth-link-row {
   margin: 12px 0 0;
   color: #cbd5e1;
@@ -142,4 +147,70 @@ button[type='submit']:hover {
 
 .auth-link-row a:hover {
   text-decoration: underline;
+}
+
+.auth-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.58);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 1000;
+}
+
+.auth-dialog {
+  width: min(380px, 100%);
+  border-radius: 8px;
+  padding: 22px 20px 20px;
+  background: #111827;
+  border: 1px solid rgba(220, 36, 126, 0.42);
+  color: #f9fafb;
+  text-align: center;
+}
+
+.auth-dialog h2 {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+}
+
+.auth-dialog p {
+  margin: 0 0 18px;
+  color: #cbd5e1;
+}
+
+.auth-dialog-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  margin: 0 auto 14px;
+  display: grid;
+  place-items: center;
+  background: rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(74, 222, 128, 0.55);
+}
+
+.auth-dialog-icon svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: #4ade80;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.auth-dialog-primary {
+  border: 0;
+  border-radius: 8px;
+  min-width: 130px;
+  padding: 10px 14px;
+  background: #dc247e;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-dialog-primary:hover {
+  background: #be185d;
 }

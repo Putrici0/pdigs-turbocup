@@ -24,7 +24,9 @@
           @if (authService.session()?.role === 'tournament_admin') {
             <a routerLink="/create-tournament" routerLinkActive="is-current" (click)="closeToolbar()">Create tournament</a>
           }
-          <button type="button" class="account-logout" (click)="logout()">Logout</button>
+          <button type="button" class="account-logout" [disabled]="isLoggingOut()" (click)="logout()">
+            {{ isLoggingOut() ? 'Closing session...' : 'Logout' }}
+          </button>
         } @else {
           <a routerLink="/login" routerLinkActive="is-current" (click)="closeToolbar()">Login</a>
           <a routerLink="/register" routerLinkActive="is-current" (click)="closeToolbar()">Register</a>
@@ -33,3 +35,22 @@
     </details>
   </nav>
 </aside>
+
+@if (showLogoutDialog()) {
+  <div class="logout-dialog-backdrop" (click)="closeLogoutDialog()">
+    <section class="logout-dialog" role="dialog" aria-modal="true" aria-labelledby="logout-result-title" (click)="$event.stopPropagation()">
+      @if (!isLogoutError()) {
+        <div class="logout-dialog-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M5 12.5l4.2 4.2L19 7.5" />
+          </svg>
+        </div>
+      }
+      <h2 id="logout-result-title">
+        {{ isLogoutError() ? 'Error al cerrar sesion' : 'Sesion cerrada' }}
+      </h2>
+      <p>{{ logoutMessage() }}</p>
+      <button type="button" class="logout-dialog-primary" (click)="closeLogoutDialog()">Entendido</button>
+    </section>
+  </div>
+}

@@ -142,7 +142,14 @@ export class AuthService {
         createdAt: new Date().toISOString(),
       };
 
-      await setDoc(doc(db, 'users', firebaseUser.uid), profile);
+      try {
+        await setDoc(doc(db, 'users', firebaseUser.uid), profile);
+      } catch (error) {
+        if (!this.isFirestorePermissionDenied(error)) {
+          throw error;
+        }
+        console.warn('Register profile write skipped by Firestore rules.');
+      }
 
       this.session.set(this.toSession(profile));
       return { ok: true };
@@ -159,18 +166,39 @@ export class AuthService {
 
   private async getOrCreateUserProfile(firebaseUser: FirebaseUser): Promise<UserProfile> {
     const userRef = doc(db, 'users', firebaseUser.uid);
-    const snapshot = await getDoc(userRef);
+    let snapshot;
+    try {
+      snapshot = await getDoc(userRef);
+    } catch (error) {
+      if (this.isFirestorePermissionDenied(error)) {
+        return this.buildFallbackProfile(firebaseUser);
+      }
+      throw error;
+    }
 
     if (snapshot.exists()) {
       return snapshot.data() as UserProfile;
     }
 
+    const fallbackProfile = this.buildFallbackProfile(firebaseUser);
+    try {
+      await setDoc(userRef, fallbackProfile);
+    } catch (error) {
+      if (!this.isFirestorePermissionDenied(error)) {
+        throw error;
+      }
+      console.warn('Profile bootstrap write skipped by Firestore rules.');
+    }
+    return fallbackProfile;
+  }
+
+  private buildFallbackProfile(firebaseUser: FirebaseUser): UserProfile {
     const displayName = firebaseUser.displayName?.trim() || '';
     const [name, ...rest] = displayName.split(/\s+/).filter(Boolean);
     const surname = rest.join(' ').trim();
     const fallbackUsername = this.buildFallbackUsername(firebaseUser);
 
-    const fallbackProfile: UserProfile = {
+    return {
       uid: firebaseUser.uid,
       name: name || 'Usuario',
       surname: surname || '',
@@ -181,9 +209,6 @@ export class AuthService {
       role: 'participant_pilot',
       createdAt: new Date().toISOString(),
     };
-
-    await setDoc(userRef, fallbackProfile);
-    return fallbackProfile;
   }
 
   private buildFallbackUsername(firebaseUser: FirebaseUser): string {
@@ -234,6 +259,15 @@ export class AuthService {
       default:
         return 'La autenticación ha fallado. Inténtalo de nuevo.';
     }
+  }
+
+  private isFirestorePermissionDenied(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) {
+      return false;
+    }
+
+    const maybeCode = (error as { code?: unknown }).code;
+    return maybeCode === 'permission-denied' || maybeCode === 'firestore/permission-denied';
   }
 
   private normalizeText(value: string): string {

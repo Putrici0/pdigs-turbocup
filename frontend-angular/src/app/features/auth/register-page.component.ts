@@ -24,6 +24,7 @@ export class RegisterPageComponent {
   readonly message = signal('');
   readonly isError = signal(false);
   readonly isSubmitting = signal(false);
+  readonly showSuccessDialog = signal(false);
 
   constructor(
     private readonly authService: AuthService,
@@ -42,7 +43,7 @@ export class RegisterPageComponent {
     if (this.isSubmitting()) return;
 
     if (this.password !== this.confirmPassword) {
-      this.message.set('Las contraseñas no coinciden.');
+      this.message.set('Las contrasenas no coinciden.');
       this.isError.set(true);
       return;
     }
@@ -67,9 +68,18 @@ export class RegisterPageComponent {
       return;
     }
 
-    this.message.set('Cuenta creada correctamente.');
+    this.message.set('');
     this.isError.set(false);
     this.isSubmitting.set(false);
-    await this.router.navigateByUrl('/');
+    this.showSuccessDialog.set(true);
+  }
+
+  async continueAfterSuccess(): Promise<void> {
+    this.showSuccessDialog.set(false);
+    const navigated = await this.router.navigateByUrl('/');
+    if (!navigated) {
+      this.message.set('Cuenta creada, pero no se pudo redirigir.');
+      this.isError.set(true);
+    }
   }
 }

@@ -3,9 +3,7 @@
     <h1>Register</h1>
 
     @if (message()) {
-      <p [class.error]="isError()" [class.success]="!isError()">
-        {{ message() }}
-      </p>
+      <p class="auth-message" [class.is-error]="isError()">{{ message() }}</p>
     }
 
     <form (ngSubmit)="submit()">
@@ -85,8 +83,8 @@
         {{ showConfirmPassword() ? 'Hide confirmation' : 'Show confirmation' }}
       </button>
 
-      <button type="submit">
-        Create account
+      <button type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Creating account...' : 'Create account' }}
       </button>
     </form>
 
@@ -96,3 +94,18 @@
     </p>
   </div>
 </section>
+
+@if (showSuccessDialog()) {
+  <div class="auth-dialog-backdrop" (click)="continueAfterSuccess()">
+    <section class="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="register-success-title" (click)="$event.stopPropagation()">
+      <div class="auth-dialog-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 12.5l4.2 4.2L19 7.5" />
+        </svg>
+      </div>
+      <h2 id="register-success-title">Cuenta creada</h2>
+      <p>Tu cuenta ya esta lista. Puedes empezar ahora mismo.</p>
+      <button type="button" class="auth-dialog-primary" (click)="continueAfterSuccess()">Continuar</button>
+    </section>
+  </div>
+}
