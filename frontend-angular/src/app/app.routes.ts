@@ -11,6 +11,7 @@ import { ViewStatisticsPageComponent } from './features/view-statistics/view-sta
 import { ViewTournamentStatisticPageComponent } from './features/view-tournament-statistic/view-tournament-statistic-page.component';
 import { ProfilePageComponent } from './features/profile/profile-page.component';
 import { EditTournamentPageComponent } from './features/edit-tournament/edit-tournament-page.component';
+import { TeamsPageComponent } from './features/teams/teams-page.component';
 import { adminGuard } from './core/admin.guard';
 
 export const routes: Routes = [
@@ -22,6 +23,7 @@ export const routes: Routes = [
       { path: 'view-tournaments', component: ViewTournamentsPageComponent },
       { path: 'view-tournament/:id', component: ViewTournamentPageComponent },
       { path: 'view-team/:teamId', component: ViewTeamPageComponent },
+      { path: 'teams', component: TeamsPageComponent },
       { path: 'view-statistics', component: ViewStatisticsPageComponent },
       { path: 'view-tournament-statistic', redirectTo: 'view-tournament-statistic/5vdGkUSsaRYUnB9FBiiQ', pathMatch: 'full' },
       { path: 'view-tournament-statistic/:id', component: ViewTournamentStatisticPageComponent },
