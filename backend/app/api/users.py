@@ -1,5 +1,5 @@
-from firebase_admin import auth
-from flask import Blueprint, jsonify
+from firebase_admin import auth, firestore
+from flask import Blueprint, jsonify, request
 
 from backend.app.db import db
 
