@@ -8,11 +8,11 @@ import { AuthService, UserRole } from '../../core/auth.service';
   selector: 'app-register-page',
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './register-page.component.html',
-  styleUrl: './auth-pages.css'
+  styleUrl: './auth-pages.css',
 })
 export class RegisterPageComponent {
-  firstName = '';
-  lastName = '';
+  name = '';
+  surname = '';
   username = '';
   email = '';
   role: UserRole = 'participant_pilot';
@@ -23,6 +23,7 @@ export class RegisterPageComponent {
   readonly showConfirmPassword = signal(false);
   readonly message = signal('');
   readonly isError = signal(false);
+  readonly isSubmitting = signal(false);
 
   constructor(
     private readonly authService: AuthService,
@@ -38,29 +39,37 @@ export class RegisterPageComponent {
   }
 
   async submit(): Promise<void> {
+    if (this.isSubmitting()) return;
+
     if (this.password !== this.confirmPassword) {
-      this.message.set('Passwords do not match.');
+      this.message.set('Las contraseñas no coinciden.');
       this.isError.set(true);
       return;
     }
 
+    this.isSubmitting.set(true);
+    this.message.set('');
+    this.isError.set(false);
+
     const result = await this.authService.register({
-      name: this.firstName,
-      surname: this.lastName,
+      name: this.name,
+      surname: this.surname,
       username: this.username,
       email: this.email,
+      password: this.password,
       role: this.role,
-      password: this.password
     });
 
     if (!result.ok) {
-      this.message.set(result.error ?? 'Register failed.');
+      this.message.set(result.error ?? 'No se pudo crear la cuenta.');
       this.isError.set(true);
+      this.isSubmitting.set(false);
       return;
     }
 
-    this.message.set('Account created. Redirecting...');
+    this.message.set('Cuenta creada correctamente.');
     this.isError.set(false);
-    this.router.navigateByUrl('/');
+    this.isSubmitting.set(false);
+    await this.router.navigateByUrl('/');
   }
 }

@@ -8,14 +8,16 @@ import { AuthService } from '../../core/auth.service';
   selector: 'app-login-page',
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './login-page.component.html',
-  styleUrl: './auth-pages.css'
+  styleUrl: './auth-pages.css',
 })
 export class LoginPageComponent {
   email = '';
   password = '';
+
   readonly showPassword = signal(false);
   readonly message = signal('');
   readonly isError = signal(false);
+  readonly isSubmitting = signal(false);
 
   constructor(
     public readonly authService: AuthService,
@@ -27,15 +29,24 @@ export class LoginPageComponent {
   }
 
   async submit(): Promise<void> {
+    if (this.isSubmitting()) return;
+
+    this.isSubmitting.set(true);
+    this.message.set('');
+    this.isError.set(false);
+
     const result = await this.authService.login(this.email, this.password);
+
     if (!result.ok) {
-      this.message.set(result.error ?? 'Login failed.');
+      this.message.set(result.error ?? 'No se pudo iniciar sesión.');
       this.isError.set(true);
+      this.isSubmitting.set(false);
       return;
     }
 
-    this.message.set('Login successful. Redirecting...');
+    this.message.set('Sesión iniciada correctamente.');
     this.isError.set(false);
-    this.router.navigateByUrl('/');
+    this.isSubmitting.set(false);
+    await this.router.navigateByUrl('/');
   }
 }

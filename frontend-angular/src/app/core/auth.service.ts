@@ -155,6 +155,7 @@ export class AuthService {
       this.session.set(this.toSession(profile));
       return { ok: true };
     } catch (error) {
+      console.error('Register error:', error);
       return { ok: false, error: this.mapAuthError(error) };
     }
   }
