@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { TeamCategoryService } from '../../core/team-category.service';
 import { TournamentDataService } from '../../core/tournament-data.service';
 
 @Component({
@@ -9,22 +10,34 @@ import { TournamentDataService } from '../../core/tournament-data.service';
   templateUrl: './create-tournament-page.component.html',
   styleUrl: './create-tournament-page.component.css'
 })
-export class CreateTournamentPageComponent {
+export class CreateTournamentPageComponent implements OnInit {
   name = '';
   category = '';
   startDate = '';
   endDate = '';
+  readonly categories = signal<string[]>([]);
   readonly message = signal('');
   readonly isError = signal(false);
   readonly isSubmitting = signal(false);
 
   constructor(
     private readonly tournamentDataService: TournamentDataService,
-    private readonly authService: AuthService
+    private readonly authService: AuthService,
+    private readonly teamCategoryService: TeamCategoryService
   ) {}
+
+  ngOnInit(): void {
+    this.teamCategoryService.getCategories().subscribe((categories) => {
+      this.categories.set(categories);
+    });
+  }
 
   canCreate(): boolean {
     return this.authService.session()?.role === 'tournament_admin';
+  }
+
+  formatCategory(category: string): string {
+    return this.teamCategoryService.formatCategory(category);
   }
 
   submit(): void {

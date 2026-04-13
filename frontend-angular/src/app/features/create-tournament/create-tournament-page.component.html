@@ -25,13 +25,10 @@
         <label class="field">
           <span>Racing category</span>
           <select name="category" [(ngModel)]="category" [disabled]="!canCreate()" required>
-            <option value="" disabled selected>Select a category</option>
-            <option value="Formula">Formula (Open Wheel)</option>
-            <option value="Rally">Rally</option>
-            <option value="GT Racing">GT (Grand Touring)</option>
-            <option value="Touring Car">Touring Car</option>
-            <option value="Karting">Karting</option>
-            <option value="Stock Car">Stock Car</option>
+            <option value="" disabled>Select a category</option>
+            @for (item of categories(); track item) {
+              <option [value]="item">{{ formatCategory(item) }}</option>
+            }
           </select>
         </label>
       </div>

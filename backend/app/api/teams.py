@@ -1,10 +1,16 @@
 from flask import Blueprint, request, jsonify
 from backend.app.db import db
+from backend.app.models.team_category import team_category
 from backend.app.utils import serialize_firestore
 
 teams_bp = Blueprint('teams', __name__)
 
-ALLOWED_CATEGORIES = ["Formula", "Rally", "GT Racing", "Touring Car", "Karting", "Stock Car"]
+ALLOWED_CATEGORIES = [item.value for item in team_category]
+
+
+@teams_bp.route('/categories', methods=['GET'])
+def list_categories():
+    return jsonify({"categories": ALLOWED_CATEGORIES}), 200
 
 @teams_bp.route('/', methods=['POST'])
 def create_team():
