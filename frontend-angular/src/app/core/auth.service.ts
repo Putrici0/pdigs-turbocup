@@ -8,13 +8,9 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import {
-  collection,
   doc,
   getDoc,
-  getDocs,
-  query,
   setDoc,
-  where,
 } from 'firebase/firestore';
 import { auth, db } from './firebase';
 
@@ -104,7 +100,8 @@ export class AuthService {
       this.session.set(this.toSession(profile));
       return { ok: true };
     } catch (error) {
-      return { ok: false, error: this.mapAuthError(error) };
+      console.error('Login error:', error);
+      return { ok: false, error: this.mapError(error) };
     }
   }
 
@@ -126,11 +123,6 @@ export class AuthService {
     }
 
     try {
-      const usernameTaken = await this.isUsernameTaken(username);
-      if (usernameTaken) {
-        return { ok: false, error: 'Ese nombre de usuario ya está en uso.' };
-      }
-
       const credential = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = credential.user;
 
@@ -156,21 +148,13 @@ export class AuthService {
       return { ok: true };
     } catch (error) {
       console.error('Register error:', error);
-      return { ok: false, error: this.mapAuthError(error) };
+      return { ok: false, error: this.mapError(error) };
     }
   }
 
   async logout(): Promise<void> {
     await signOut(auth);
     this.session.set(null);
-  }
-
-  private async isUsernameTaken(username: string): Promise<boolean> {
-    const normalized = username.toLowerCase();
-    const usersRef = collection(db, 'users');
-    const usernameQuery = query(usersRef, where('usernameLowercase', '==', normalized));
-    const snapshot = await getDocs(usernameQuery);
-    return !snapshot.empty;
   }
 
   private async getOrCreateUserProfile(firebaseUser: FirebaseUser): Promise<UserProfile> {
@@ -220,7 +204,7 @@ export class AuthService {
     };
   }
 
-  private mapAuthError(error: unknown): string {
+  private mapError(error: unknown): string {
     const code =
       typeof error === 'object' &&
       error !== null &&
@@ -242,6 +226,11 @@ export class AuthService {
         return 'Email o contraseña incorrectos.';
       case 'auth/too-many-requests':
         return 'Demasiados intentos. Prueba más tarde.';
+      case 'auth/operation-not-allowed':
+        return 'Email/password no está activado en Firebase Authentication.';
+      case 'permission-denied':
+      case 'firestore/permission-denied':
+        return 'Firestore está rechazando la operación por reglas de seguridad.';
       default:
         return 'La autenticación ha fallado. Inténtalo de nuevo.';
     }
