@@ -27,10 +27,6 @@ def create_user():
 
         db.collection("users").document(uid).set({
             "email": email,
-            "stats": {
-                "matchesPlayed": 0,
-                "wins": 0,
-            },
             "createdAt": datetime.utcnow()
         })
 
@@ -55,13 +51,3 @@ def get_user(user_id):
 
     return jsonify(user.to_dict()), 200
 
-@users_bp.route('/<user_id>/stats', methods=['GET'])
-def get_user_stats(user_id):
-    user_ref = db.collection("users").document(user_id)
-    user = user_ref.get()
-
-    if not user.exists:
-        return jsonify({"error": "User not found"}), 404
-
-    data = user.to_dict()
-    return jsonify(data.get("stats", {})), 200
