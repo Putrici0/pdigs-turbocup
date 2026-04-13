@@ -5,6 +5,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  updateEmail,
   updateProfile,
 } from 'firebase/auth';
 import {
@@ -43,6 +44,13 @@ export interface RegisterPayload {
   email: string;
   password: string;
   role: UserRole;
+}
+
+export interface UpdateProfilePayload {
+  name: string;
+  surname: string;
+  username: string;
+  email: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -162,6 +170,76 @@ export class AuthService {
   async logout(): Promise<void> {
     await signOut(auth);
     this.session.set(null);
+  }
+
+  async updateCurrentUserProfile(payload: UpdateProfilePayload): Promise<{ ok: boolean; error?: string }> {
+    const firebaseUser = auth.currentUser;
+    const currentSession = this.session();
+
+    if (!firebaseUser || !currentSession) {
+      return { ok: false, error: 'No hay una sesion activa.' };
+    }
+
+    const name = this.normalizeText(payload.name);
+    const surname = this.normalizeText(payload.surname);
+    const username = this.normalizeUsername(payload.username);
+    const email = this.normalizeEmail(payload.email);
+
+    if (!name) return { ok: false, error: 'El nombre es obligatorio.' };
+    if (!surname) return { ok: false, error: 'Los apellidos son obligatorios.' };
+    if (!username) return { ok: false, error: 'El nombre de usuario es obligatorio.' };
+    if (!email) return { ok: false, error: 'El email es obligatorio.' };
+
+    const fullName = `${name} ${surname}`.trim();
+
+    try {
+      await updateProfile(firebaseUser, { displayName: fullName });
+
+      if (email !== (firebaseUser.email || '').toLowerCase()) {
+        await updateEmail(firebaseUser, email);
+      }
+
+      const userRef = doc(db, 'users', firebaseUser.uid);
+      let existingProfile: Partial<UserProfile> | null = null;
+
+      try {
+        const snapshot = await getDoc(userRef);
+        if (snapshot.exists()) {
+          existingProfile = snapshot.data() as Partial<UserProfile>;
+        }
+      } catch (error) {
+        if (!this.isFirestorePermissionDenied(error)) {
+          throw error;
+        }
+      }
+
+      const profile: UserProfile = {
+        uid: firebaseUser.uid,
+        name,
+        surname,
+        username,
+        usernameLowercase: username.toLowerCase(),
+        fullName,
+        email,
+        role: (existingProfile?.role as UserRole | undefined) ?? currentSession.role,
+        createdAt: existingProfile?.createdAt || new Date().toISOString(),
+      };
+
+      try {
+        await setDoc(userRef, profile, { merge: true });
+      } catch (error) {
+        if (!this.isFirestorePermissionDenied(error)) {
+          throw error;
+        }
+        console.warn('Profile update write skipped by Firestore rules.');
+      }
+
+      this.session.set(this.toSession(profile));
+      return { ok: true };
+    } catch (error) {
+      console.error('Profile update error:', error);
+      return { ok: false, error: this.mapError(error) };
+    }
   }
 
   private async getOrCreateUserProfile(firebaseUser: FirebaseUser): Promise<UserProfile> {

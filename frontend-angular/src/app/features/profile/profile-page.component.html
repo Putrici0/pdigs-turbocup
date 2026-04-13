@@ -1,73 +1,76 @@
 <main class="page-shell">
   <section class="hero">
-    <p class="eyebrow">Profile Settings</p>
-    <h1>Edit profile</h1>
-    <p class="hero-copy">Update your profile information and visible account details.</p>
+    <p class="eyebrow">Account</p>
+    <h1>Mi cuenta</h1>
+    <p class="hero-copy">Actualiza tu informacion real.</p>
   </section>
 
-  <form class="panel profile-layout">
-    <section class="panel profile-summary">
-      <div class="avatar-block">
+  @if (authService.loading()) {
+    <section class="profile-box">
+      <p class="state-copy">Cargando cuenta...</p>
+    </section>
+  } @else if (!session()) {
+    <section class="profile-box">
+      <p class="state-copy">No hay una sesion activa.</p>
+    </section>
+  } @else {
+    <section class="profile-box">
+      <div class="profile-head">
         <div class="avatar-preview" aria-hidden="true">{{ initials() }}</div>
-        <div class="avatar-copy">
-          <h2>Profile image</h2>
-          <p>Choose an image that other users will see next to your name.</p>
+        <div>
+          <h2>{{ session()!.fullName }}</h2>
+          <p>&commat;{{ session()!.username }}</p>
         </div>
       </div>
-      <div class="upload-actions">
-        <label class="upload-button" for="profile-image">Choose image</label>
-        <input id="profile-image" class="hidden-input" type="file" accept="image/*" />
-        <button type="button" class="secondary-action">Remove image</button>
-      </div>
-    </section>
 
-    <section class="form-section">
-      <div class="section-copy">
-        <h2>Public information</h2>
-      </div>
-      <div class="field-grid">
-        <label class="field">
-          <span>Profile name</span>
-          <input type="text" name="profileName" [(ngModel)]="profileName" />
-        </label>
-        <label class="field">
-          <span>Username</span>
-          <input type="text" name="username" [(ngModel)]="username" />
-        </label>
-      </div>
-      <label class="field full-width">
-        <span>Bio</span>
-        <textarea name="bio" rows="4" [(ngModel)]="bio"></textarea>
-      </label>
-    </section>
+      <form class="profile-form" (ngSubmit)="saveChanges()">
+        @if (message()) {
+          <p class="profile-message" [class.is-error]="isError()">{{ message() }}</p>
+        }
 
-    <section class="form-section">
-      <div class="section-copy">
-        <h2>Account details</h2>
-      </div>
-      <div class="field-grid">
-        <label class="field">
-          <span>Email address</span>
-          <input type="email" name="email" [(ngModel)]="email" />
-        </label>
-        <label class="field">
-          <span>Location</span>
-          <input type="text" name="location" [(ngModel)]="location" />
-        </label>
-        <label class="field">
-          <span>Favorite team</span>
-          <input type="text" name="favoriteTeam" [(ngModel)]="favoriteTeam" />
-        </label>
-        <label class="field">
-          <span>Preferred role</span>
-          <input type="text" name="preferredRole" [(ngModel)]="preferredRole" />
-        </label>
-      </div>
-    </section>
+        <div class="field-grid">
+          <label class="field">
+            <span>Nombre</span>
+            <input type="text" name="name" [(ngModel)]="name" required />
+          </label>
+          <label class="field">
+            <span>Apellidos</span>
+            <input type="text" name="surname" [(ngModel)]="surname" required />
+          </label>
+          <label class="field">
+            <span>Usuario</span>
+            <input type="text" name="username" [(ngModel)]="username" required />
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" [(ngModel)]="email" required />
+          </label>
+        </div>
 
-    <div class="actions">
-      <button type="submit" class="primary-action">Save changes</button>
-      <button type="reset" class="secondary-action">Reset</button>
-    </div>
-  </form>
+        <div class="meta-row">
+          <div><strong>Rol:</strong> {{ roleLabel() }}</div>
+          <div><strong>UID:</strong> <span class="uid">{{ session()!.uid }}</span></div>
+        </div>
+
+        <button type="submit" class="primary-action" [disabled]="isSubmitting()">
+          {{ isSubmitting() ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </form>
+    </section>
+  }
 </main>
+
+@if (showSuccessDialog()) {
+  <div class="profile-dialog-backdrop" (click)="closeSuccessDialog()">
+    <section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-success-title" (click)="$event.stopPropagation()">
+      <div class="profile-dialog-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 12.5l4.2 4.2L19 7.5" />
+        </svg>
+      </div>
+      <h2 id="profile-success-title">Cuenta actualizada</h2>
+      <p>Tus datos se han guardado correctamente.</p>
+      <button type="button" class="profile-dialog-primary" (click)="closeSuccessDialog()">Continuar</button>
+    </section>
+  </div>
+}

@@ -14,9 +14,5 @@ export const authGuard: CanActivateFn = async () => {
     return router.createUrlTree(['/login']);
   }
 
-  if (session.role !== 'tournament_admin') {
-    return router.createUrlTree(['/']);
-  }
-
   return true;
 };
