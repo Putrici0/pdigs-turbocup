@@ -213,7 +213,10 @@ def join_tournament(tournament_id):
 
     team_data = team_doc.to_dict()
 
-    if tourn_data.get('category') != team_data.get('category'):
+    tourn_cat = str(tourn_data.get('category', '')).strip().lower()
+    team_cat = str(team_data.get('category', '')).strip().lower()
+
+    if tourn_cat != team_cat:
         return jsonify({
             "message": f"Category incompatibility. Tournament category is {tourn_data.get('category')}, but team category is {team_data.get('category')}."
         }), 400
@@ -315,8 +318,6 @@ def remove_team_from_tournament(tournament_id, team_id):
     })
 
     return jsonify({"message": "Equipo eliminado del torneo con éxito"}), 200
-
-from google.cloud.firestore import FieldFilter
 
 @tournaments_bp.route('/user/<user_id>', methods=['GET'])
 def get_user_tournaments(user_id):

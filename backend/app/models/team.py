@@ -1,8 +1,8 @@
-from backend.app.models.team_category import team_category
+from backend.app.models.team_category import racing_category
 
 
 class Team:
-    def __init__(self, name, driver_id, co_pilot_id, team_category: team_category):
+    def __init__(self, name, driver_id, co_pilot_id, team_category: racing_category):
         self.name = name
         self.driver_id = driver_id
         self.co_pilot_id = co_pilot_id

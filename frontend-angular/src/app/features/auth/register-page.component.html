@@ -47,11 +47,14 @@
         autocomplete="email"
       />
 
-      <label for="role">Role</label>
-      <select id="role" name="role" [(ngModel)]="role" required>
-        <option value="participant_pilot">Participant pilot</option>
-        <option value="participant_copilot">Participant copilot</option>
-      </select>
+      <label class="field">
+        <span>Role</span>
+        <select name="role" [(ngModel)]="role" required class="form-select">
+          <option value="participant_pilot">Racer (Pilot)</option>
+          <option value="participant_copilot">Racer (Co-pilot)</option>
+          <option value="tournament_admin">Tournament Administrator</option>
+        </select>
+      </label>
 
       <label for="password">Password</label>
       <input

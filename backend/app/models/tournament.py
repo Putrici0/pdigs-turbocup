@@ -1,5 +1,6 @@
 class Tournament:
-    def __init__(self, name, start_date, end_date=None, status="scheduled", category="100cc"):
+    def __init__(self, name, start_date, end_date=None, status="scheduled", category="100cc", creator_id=None):
+        self.creator_id = creator_id
         self.name = name
         self.start_date = start_date # Start date and time
         self.end_date = end_date # End date and time
@@ -12,5 +13,6 @@ class Tournament:
             "start_date": self.start_date,
             "end_date": self.end_date,
             "status": self.status,
-            "category": self.category
+            "category": self.category,
+            "creator_id": self.creator_id
         }

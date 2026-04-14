@@ -1,7 +1,6 @@
 from enum import Enum
 
-
-class team_category(Enum):
+class racing_category(Enum):
     FORMULA = "formula"
     RALLY = "rally"
     GT_RACING = "gt_racing"
