@@ -5,8 +5,5 @@ tournaments backend is not properly implemented
 - has 2 entries for teams
 - model is not properly implemented so modification is not possible
 categories must come from enum categories
-tournaments must be created by admin (creator_id)
-each user should have a tournaments list participating
-each admin should have a tournaments list created
 need a form to create a team
 
