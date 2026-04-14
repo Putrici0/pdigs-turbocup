@@ -26,9 +26,7 @@ export class MyTournamentsComponent {
       const user = this.authService.session();
 
       if (user && user.uid) {
-        // Verificamos si el usuario es administrador
         if (user.role === 'tournament_admin') {
-          // RUTA ADMIN: Carga los torneos que ha creado
           this.tournamentService.getAdminTournaments(user.uid).subscribe({
             next: (data) => {
               this.pastTournaments.set(data.past);
@@ -36,7 +34,6 @@ export class MyTournamentsComponent {
             }
           });
         } else {
-          // RUTA PILOTO: Carga los torneos en los que compite
           this.tournamentService.getUserTournaments(user.uid).subscribe({
             next: (data) => {
               this.pastTournaments.set(data.past);
