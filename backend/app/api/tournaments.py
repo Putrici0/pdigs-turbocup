@@ -315,3 +315,42 @@ def remove_team_from_tournament(tournament_id, team_id):
     })
 
     return jsonify({"message": "Equipo eliminado del torneo con éxito"}), 200
+
+from google.cloud.firestore import FieldFilter
+
+@tournaments_bp.route('/user/<user_id>', methods=['GET'])
+def get_user_tournaments(user_id):
+    teams_ref = db.collection('teams')
+    pilot_teams = teams_ref.where(filter=FieldFilter('pilot_id', '==', user_id)).stream()
+    copilot_teams = teams_ref.where(filter=FieldFilter('copilot_id', '==', user_id)).stream()
+
+    team_ids = set()
+    for t in pilot_teams:
+        team_ids.add(t.id)
+    for t in copilot_teams:
+        team_ids.add(t.id)
+
+    if not team_ids:
+        return jsonify({"past": [], "scheduled": []}), 200
+
+    all_tournaments = db.collection('tournaments').stream()
+
+    past_tournaments = []
+    scheduled_tournaments = []
+
+    for tourn in all_tournaments:
+        t_data = tourn.to_dict()
+        reg_teams = set(t_data.get('registered_team_ids', []))
+
+        if team_ids.intersection(reg_teams):
+            serialized = serialize_firestore(tourn)
+
+            if t_data.get('status') == 'past':
+                past_tournaments.append(serialized)
+            else:
+                scheduled_tournaments.append(serialized)
+
+    return jsonify({
+        "past": past_tournaments,
+        "scheduled": scheduled_tournaments
+    }), 200

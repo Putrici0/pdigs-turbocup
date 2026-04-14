@@ -414,4 +414,18 @@ export class TournamentDataService {
       return acc;
     }, {});
   }
+  getUserTournaments(userId: string): Observable<{ past: Tournament[], scheduled: Tournament[] }> {
+    return this.http.get<{ past: ApiTournament[], scheduled: ApiTournament[] }>(`${this.apiBase}/user/${userId}`).pipe(
+      map(response => {
+        return {
+          past: response.past.map(item => this.normalizeTournament(item)),
+          scheduled: response.scheduled.map(item => this.normalizeTournament(item))
+        };
+      }),
+      catchError(err => {
+        console.error('Error fetching user tournaments:', err);
+        return of({ past: [], scheduled: [] });
+      })
+    );
+  }
 }

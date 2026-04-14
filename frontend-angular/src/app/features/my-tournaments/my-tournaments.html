@@ -1,0 +1,49 @@
+<main class="page-shell">
+  <section class="hero panel">
+    <p class="eyebrow">Personal Dashboard</p>
+    <h1>My Tournaments</h1>
+    <p class="hero-copy">Track your upcoming races and review your past glory.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Scheduled & Ongoing</h2>
+      <p class="panel-copy">Tournaments you are actively participating in.</p>
+    </div>
+
+    @if (scheduledTournaments().length > 0) {
+      <div class="tournaments-grid">
+        @for (tourn of scheduledTournaments(); track tourn.id) {
+          <article class="tournament-card">
+            <h3><a [routerLink]="['/view-tournament', tourn.id]">{{ tourn.name }}</a></h3>
+            <span class="status-pill scheduled">{{ tourn.status }}</span>
+            <p>{{ tourn.start_date | date:'mediumDate' }}</p>
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="empty-state">You have no upcoming tournaments.</p>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Past Tournaments</h2>
+      <p class="panel-copy">Your completed competitions.</p>
+    </div>
+
+    @if (pastTournaments().length > 0) {
+      <div class="tournaments-grid">
+        @for (tourn of pastTournaments(); track tourn.id) {
+          <article class="tournament-card">
+            <h3><a [routerLink]="['/view-tournament', tourn.id]">{{ tourn.name }}</a></h3>
+            <span class="status-pill completed">Completed</span>
+            <p>{{ tourn.end_date | date:'mediumDate' }}</p>
+          </article>
+        }
+      </div>
+    } @else {
+      <p class="empty-state">No past tournaments found.</p>
+    }
+  </section>
+</main>

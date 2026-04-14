@@ -13,6 +13,10 @@
     <a routerLink="/view-tournaments" routerLinkActive="is-current" (click)="closeToolbar()">Explore</a>
     <a routerLink="/teams" routerLinkActive="is-current" (click)="closeToolbar()">Teams</a>
     <a routerLink="/view-statistics" routerLinkActive="is-current" (click)="closeToolbar()">Statistics</a>
+    <a routerLink="/view-tournaments" routerLinkActive="active">All Tournaments</a>
+    @if (authService.session()) {
+        <a routerLink="/my-tournaments" routerLinkActive="active"> My Tournaments</a>
+      }
 
     <details class="account-menu" [class.is-open]="isAccountOpen()" [open]="isAccountOpen()">
       <summary (click)="$event.preventDefault(); toggleAccount()" class="account-summary">
