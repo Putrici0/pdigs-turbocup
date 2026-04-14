@@ -26,15 +26,24 @@ export class MyTournamentsComponent {
       const user = this.authService.session();
 
       if (user && user.uid) {
-        this.tournamentService.getUserTournaments(user.uid).subscribe({
-          next: (data) => {
-            this.pastTournaments.set(data.past);
-            this.scheduledTournaments.set(data.scheduled);
-          },
-          error: (err) => {
-            console.error('Error al cargar mis torneos:', err);
-          }
-        });
+        // Verificamos si el usuario es administrador
+        if (user.role === 'tournament_admin') {
+          // RUTA ADMIN: Carga los torneos que ha creado
+          this.tournamentService.getAdminTournaments(user.uid).subscribe({
+            next: (data) => {
+              this.pastTournaments.set(data.past);
+              this.scheduledTournaments.set(data.scheduled);
+            }
+          });
+        } else {
+          // RUTA PILOTO: Carga los torneos en los que compite
+          this.tournamentService.getUserTournaments(user.uid).subscribe({
+            next: (data) => {
+              this.pastTournaments.set(data.past);
+              this.scheduledTournaments.set(data.scheduled);
+            }
+          });
+        }
       }
     });
   }

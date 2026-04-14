@@ -65,7 +65,7 @@ export class CreateTournamentPageComponent implements OnInit {
       category: this.category,
       startDate: this.startDate,
       endDate: this.endDate,
-      creatorId: this.authService.session()?.username || ''
+      creatorId: this.authService.session()?.uid || ''
     }).subscribe({
       next: () => {
         this.message.set('Tournament created successfully.');

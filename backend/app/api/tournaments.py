@@ -76,7 +76,8 @@ def create_tournament():
         "max_participants": data.get('max_participants', 0),
         "statistics_url": data.get('statistics_url', ""),
         "status": status,
-        "participants": []
+        "participants": [],
+        "creator_id": data.get('creator_id', "")
     }
 
     _, doc_ref = db.collection('tournaments').add(tournament_data)

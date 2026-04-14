@@ -428,4 +428,25 @@ export class TournamentDataService {
       })
     );
   }
+
+  getAdminTournaments(adminId: string): Observable<{ past: Tournament[], scheduled: Tournament[] }> {
+    // Usamos el endpoint de admin que ya tenías definido en tu servicio
+    return this.http.get<ApiTournament[]>(`${this.apiBase}/admin/${adminId}`).pipe(
+      map(items => {
+        // 1. Normalizamos los datos que llegan de Python
+        const normalized = items.map(item => this.normalizeTournament(item));
+
+        // 2. Los dividimos en dos listas para que el HTML funcione igual que con los pilotos
+        return {
+          past: normalized.filter(t => t.status === 'past'),
+          scheduled: normalized.filter(t => t.status !== 'past')
+        };
+      }),
+      catchError(err => {
+        console.error('Error fetching admin tournaments:', err);
+        return of({ past: [], scheduled: [] });
+      })
+    );
+  }
+
 }
