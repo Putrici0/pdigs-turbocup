@@ -39,7 +39,7 @@ export class LoginPageComponent {
     const result = await this.authService.login(this.email, this.password);
 
     if (!result.ok) {
-      this.message.set(result.error ?? 'No se pudo iniciar sesion.');
+      this.message.set(result.error ?? 'We are sorry, we could not log you in. Please try again later.');
       this.isError.set(true);
       this.isSubmitting.set(false);
       return;
@@ -55,7 +55,7 @@ export class LoginPageComponent {
     this.showSuccessDialog.set(false);
     const navigated = await this.router.navigateByUrl('/');
     if (!navigated) {
-      this.message.set('Sesion iniciada, pero no se pudo redirigir.');
+      this.message.set('Login successful, but we could not redirect you. Please try again later.');
       this.isError.set(true);
     }
   }

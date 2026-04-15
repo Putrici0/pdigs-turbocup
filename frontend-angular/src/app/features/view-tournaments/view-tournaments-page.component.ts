@@ -29,7 +29,7 @@ export class ViewTournamentsPageComponent implements OnInit {
 
   ngOnInit(): void {
     const adminId = this.authService.session()?.role === 'tournament_admin'
-      ? this.authService.session()?.username
+      ? this.authService.session()?.uid
       : undefined;
 
     if (adminId) {
@@ -104,7 +104,9 @@ export class ViewTournamentsPageComponent implements OnInit {
   }
 
   participantCount(tournament: Tournament): number {
-    return Object.keys(tournament.teams_involved || {}).length;
+    return tournament.registered_team_ids?.length
+      || tournament.registered_teams?.length
+      || Object.keys(tournament.teams_involved || {}).length;
   }
 
   canCreateTournament(): boolean {
@@ -115,8 +117,8 @@ export class ViewTournamentsPageComponent implements OnInit {
     if (this.authService.session()?.role !== 'tournament_admin') {
       return false;
     }
-    const currentUsername = this.authService.session()?.username || '';
-    return !tournament.creator_id || tournament.creator_id === currentUsername;
+    const currentUid = this.authService.session()?.uid || '';
+    return !tournament.creator_id || tournament.creator_id === currentUid;
   }
 
   deleteTournament(tournament: Tournament): void {

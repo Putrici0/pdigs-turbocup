@@ -51,10 +51,10 @@
         </div>
       }
       <h2 id="logout-result-title">
-        {{ isLogoutError() ? 'Error al cerrar sesion' : 'Sesion cerrada' }}
+        {{ isLogoutError() ? 'Error while logging out' : 'Logged out' }}
       </h2>
       <p>{{ logoutMessage() }}</p>
-      <button type="button" class="logout-dialog-primary" (click)="closeLogoutDialog()">Entendido</button>
+      <button type="button" class="logout-dialog-primary" (click)="closeLogoutDialog()">OK</button>
     </section>
   </div>
 }

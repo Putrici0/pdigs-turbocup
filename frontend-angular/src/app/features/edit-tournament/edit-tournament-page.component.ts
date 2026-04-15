@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http'; // <-- 1. Importamos HttpClient
+import { API_BASE_URL } from '../../core/api.config';
 import { AuthService } from '../../core/auth.service';
 import { Tournament, TournamentDataService } from '../../core/tournament-data.service';
 
@@ -10,7 +11,7 @@ import { Tournament, TournamentDataService } from '../../core/tournament-data.se
   selector: 'app-edit-tournament-page',
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './edit-tournament-page.component.html',
-  styleUrl: './edit-tournament-page.component.css'
+  styleUrl: './edit-tournament-page.component.css',
 })
 export class EditTournamentPageComponent implements OnInit {
   readonly message = signal('');
@@ -28,19 +29,24 @@ export class EditTournamentPageComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly authService: AuthService,
     private readonly tournamentDataService: TournamentDataService,
-    private readonly http: HttpClient // <-- 2. Inyectamos HttpClient
+    private readonly http: HttpClient,
   ) {}
 
   ngOnInit(): void {
     this.tournamentId = this.route.snapshot.paramMap.get('id') || '';
-    this.syncFromStore();
+
+    if (!this.tournamentId) {
+      this.message.set('Tournament ID is missing.');
+      this.isError.set(true);
+      return;
+    }
 
     this.tournamentDataService.refreshTournaments().subscribe({
       next: () => this.syncFromStore(),
       error: () => {
         this.message.set('Could not load tournament data.');
         this.isError.set(true);
-      }
+      },
     });
   }
 
@@ -48,26 +54,27 @@ export class EditTournamentPageComponent implements OnInit {
     if (this.authService.session()?.role !== 'tournament_admin') {
       return false;
     }
-    const currentUsername = this.authService.session()?.username || '';
+
+    const currentUid = this.authService.session()?.uid || '';
     const creatorId = this.tournament()?.creator_id || '';
-    return !creatorId || creatorId === currentUsername;
+
+    return !creatorId || creatorId === currentUid;
   }
 
-  // <-- 3. Ahora devolvemos objetos con ID y Name para que el HTML no se queje -->
-  registeredTeams(): { id: string, name: string }[] {
+  registeredTeams(): { id: string; name: string }[] {
     const current = this.tournament();
     if (!current) return [];
 
     if (current.participants && current.participants.length > 0) {
       return current.participants
-        .filter((item: any) => !!item.name && !!item.id)
-        .map((item: any) => ({ id: item.id, name: item.name }));
+        .filter((item) => !!item.name && !!item.id)
+        .map((item) => ({ id: item.id, name: item.name }));
     }
 
     if (current.registered_teams && current.registered_teams.length > 0) {
       return current.registered_teams
-        .filter((item: any) => !!item.name && !!item.id)
-        .map((item: any) => ({ id: item.id, name: item.name }));
+        .filter((item) => !!item.name && !!item.id)
+        .map((item) => ({ id: item.id, name: item.name }));
     }
 
     return [];
@@ -93,11 +100,12 @@ export class EditTournamentPageComponent implements OnInit {
     }
 
     this.isSubmitting.set(true);
+
     this.tournamentDataService.updateTournament({
       id: this.tournamentId,
       name: this.name.trim(),
       startDate: this.startDate,
-      endDate: this.endDate
+      endDate: this.endDate,
     }).subscribe({
       next: (updated) => {
         this.tournament.set(updated);
@@ -106,45 +114,40 @@ export class EditTournamentPageComponent implements OnInit {
         this.isSubmitting.set(false);
       },
       error: () => {
-        this.message.set('Could not update tournament. Check backend is running on 127.0.0.1:5000.');
+        this.message.set(`Could not update tournament. Check backend is running on ${API_BASE_URL}.`);
         this.isError.set(true);
         this.isSubmitting.set(false);
-      }
+      },
     });
   }
 
-  removeTeam(teamId: string) {
-    if (!confirm('Are you sure you want to remove this team?')) return;
+  removeTeam(teamId: string): void {
+    if (!confirm('Are you sure you want to remove this team?')) {
+      return;
+    }
 
-    this.http.delete(`http://127.0.0.1:5000/api/tournaments/${this.tournamentId}/participants/${teamId}`)
+    this.http
+      .delete(`${API_BASE_URL}/tournaments/${this.tournamentId}/participants/${teamId}`)
       .subscribe({
-        // <-- 4. Añadimos ': any' para solucionar los errores TS7006 -->
-        next: (response: any) => {
-          this.message.set('Team removed successfully');
+        next: () => {
+          this.message.set('Team removed successfully.');
           this.isError.set(false);
 
-          // <-- 5. En lugar de mutar un Signal que no existe, le pedimos a nuestro servicio
-          // que recargue los datos reales desde el backend y sincronice la vista -->
           this.tournamentDataService.refreshTournaments().subscribe({
-            next: () => this.syncFromStore()
+            next: () => this.syncFromStore(),
           });
         },
-        error: (err: any) => {
-          this.message.set('Error removing team');
+        error: (err: unknown) => {
+          this.message.set('Error removing team.');
           this.isError.set(true);
           console.error(err);
-        }
+        },
       });
   }
 
   private syncFromStore(): void {
-    if (!this.tournamentId) {
-      this.message.set('Tournament ID is missing.');
-      this.isError.set(true);
-      return;
-    }
-
     const current = this.tournamentDataService.getTournamentById(this.tournamentId);
+
     if (!current) {
       this.message.set('Tournament not found.');
       this.isError.set(true);

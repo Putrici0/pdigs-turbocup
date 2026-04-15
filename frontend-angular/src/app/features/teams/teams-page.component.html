@@ -1,45 +1,53 @@
-<main class="page-shell">
-  <section class="hero">
-    <p class="eyebrow">Team Directory</p>
-    <h1>Teams</h1>
-    <p class="hero-copy">Browse all teams and join any team that still has an open member slot.</p>
+<section class="teams-directory">
+  <p class="eyebrow">Team Directory</p>
+  <h1>Teams</h1>
+  <p class="intro">
+    Browse all teams currently stored in the database.
+  </p>
+
+  <section class="teams-summary-card">
+    <h2>Available teams</h2>
+    <p>Each team can have up to 2 members.</p>
   </section>
 
-  <section class="panel">
-    <div class="panel-header">
-      <h2>Available teams</h2>
-      <p class="panel-copy">Each team can have up to 2 members.</p>
-    </div>
-    <div class="filters-row">
-      <label class="filter-field">
-        <span>Search by team name</span>
-        <input
-          type="search"
-          [ngModel]="query()"
-          (ngModelChange)="updateQuery($event)"
-          placeholder="Type team name"
-        />
-      </label>
-      <label class="filter-field">
-        <span>List type</span>
-        <select [ngModel]="listFilter()" (ngModelChange)="updateListFilter($event)">
-          <option value="all">All teams</option>
-          <option value="open">Teams with open slots</option>
-          <option value="full">Full teams</option>
-        </select>
-      </label>
-      <label class="filter-field">
-        <span>Category</span>
-        <select [ngModel]="categoryFilter()" (ngModelChange)="updateCategoryFilter($event)">
-          <option value="all">All categories</option>
-          @for (item of availableCategories(); track item) {
-            <option [value]="item">{{ formatCategory(item) }}</option>
-          }
-        </select>
-      </label>
-    </div>
-    <div class="table-wrap">
-      <table>
+  <section class="filters-card">
+    <label>
+      <span>Search by team name</span>
+      <input
+        type="search"
+        [ngModel]="query()"
+        (ngModelChange)="updateQuery($event)"
+        placeholder="Search teams..."
+      />
+    </label>
+
+    <label>
+      <span>List type</span>
+      <select [ngModel]="listFilter()" (ngModelChange)="updateListFilter($event)">
+        <option value="all">All teams</option>
+        <option value="open">Teams with open slots</option>
+        <option value="full">Full teams</option>
+      </select>
+    </label>
+
+    <label>
+      <span>Category</span>
+      <select [ngModel]="categoryFilter()" (ngModelChange)="updateCategoryFilter($event)">
+        <option value="all">All categories</option>
+        @for (item of availableCategories(); track item) {
+          <option [value]="item">{{ formatCategory(item) }}</option>
+        }
+      </select>
+    </label>
+  </section>
+
+  @if (isLoading()) {
+    <p>Loading teams...</p>
+  } @else if (errorMessage()) {
+    <p>{{ errorMessage() }}</p>
+  } @else {
+    <div class="teams-table-wrapper">
+      <table class="teams-table">
         <thead>
         <tr>
           <th>Team</th>
@@ -52,30 +60,21 @@
         <tbody>
           @for (team of filteredTeams(); track team.id) {
             <tr>
-              <td><strong>{{ team.name }}</strong></td>
+              <td>{{ team.name }}</td>
               <td>{{ formatCategory(team.category) }}</td>
               <td>{{ team.memberCount }}/2</td>
+              <td>{{ hasOpenSlot(team) ? 'Open slot' : 'Full' }}</td>
               <td>
-                <span class="status-pill" [class.open]="hasOpenSlot(team)" [class.full]="!hasOpenSlot(team)">
-                  {{ hasOpenSlot(team) ? 'Open slot' : 'Full' }}
-                </span>
-              </td>
-              <td>
-                @if (hasJoined(team.id)) {
-                  <span class="joined-label">Joined</span>
-                } @else if (hasOpenSlot(team)) {
-                  <button type="button" class="join-button" (click)="joinTeam(team.id)">Join</button>
-                } @else {
-                  <a class="team-link" [routerLink]="['/view-team', team.id]">View team</a>
-                }
+                <a [routerLink]="['/view-team', team.id]">View team</a>
               </td>
             </tr>
           }
         </tbody>
       </table>
     </div>
+
     @if (filteredTeams().length === 0) {
-      <p class="empty-state">No teams match the current search or filters.</p>
+      <p>No teams match the current search or filters.</p>
     }
-  </section>
-</main>
+  }
+</section>

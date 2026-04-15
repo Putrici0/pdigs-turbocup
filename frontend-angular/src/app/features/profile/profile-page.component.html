@@ -1,17 +1,17 @@
 <main class="page-shell">
   <section class="hero">
     <p class="eyebrow">Account</p>
-    <h1>Mi cuenta</h1>
-    <p class="hero-copy">Actualiza tu informacion real.</p>
+    <h1>My Account</h1>
+    <p class="hero-copy">Update your real profile information.</p>
   </section>
 
   @if (authService.loading()) {
     <section class="profile-box">
-      <p class="state-copy">Cargando cuenta...</p>
+      <p class="state-copy">Loading account...</p>
     </section>
   } @else if (!session()) {
     <section class="profile-box">
-      <p class="state-copy">No hay una sesion activa.</p>
+      <p class="state-copy">There is no active session.</p>
     </section>
   } @else {
     <section class="profile-box">
@@ -30,15 +30,15 @@
 
         <div class="field-grid">
           <label class="field">
-            <span>Nombre</span>
+            <span>First name</span>
             <input type="text" name="name" [(ngModel)]="name" required />
           </label>
           <label class="field">
-            <span>Apellidos</span>
+            <span>Last name</span>
             <input type="text" name="surname" [(ngModel)]="surname" required />
           </label>
           <label class="field">
-            <span>Usuario</span>
+            <span>Username</span>
             <input type="text" name="username" [(ngModel)]="username" required />
           </label>
           <label class="field">
@@ -48,12 +48,12 @@
         </div>
 
         <div class="meta-row">
-          <div><strong>Rol:</strong> {{ roleLabel() }}</div>
+          <div><strong>Role:</strong> {{ roleLabel() }}</div>
           <div><strong>UID:</strong> <span class="uid">{{ session()!.uid }}</span></div>
         </div>
 
         <button type="submit" class="primary-action" [disabled]="isSubmitting()">
-          {{ isSubmitting() ? 'Guardando...' : 'Guardar cambios' }}
+          {{ isSubmitting() ? 'Saving...' : 'Save changes' }}
         </button>
       </form>
     </section>
@@ -68,9 +68,9 @@
           <path d="M5 12.5l4.2 4.2L19 7.5" />
         </svg>
       </div>
-      <h2 id="profile-success-title">Cuenta actualizada</h2>
-      <p>Tus datos se han guardado correctamente.</p>
-      <button type="button" class="profile-dialog-primary" (click)="closeSuccessDialog()">Continuar</button>
+      <h2 id="profile-success-title">Account updated</h2>
+      <p>Your profile information has been saved successfully.</p>
+      <button type="button" class="profile-dialog-primary" (click)="closeSuccessDialog()">Continue</button>
     </section>
   </div>
 }

@@ -43,7 +43,7 @@ export class RegisterPageComponent {
     if (this.isSubmitting()) return;
 
     if (this.password !== this.confirmPassword) {
-      this.message.set('Las contrasenas no coinciden.');
+      this.message.set('Passwords do not match.');
       this.isError.set(true);
       return;
     }
@@ -62,7 +62,7 @@ export class RegisterPageComponent {
     });
 
     if (!result.ok) {
-      this.message.set(result.error ?? 'No se pudo crear la cuenta.');
+      this.message.set(result.error ?? 'We are sorry, we could not create your account. Please try again later.');
       this.isError.set(true);
       this.isSubmitting.set(false);
       return;
@@ -78,7 +78,7 @@ export class RegisterPageComponent {
     this.showSuccessDialog.set(false);
     const navigated = await this.router.navigateByUrl('/');
     if (!navigated) {
-      this.message.set('Cuenta creada, pero no se pudo redirigir.');
+      this.message.set('Account created successfully, but we could not redirect you. Please try again later.');
       this.isError.set(true);
     }
   }

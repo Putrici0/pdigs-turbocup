@@ -1,3 +1,8 @@
+@if (isLoading()) {
+  <p class="empty-state">Loading tournament...</p>
+} @else if (errorMessage()) {
+  <p class="empty-state">{{ errorMessage() }}</p>
+} @else {
 <main class="page-shell">
   <section class="hero panel">
     <p class="eyebrow">Tournament Detail</p>
@@ -30,8 +35,16 @@
           @for (item of roundOf16(); track item.id) {
             <article class="match-card">
               <div class="teams-row">
-                <a [routerLink]="['/view-team', item.leftTeamId || 'team-01']">{{ item.leftName }}</a>
-                <a [routerLink]="['/view-team', item.rightTeamId || 'team-01']">{{ item.rightName }}</a>
+                @if (item.leftTeamId) {
+                  <a [routerLink]="['/view-team', item.leftTeamId]">{{ item.leftName }}</a>
+                } @else {
+                  <p>{{ item.leftName }}</p>
+                }
+                @if (item.rightTeamId) {
+                  <a [routerLink]="['/view-team', item.rightTeamId]">{{ item.rightName }}</a>
+                } @else {
+                  <p>{{ item.rightName }}</p>
+                }
               </div>
               <span [class]="stateClass(item.state)">{{ formatMatchState(item.state) }}</span>
             </article>
@@ -144,3 +157,4 @@
     </div>
   </section>
 </main>
+}

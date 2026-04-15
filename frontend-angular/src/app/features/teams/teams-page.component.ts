@@ -3,7 +3,7 @@ import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TeamCategoryService } from '../../core/team-category.service';
-import { TeamProfile, TournamentDataService } from '../../core/tournament-data.service';
+import { Team, TeamService } from '../../core/team.service';
 
 interface TeamListItem {
   id: string;
@@ -16,30 +16,36 @@ interface TeamListItem {
   selector: 'app-teams-page',
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './teams-page.component.html',
-  styleUrl: './teams-page.component.css'
+  styleUrl: './teams-page.component.css',
 })
 export class TeamsPageComponent implements OnInit {
   readonly query = signal('');
   readonly listFilter = signal<'all' | 'full' | 'open'>('all');
   readonly categoryFilter = signal('all');
   readonly backendCategories = signal<string[]>([]);
-  private readonly joinedIds = signal<string[]>([]);
+  readonly allTeams = signal<Team[]>([]);
+  readonly isLoading = signal(true);
+  readonly errorMessage = signal('');
+
   readonly teams = computed<TeamListItem[]>(() =>
-    this.tournamentDataService
-      .getTeamProfiles()
+    this.allTeams()
       .map((team) => ({
         id: team.id,
         name: team.name,
         category: team.category,
-        memberCount: this.memberCount(team) + (this.hasJoined(team.id) ? 1 : 0)
+        memberCount: team.member_count,
       }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => a.name.localeCompare(b.name)),
   );
+
   readonly availableCategories = computed(() => {
     const fromTeams = this.teams().map((team) => team.category);
     const merged = new Set([...this.backendCategories(), ...fromTeams]);
-    return Array.from(merged).filter((item) => !!item && item.trim().length > 0).sort((a, b) => a.localeCompare(b));
+    return Array.from(merged)
+      .filter((item) => !!item && item.trim().length > 0)
+      .sort((a, b) => a.localeCompare(b));
   });
+
   readonly filteredTeams = computed(() => {
     const text = this.query().trim().toLowerCase();
     const listFilter = this.listFilter();
@@ -49,9 +55,9 @@ export class TeamsPageComponent implements OnInit {
       const isOpen = this.hasOpenSlot(team);
       const queryMatch = !text || team.name.toLowerCase().includes(text);
       const listMatch =
-        listFilter === 'all' ||
-        (listFilter === 'open' && isOpen) ||
-        (listFilter === 'full' && !isOpen);
+        listFilter === 'all'
+        || (listFilter === 'open' && isOpen)
+        || (listFilter === 'full' && !isOpen);
       const categoryMatch = categoryFilter === 'all' || team.category === categoryFilter;
 
       return queryMatch && listMatch && categoryMatch;
@@ -59,13 +65,22 @@ export class TeamsPageComponent implements OnInit {
   });
 
   constructor(
-    private readonly tournamentDataService: TournamentDataService,
-    private readonly teamCategoryService: TeamCategoryService
+    private readonly teamService: TeamService,
+    private readonly teamCategoryService: TeamCategoryService,
   ) {}
 
   ngOnInit(): void {
     this.teamCategoryService.getCategories().subscribe((categories) => {
       this.backendCategories.set(categories);
+    });
+
+    this.teamService.getTeams().subscribe((teams) => {
+      this.allTeams.set(teams);
+      this.errorMessage.set('');
+      this.isLoading.set(false);
+    }, () => {
+      this.errorMessage.set('Could not load teams from backend.');
+      this.isLoading.set(false);
     });
   }
 
@@ -87,19 +102,5 @@ export class TeamsPageComponent implements OnInit {
 
   hasOpenSlot(team: TeamListItem): boolean {
     return team.memberCount < 2;
-  }
-
-  hasJoined(teamId: string): boolean {
-    return this.joinedIds().includes(teamId);
-  }
-
-  joinTeam(teamId: string): void {
-    if (this.hasJoined(teamId)) return;
-    this.joinedIds.set([...this.joinedIds(), teamId]);
-  }
-
-  private memberCount(team: TeamProfile): number {
-    const members = [team.crew.driver.name, team.crew.codriver.name];
-    return members.filter((name) => !!name && name.trim().length > 0 && name !== 'TBD').length;
   }
 }

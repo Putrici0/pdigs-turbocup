@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, catchError, map, of } from 'rxjs';
+import { API_BASE_URL } from './api.config';
 
 interface TeamCategoriesResponse {
   categories?: string[];
@@ -8,7 +9,7 @@ interface TeamCategoriesResponse {
 
 @Injectable({ providedIn: 'root' })
 export class TeamCategoryService {
-  private readonly apiBase = 'http://127.0.0.1:5000/api/teams';
+  private readonly apiBase = `${API_BASE_URL}/teams`;
 
   constructor(private readonly http: HttpClient) {}
 

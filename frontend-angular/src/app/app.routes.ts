@@ -7,11 +7,11 @@ import { CreateTournamentPageComponent } from './features/create-tournament/crea
 import { ViewTournamentsPageComponent } from './features/view-tournaments/view-tournaments-page.component';
 import { ViewTournamentPageComponent } from './features/view-tournament/view-tournament-page.component';
 import { ViewTeamPageComponent } from './features/view-team/view-team-page.component';
-import { TeamsPageComponent } from './features/teams/teams-page.component';
 import { ViewStatisticsPageComponent } from './features/view-statistics/view-statistics-page.component';
 import { ViewTournamentStatisticPageComponent } from './features/view-tournament-statistic/view-tournament-statistic-page.component';
 import { ProfilePageComponent } from './features/profile/profile-page.component';
 import { EditTournamentPageComponent } from './features/edit-tournament/edit-tournament-page.component';
+import { TeamsPageComponent } from './features/teams/teams-page.component';
 import { adminGuard } from './core/admin.guard';
 import { authGuard } from './core/auth.guard';
 import { MyTournamentsComponent } from './features/my-tournaments/my-tournaments';
@@ -38,8 +38,8 @@ export const routes: Routes = [
       { path: 'my-tournaments', component: MyTournamentsComponent, canActivate: [authGuard] },
       { path: 'login', component: LoginPageComponent },
       { path: 'register', component: RegisterPageComponent },
-      { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] }
-    ]
+      { path: 'profile', component: ProfilePageComponent, canActivate: [authGuard] },
+    ],
   },
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: '' },
 ];

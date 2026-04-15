@@ -40,10 +40,10 @@ export class ToolbarComponent {
     try {
       await this.authService.logout();
       this.closeToolbar();
-      this.logoutMessage.set('Has salido correctamente de la sesion.');
+      this.logoutMessage.set('You have successfully logged out.');
       this.showLogoutDialog.set(true);
     } catch {
-      this.logoutMessage.set('No se pudo cerrar sesion. Intentalo de nuevo.');
+      this.logoutMessage.set('Could not log out. Please try again.');
       this.isLogoutError.set(true);
       this.showLogoutDialog.set(true);
     } finally {

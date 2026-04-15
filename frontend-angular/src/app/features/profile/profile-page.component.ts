@@ -64,7 +64,7 @@ export class ProfilePageComponent {
     });
 
     if (!result.ok) {
-      this.message.set(result.error ?? 'No se pudo actualizar la cuenta.');
+      this.message.set(result.error ?? 'The account could not be updated.');
       this.isError.set(true);
       this.isSubmitting.set(false);
       return;

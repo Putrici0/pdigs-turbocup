@@ -95,11 +95,11 @@ export class AuthService {
     const normalizedEmail = this.normalizeEmail(email);
 
     if (!normalizedEmail) {
-      return { ok: false, error: 'El email es obligatorio.' };
+      return { ok: false, error: 'Email is required.' };
     }
 
     if (!password) {
-      return { ok: false, error: 'La contraseña es obligatoria.' };
+      return { ok: false, error: 'Password is required.' };
     }
 
     try {
@@ -121,13 +121,13 @@ export class AuthService {
     const password = String(payload.password || '');
     const role = this.normalizeRole(payload.role);
 
-    if (!name) return { ok: false, error: 'El nombre es obligatorio.' };
-    if (!surname) return { ok: false, error: 'Los apellidos son obligatorios.' };
-    if (!username) return { ok: false, error: 'El nombre de usuario es obligatorio.' };
-    if (!email) return { ok: false, error: 'El email es obligatorio.' };
-    if (!role) return { ok: false, error: 'El rol no es válido.' };
+    if (!name) return { ok: false, error: 'First name is required.' };
+    if (!surname) return { ok: false, error: 'Last name is required.' };
+    if (!username) return { ok: false, error: 'Username is required.' };
+    if (!email) return { ok: false, error: 'Email is required.' };
+    if (!role) return { ok: false, error: 'Role is not valid.' };
     if (password.length < 6) {
-      return { ok: false, error: 'La contraseña debe tener al menos 6 caracteres.' };
+      return { ok: false, error: 'Password must be at least 6 characters.' };
     }
 
     try {
@@ -177,7 +177,7 @@ export class AuthService {
     const currentSession = this.session();
 
     if (!firebaseUser || !currentSession) {
-      return { ok: false, error: 'No hay una sesion activa.' };
+      return { ok: false, error: 'There is no active session.' };
     }
 
     const name = this.normalizeText(payload.name);
@@ -185,10 +185,10 @@ export class AuthService {
     const username = this.normalizeUsername(payload.username);
     const email = this.normalizeEmail(payload.email);
 
-    if (!name) return { ok: false, error: 'El nombre es obligatorio.' };
-    if (!surname) return { ok: false, error: 'Los apellidos son obligatorios.' };
-    if (!username) return { ok: false, error: 'El nombre de usuario es obligatorio.' };
-    if (!email) return { ok: false, error: 'El email es obligatorio.' };
+    if (!name) return { ok: false, error: 'First name is required.' };
+    if (!surname) return { ok: false, error: 'Last name is required.' };
+    if (!username) return { ok: false, error: 'Username is required.' };
+    if (!email) return { ok: false, error: 'Email is required.' };
 
     const fullName = `${name} ${surname}`.trim();
 
@@ -278,11 +278,11 @@ export class AuthService {
 
     return {
       uid: firebaseUser.uid,
-      name: name || 'Usuario',
+      name: name || 'User',
       surname: surname || '',
       username: fallbackUsername,
       usernameLowercase: fallbackUsername.toLowerCase(),
-      fullName: displayName || firebaseUser.email?.split('@')[0] || 'Usuario',
+      fullName: displayName || firebaseUser.email?.split('@')[0] || 'User',
       email: firebaseUser.email?.toLowerCase() || '',
       role: 'participant_pilot',
       createdAt: new Date().toISOString(),
@@ -318,24 +318,24 @@ export class AuthService {
 
     switch (code) {
       case 'auth/email-already-in-use':
-        return 'Ese email ya está registrado.';
+        return 'This email is already registered.';
       case 'auth/invalid-email':
-        return 'El email no es válido.';
+        return 'The email is not valid.';
       case 'auth/weak-password':
-        return 'La contraseña es demasiado débil.';
+        return 'The password is too weak.';
       case 'auth/invalid-credential':
       case 'auth/user-not-found':
       case 'auth/wrong-password':
-        return 'Email o contraseña incorrectos.';
+        return 'Incorrect email or password.';
       case 'auth/too-many-requests':
-        return 'Demasiados intentos. Prueba más tarde.';
+        return 'Too many attempts. Try again later.';
       case 'auth/operation-not-allowed':
-        return 'Email/password no está activado en Firebase Authentication.';
+        return 'Email/password sign-in is not enabled in Firebase Authentication.';
       case 'permission-denied':
       case 'firestore/permission-denied':
-        return 'Firestore está rechazando la operación por reglas de seguridad.';
+        return 'Firestore is rejecting this operation due to security rules.';
       default:
-        return 'La autenticación ha fallado. Inténtalo de nuevo.';
+        return 'Authentication failed. Please try again.';
     }
   }
 

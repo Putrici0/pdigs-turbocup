@@ -1,6 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
+import { API_BASE_URL } from '../../core/api.config';
 import { TeamCategoryService } from '../../core/team-category.service';
 import { TournamentDataService } from '../../core/tournament-data.service';
 
@@ -77,7 +78,7 @@ export class CreateTournamentPageComponent implements OnInit {
         this.isSubmitting.set(false);
       },
       error: () => {
-        this.message.set('Could not create tournament. Check backend is running on 127.0.0.1:5000.');
+        this.message.set(`Could not create tournament. Check backend is running on ${API_BASE_URL}.`);
         this.isError.set(true);
         this.isSubmitting.set(false);
       }
