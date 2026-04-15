@@ -1,0 +1,50 @@
+<main class="page-shell">
+  <section class="hero">
+    <p class="eyebrow">Team Setup</p>
+    <h1>Create new team</h1>
+    <p class="hero-copy">Create a team with a name and category. Pilot and copilot can be assigned now or later.</p>
+  </section>
+
+  <form class="panel form-layout" (ngSubmit)="submit()">
+    @if (message()) {
+      <p class="notice" [class.is-error]="isError()">{{ message() }}</p>
+    }
+
+    <section class="form-section">
+      <h2>Team details</h2>
+      <div class="field-grid">
+        <label class="field">
+          <span>Team name</span>
+          <input type="text" name="teamName" [(ngModel)]="teamName" required />
+        </label>
+
+        <label class="field">
+          <span>Category</span>
+          <select name="category" [(ngModel)]="category" required>
+            <option value="" disabled>Select a category</option>
+            @for (item of categories(); track item) {
+              <option [value]="item">{{ formatCategory(item) }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Pilot ID (optional)</span>
+          <input type="text" name="pilotId" [(ngModel)]="pilotId" />
+        </label>
+
+        <label class="field">
+          <span>Copilot ID (optional)</span>
+          <input type="text" name="copilotId" [(ngModel)]="copilotId" />
+        </label>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button type="submit" class="primary-action" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Creating...' : 'Create team' }}
+      </button>
+      <button type="reset" class="secondary-action">Clear</button>
+    </div>
+  </form>
+</main>

@@ -43,7 +43,10 @@ body {
     position: absolute;
     inset: 0;
     align-items: end;
-    padding: clamp(22px, 4vw, 54px);
+    padding:
+        clamp(22px, 4vw, 54px)
+        clamp(22px, 4vw, 54px)
+        clamp(148px, 22vh, 190px);
     animation: fade-slide-in 500ms ease;
 }
 
@@ -81,6 +84,7 @@ body {
 .slide-copy {
     position: relative;
     max-width: 720px;
+    margin-bottom: clamp(74px, 12vh, 118px);
     padding: clamp(18px, 2.6vw, 28px);
     border-radius: 14px;
     border: 1px solid rgba(248, 250, 252, 0.18);
@@ -324,11 +328,15 @@ body {
     }
 
     .slide {
-        padding: 16px;
+        padding: 16px 16px 138px;
     }
 
     .slide-copy h2 {
         font-size: clamp(1.6rem, 8vw, 2.1rem);
+    }
+
+    .slide-copy {
+        margin-bottom: 82px;
     }
 
     .section-shell {

@@ -78,6 +78,7 @@
 .slide-copy {
   position: relative;
   max-width: 720px;
+  margin-bottom: clamp(38px, 7vh, 82px);
   padding: clamp(18px, 2.6vw, 28px);
   border-radius: 14px;
   border: 1px solid rgba(248, 250, 252, 0.18);
@@ -327,6 +328,10 @@
 
   .slide-copy h2 {
     font-size: clamp(1.6rem, 8vw, 2.1rem);
+  }
+
+  .slide-copy {
+    margin-bottom: 46px;
   }
 
   .section-shell {
