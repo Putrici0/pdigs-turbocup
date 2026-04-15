@@ -53,6 +53,33 @@ body {
     line-height: 1.03;
 }
 
+.hero-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+}
+
+.create-team-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 10px 16px;
+    background: #ec4899;
+    color: #ffffff;
+    border: 1px solid #f472b6;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.15s ease;
+}
+
+.create-team-button:hover,
+.create-team-button:focus-visible {
+    background: #db2777;
+}
+
 .hero-copy,
 .panel-copy {
     margin: 10px 0 0;
@@ -264,6 +291,15 @@ tbody tr:last-child td {
     .panel-header {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .hero-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .create-team-button {
+        width: 100%;
     }
 
     .crew-grid,

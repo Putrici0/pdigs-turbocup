@@ -116,6 +116,65 @@
 
     const TEAM_DATA = buildTeamsData();
 
+    function getCustomTeams() {
+        try {
+            const raw = localStorage.getItem("customTeams");
+            const parsed = raw ? JSON.parse(raw) : {};
+            if (!parsed || typeof parsed !== "object") return {};
+
+            const normalized = {};
+            Object.keys(parsed).forEach(function (teamId) {
+                const item = parsed[teamId];
+                if (!item || typeof item !== "object") return;
+                normalized[teamId] = {
+                    id: teamId,
+                    name: safeText(item.name, "Custom Team"),
+                    category: safeText(item.category, "N/A"),
+                    status: "scheduled",
+                    homeBase: "Pending",
+                    bio: "Newly created team. Profile details can be added later.",
+                    crew: {
+                        driver: {
+                            name: safeText(item.pilot_id, "N/A"),
+                            age: "N/A",
+                            nationality: "N/A",
+                            style: "N/A"
+                        },
+                        codriver: {
+                            name: safeText(item.copilot_id, "N/A"),
+                            age: "N/A",
+                            nationality: "N/A",
+                            notes: "N/A"
+                        }
+                    },
+                    car: {
+                        model: "N/A",
+                        drivetrain: "N/A",
+                        tirePreference: "N/A",
+                        topSpeed: "N/A",
+                        accel: "N/A",
+                        setupBias: "N/A"
+                    },
+                    stats: {
+                        events: 0,
+                        podiums: 0,
+                        stageWins: 0,
+                        bestResult: "N/A",
+                        avgStageTime: "N/A",
+                        dnfRate: "N/A",
+                        penalties: "0 s",
+                        points2026: 0
+                    },
+                    tournaments: []
+                };
+            });
+
+            return normalized;
+        } catch (error) {
+            return {};
+        }
+    }
+
     function toBadgeClass(status) {
         const normalized = safeText(status, "scheduled").toLowerCase();
         if (normalized === "ongoing" || normalized === "current") return "ongoing";
@@ -133,8 +192,13 @@
     function getRequestedTeam() {
         const params = new URLSearchParams(window.location.search);
         const teamId = params.get("team");
-        if (teamId && TEAM_DATA[teamId]) return TEAM_DATA[teamId];
-        return TEAM_DATA["team-01"];
+        const availableTeams = {
+            ...TEAM_DATA,
+            ...getCustomTeams()
+        };
+
+        if (teamId && availableTeams[teamId]) return availableTeams[teamId];
+        return availableTeams["team-01"] || TEAM_DATA["team-01"];
     }
 
     function renderHero(team) {
@@ -156,21 +220,23 @@
     function renderCrew(team) {
         const crewNode = document.getElementById("crew-grid");
         if (!crewNode) return;
+        const driver = (team && team.crew && team.crew.driver) || {};
+        const codriver = (team && team.crew && team.crew.codriver) || {};
 
         crewNode.innerHTML = `
             <article class="crew-card">
                 <p class="role-label">Pilot</p>
-                <h3 class="person-name">${safeText(team.crew.driver.name, "N/A")}</h3>
-                <p class="person-meta">Age: ${team.crew.driver.age}</p>
-                <p class="person-meta">Nationality: ${safeText(team.crew.driver.nationality, "N/A")}</p>
-                <p class="person-meta">Driving style: ${safeText(team.crew.driver.style, "N/A")}</p>
+                <h3 class="person-name">${safeText(driver.name, "N/A")}</h3>
+                <p class="person-meta">Age: ${safeText(driver.age, "N/A")}</p>
+                <p class="person-meta">Nationality: ${safeText(driver.nationality, "N/A")}</p>
+                <p class="person-meta">Driving style: ${safeText(driver.style, "N/A")}</p>
             </article>
             <article class="crew-card">
                 <p class="role-label">Co-driver</p>
-                <h3 class="person-name">${safeText(team.crew.codriver.name, "N/A")}</h3>
-                <p class="person-meta">Age: ${team.crew.codriver.age}</p>
-                <p class="person-meta">Nationality: ${safeText(team.crew.codriver.nationality, "N/A")}</p>
-                <p class="person-meta">Notes: ${safeText(team.crew.codriver.notes, "N/A")}</p>
+                <h3 class="person-name">${safeText(codriver.name, "N/A")}</h3>
+                <p class="person-meta">Age: ${safeText(codriver.age, "N/A")}</p>
+                <p class="person-meta">Nationality: ${safeText(codriver.nationality, "N/A")}</p>
+                <p class="person-meta">Notes: ${safeText(codriver.notes, "N/A")}</p>
             </article>
         `;
     }
@@ -178,23 +244,23 @@
     function renderStats(team) {
         const statsNode = document.getElementById("stats-grid");
         if (!statsNode) return;
-        const s = team.stats;
+        const s = (team && team.stats) || {};
         statsNode.innerHTML = `
-            <article class="stat-card"><p class="stat-label">Events</p><p class="stat-value">${s.events}</p></article>
-            <article class="stat-card"><p class="stat-label">Podiums</p><p class="stat-value">${s.podiums}</p></article>
-            <article class="stat-card"><p class="stat-label">Stage wins</p><p class="stat-value">${s.stageWins}</p></article>
-            <article class="stat-card"><p class="stat-label">Best result</p><p class="stat-value">${s.bestResult}</p></article>
-            <article class="stat-card"><p class="stat-label">Avg stage time</p><p class="stat-value">${s.avgStageTime}</p></article>
-            <article class="stat-card"><p class="stat-label">DNF rate</p><p class="stat-value">${s.dnfRate}</p></article>
-            <article class="stat-card"><p class="stat-label">Penalties</p><p class="stat-value">${s.penalties}</p></article>
-            <article class="stat-card"><p class="stat-label">2026 points</p><p class="stat-value">${s.points2026}</p></article>
+            <article class="stat-card"><p class="stat-label">Events</p><p class="stat-value">${safeText(s.events, "0")}</p></article>
+            <article class="stat-card"><p class="stat-label">Podiums</p><p class="stat-value">${safeText(s.podiums, "0")}</p></article>
+            <article class="stat-card"><p class="stat-label">Stage wins</p><p class="stat-value">${safeText(s.stageWins, "0")}</p></article>
+            <article class="stat-card"><p class="stat-label">Best result</p><p class="stat-value">${safeText(s.bestResult, "N/A")}</p></article>
+            <article class="stat-card"><p class="stat-label">Avg stage time</p><p class="stat-value">${safeText(s.avgStageTime, "N/A")}</p></article>
+            <article class="stat-card"><p class="stat-label">DNF rate</p><p class="stat-value">${safeText(s.dnfRate, "N/A")}</p></article>
+            <article class="stat-card"><p class="stat-label">Penalties</p><p class="stat-value">${safeText(s.penalties, "0 s")}</p></article>
+            <article class="stat-card"><p class="stat-label">2026 points</p><p class="stat-value">${safeText(s.points2026, "0")}</p></article>
         `;
     }
 
     function renderCarSpecs(team) {
         const carNode = document.getElementById("car-grid");
         if (!carNode) return;
-        const c = team.car;
+        const c = (team && team.car) || {};
         carNode.innerHTML = `
             <article class="spec-card"><p class="spec-label">Car model</p><p class="spec-value">${safeText(c.model, "N/A")}</p></article>
             <article class="spec-card"><p class="spec-label">Drivetrain</p><p class="spec-value">${safeText(c.drivetrain, "N/A")}</p></article>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create team</title>
+    <link rel="stylesheet" href="../css/toolbar.css">
+    <link rel="stylesheet" href="../css/footer.css">
+    <link rel="stylesheet" href="../css/create_team.css">
+</head>
+<body>
+<main class="page-shell">
+    <section class="hero">
+        <p class="eyebrow">Team Setup</p>
+        <h1>Create new team</h1>
+        <p class="hero-copy">Add the base information for a team so it can be used in tournaments.</p>
+    </section>
+
+    <form class="panel form-layout" id="createTeamForm">
+        <section class="form-section" aria-labelledby="details-heading">
+            <div class="section-copy">
+                <h2 id="details-heading">Team details</h2>
+                <p>These are the required fields for team creation.</p>
+            </div>
+
+            <div class="field-grid">
+                <label class="field">
+                    <span>Team name</span>
+                    <input type="text" name="teamName" placeholder="e.g. Turbo Falcons" required>
+                </label>
+
+                <label class="field">
+                    <span>Category</span>
+                    <select name="category" id="teamCategory" required>
+                        <option value="" disabled selected>Select a category</option>
+                    </select>
+                </label>
+
+                <label class="field">
+                    <span>Pilot ID</span>
+                    <input type="text" name="pilotId" placeholder="User id of pilot" required>
+                </label>
+
+                <label class="field">
+                    <span>Copilot ID</span>
+                    <input type="text" name="copilotId" placeholder="User id of copilot" required>
+                </label>
+            </div>
+        </section>
+
+        <div class="actions">
+            <button type="submit" class="primary-action">Create team</button>
+            <button type="reset" class="secondary-action">Clear form</button>
+        </div>
+    </form>
+</main>
+<script src="../js/auth.js" defer></script>
+<script src="../templates/layout_template.js" defer></script>
+<script src="../js/toolbar.js" defer></script>
+<script src="../js/create_team_page.js" defer></script>
+</body>
+</html>
