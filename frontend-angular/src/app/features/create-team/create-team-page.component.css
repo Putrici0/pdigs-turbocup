@@ -102,7 +102,7 @@
 .secondary-action {
   border: 0;
   border-radius: 999px;
-  padding: 12px 18px;
+  padding: 10px 14px;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -153,5 +153,11 @@
 
   .actions {
     flex-direction: column;
+  }
+
+  .primary-action,
+  .secondary-action {
+    width: 100%;
+    min-width: 0;
   }
 }

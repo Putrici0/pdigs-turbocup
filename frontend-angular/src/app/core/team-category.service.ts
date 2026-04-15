@@ -9,13 +9,17 @@ interface TeamCategoriesResponse {
 @Injectable({ providedIn: 'root' })
 export class TeamCategoryService {
   private readonly apiBase = 'http://127.0.0.1:5000/api/teams';
+  private readonly fallbackCategories = ['formula', 'rally', 'gt_racing', 'touring_car', 'karting', 'stock_car'];
 
   constructor(private readonly http: HttpClient) {}
 
   getCategories(): Observable<string[]> {
     return this.http.get<TeamCategoriesResponse>(`${this.apiBase}/categories`).pipe(
-      map((response) => this.uniqueCategories(response.categories || [])),
-      catchError(() => of([]))
+      map((response) => {
+        const categories = this.uniqueCategories(response.categories || []);
+        return categories.length ? categories : this.fallbackCategories;
+      }),
+      catchError(() => of(this.fallbackCategories))
     );
   }
 
