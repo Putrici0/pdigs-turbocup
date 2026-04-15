@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, map, catchError, of, throwError } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
 import { API_BASE_URL } from './api.config';
 
 export interface Team {
@@ -25,6 +25,13 @@ interface ApiTeam {
   member_count?: number;
 }
 
+export interface CreateTeamPayload {
+  name: string;
+  category: string;
+  pilot_id: string;
+  copilot_id: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TeamService {
   private readonly apiBase = `${API_BASE_URL}/teams`;
@@ -36,7 +43,7 @@ export class TeamService {
       map((items) => (items || []).map((item) => this.normalizeTeam(item))),
       catchError((error) => {
         console.error('Error loading teams:', error);
-        return throwError(() => error);
+        return of([]);
       }),
     );
   }
@@ -48,6 +55,12 @@ export class TeamService {
         console.error('Error loading team:', error);
         return of(null);
       }),
+    );
+  }
+
+  createTeam(payload: CreateTeamPayload): Observable<Team> {
+    return this.http.post<ApiTeam>(`${this.apiBase}/`, payload).pipe(
+      map((item) => this.normalizeTeam(item)),
     );
   }
 

@@ -25,7 +25,7 @@ export class TeamsPageComponent implements OnInit {
   readonly backendCategories = signal<string[]>([]);
   readonly allTeams = signal<Team[]>([]);
   readonly isLoading = signal(true);
-  readonly errorMessage = signal('');
+  readonly infoMessage = signal('');
 
   readonly teams = computed<TeamListItem[]>(() =>
     this.allTeams()
@@ -76,10 +76,6 @@ export class TeamsPageComponent implements OnInit {
 
     this.teamService.getTeams().subscribe((teams) => {
       this.allTeams.set(teams);
-      this.errorMessage.set('');
-      this.isLoading.set(false);
-    }, () => {
-      this.errorMessage.set('Could not load teams from backend.');
       this.isLoading.set(false);
     });
   }
@@ -102,5 +98,13 @@ export class TeamsPageComponent implements OnInit {
 
   hasOpenSlot(team: TeamListItem): boolean {
     return team.memberCount < 2;
+  }
+
+  hasJoined(_teamId: string): boolean {
+    return false;
+  }
+
+  joinTeam(_teamId: string): void {
+    this.infoMessage.set('Joining a team is not implemented in this page yet.');
   }
 }

@@ -1,87 +1,95 @@
-import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Component, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TeamCategoryService } from '../../core/team-category.service';
-import { TournamentDataService } from '../../core/tournament-data.service';
-
-interface CreateTeamResponse {
-  id?: string;
-  message?: string;
-}
+import { TeamService } from '../../core/team.service';
+import { AuthService } from '../../core/auth.service';
 
 @Component({
   selector: 'app-create-team-page',
-  imports: [FormsModule],
+  standalone: true,
+  imports: [CommonModule, FormsModule],
   templateUrl: './create-team-page.component.html',
-  styleUrl: './create-team-page.component.css'
+  styleUrl: './create-team-page.component.css',
 })
-export class CreateTeamPageComponent implements OnInit {
-  private readonly apiBase = 'http://127.0.0.1:5000/api/teams';
-
-  teamName = '';
-  category = '';
-  pilotId = '';
-  copilotId = '';
-
-  readonly categories = signal<string[]>([]);
-  readonly message = signal('');
-  readonly isError = signal(false);
+export class CreateTeamPageComponent {
+  readonly name = signal('');
+  readonly category = signal('');
   readonly isSubmitting = signal(false);
+  readonly errorMessage = signal('');
+  readonly successMessage = signal('');
+  readonly backendCategories = signal<string[]>([]);
+
+  readonly availableCategories = computed(() => this.backendCategories());
 
   constructor(
-    private readonly http: HttpClient,
-    private readonly router: Router,
     private readonly teamCategoryService: TeamCategoryService,
-    private readonly tournamentDataService: TournamentDataService
-  ) {}
-
-  ngOnInit(): void {
+    private readonly teamService: TeamService,
+    private readonly authService: AuthService,
+    private readonly router: Router,
+  ) {
     this.teamCategoryService.getCategories().subscribe((categories) => {
-      this.categories.set(categories);
+      this.backendCategories.set(categories);
+      if (!this.category() && categories.length > 0) {
+        this.category.set(categories[0]);
+      }
     });
+  }
+
+  updateName(value: string): void {
+    this.name.set(value);
+  }
+
+  updateCategory(value: string): void {
+    this.category.set(value);
   }
 
   formatCategory(category: string): string {
     return this.teamCategoryService.formatCategory(category);
   }
 
-  submit(): void {
-    if (!this.teamName.trim() || !this.category) {
-      this.message.set('Please complete team name and category.');
-      this.isError.set(true);
+  async submit(): Promise<void> {
+    this.errorMessage.set('');
+    this.successMessage.set('');
+
+    const currentUser = this.authService.session();
+    const teamName = this.name().trim();
+    const category = this.category().trim();
+
+    if (!currentUser) {
+      this.errorMessage.set('You must be logged in to create a team.');
+      return;
+    }
+
+    if (!teamName) {
+      this.errorMessage.set('Team name is required.');
+      return;
+    }
+
+    if (!category) {
+      this.errorMessage.set('Category is required.');
       return;
     }
 
     this.isSubmitting.set(true);
-    this.message.set('');
 
-    const payload = {
-      name: this.teamName.trim(),
-      category: this.category,
-      pilot_id: this.pilotId.trim() || null,
-      copilot_id: this.copilotId.trim() || null
-    };
-
-    this.http.post<CreateTeamResponse>(`${this.apiBase}/`, payload).subscribe({
-      next: (response) => {
-        const createdId = response.id || `unknown-${payload.name.toLowerCase().replace(/\s+/g, '-')}`;
-        this.tournamentDataService.addCustomTeam({
-          id: createdId,
-          name: payload.name,
-          category: payload.category,
-          pilotId: payload.pilot_id,
-          copilotId: payload.copilot_id
-        });
+    this.teamService.createTeam({
+      name: teamName,
+      category,
+      pilot_id: currentUser.role === 'participant_pilot' ? currentUser.uid : '',
+      copilot_id: currentUser.role === 'participant_copilot' ? currentUser.uid : '',
+    }).subscribe({
+      next: () => {
+        this.successMessage.set('Team created successfully.');
         this.isSubmitting.set(false);
-        this.router.navigate(['/view-team', createdId]);
+        this.router.navigate(['/teams']);
       },
       error: (error) => {
-        const backendMessage = error?.error?.message;
-        this.message.set(backendMessage || 'Could not create team. Check backend is running on 127.0.0.1:5000.');
-        this.isError.set(true);
+        console.error('Error creating team:', error);
+        this.errorMessage.set('Could not create the team.');
         this.isSubmitting.set(false);
-      }
+      },
     });
   }
 }

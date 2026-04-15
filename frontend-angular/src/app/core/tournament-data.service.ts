@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
-import { Observable, catchError, map, of, tap, throwError } from 'rxjs';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 import { API_BASE_URL } from './api.config';
 
 export type TournamentStatus = 'scheduled' | 'current' | 'past';
@@ -73,6 +73,11 @@ interface ApiTournamentTeam {
   category?: string;
 }
 
+interface ApiTournamentParticipant {
+  id?: string;
+  name?: string;
+}
+
 interface ApiTournament {
   id?: string;
   name?: string;
@@ -81,16 +86,22 @@ interface ApiTournament {
   start_date?: string;
   end_date?: string;
   status?: string;
-  registered_team_ids?: string[];
-  matches?: ApiMatch[];
-  participants?: Array<{ id?: string; name?: string }>;
-  registered_teams?: ApiTournamentTeam[];
   teams_involved?: Record<string, string>;
+  participants?: ApiTournamentParticipant[];
+  registered_team_ids?: string[];
+  registered_teams?: ApiTournamentTeam[];
+  matches?: ApiMatch[];
+}
+
+interface TournamentBucketsResponse {
+  past?: ApiTournament[];
+  scheduled?: ApiTournament[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class TournamentDataService {
   private readonly apiBase = `${API_BASE_URL}/tournaments`;
+
   readonly tournaments = signal<Tournament[]>([]);
 
   constructor(private readonly http: HttpClient) {}
@@ -100,19 +111,58 @@ export class TournamentDataService {
   }
 
   getTeamName(teamId: string): string {
-    const fromRegisteredTeams = this.tournaments()
-      .flatMap((tournament) => tournament.registered_teams || [])
-      .find((team) => team.id === teamId)?.name;
+    for (const tournament of this.tournaments()) {
+      const fromMap = tournament.teams_involved?.[teamId];
+      if (fromMap) {
+        return fromMap;
+      }
 
-    if (fromRegisteredTeams) {
-      return fromRegisteredTeams;
+      const fromRegistered = tournament.registered_teams?.find((team) => team.id === teamId)?.name;
+      if (fromRegistered) {
+        return fromRegistered;
+      }
+
+      const fromParticipants = tournament.participants?.find((participant) => participant.id === teamId)?.name;
+      if (fromParticipants) {
+        return fromParticipants;
+      }
     }
 
-    const fromTeamsInvolved = this.tournaments()
-      .map((tournament) => tournament.teams_involved?.[teamId])
-      .find((name) => !!name);
+    return 'TBD';
+  }
 
-    return fromTeamsInvolved || 'TBD';
+  refreshTournaments(adminId?: string): Observable<Tournament[]> {
+    const url = adminId
+      ? `${this.apiBase}/admin/${encodeURIComponent(adminId)}`
+      : `${this.apiBase}/`;
+
+    return this.http.get<ApiTournament[]>(url).pipe(
+      map((items) => (items || []).map((item) => this.normalizeTournament(item))),
+      tap((items) => this.tournaments.set(items)),
+      catchError((error) => {
+        console.error('Error loading tournaments:', error);
+        return of([]);
+      }),
+    );
+  }
+
+  getTournamentDetails(tournamentId: string): Observable<Tournament> {
+    return this.http.get<ApiTournament>(`${this.apiBase}/${encodeURIComponent(tournamentId)}/details`).pipe(
+      map((item) => this.normalizeTournament(item)),
+      tap((tournament) => {
+        const current = this.tournaments();
+        const existingIndex = current.findIndex((item) => item.id === tournament.id);
+
+        if (existingIndex === -1) {
+          this.tournaments.set([...current, tournament]);
+          return;
+        }
+
+        const updated = [...current];
+        updated[existingIndex] = tournament;
+        this.tournaments.set(updated);
+      }),
+    );
   }
 
   createTournament(payload: {
@@ -123,7 +173,7 @@ export class TournamentDataService {
     creatorId?: string;
   }): Observable<Tournament> {
     const body = {
-      name: payload.name,
+      name: payload.name.trim(),
       category: payload.category,
       start_date: this.toApiDateTime(payload.startDate),
       end_date: this.toApiDateTime(payload.endDate),
@@ -140,24 +190,27 @@ export class TournamentDataService {
     );
   }
 
-  refreshTournaments(adminId?: string): Observable<Tournament[]> {
-    const endpoint = adminId
-      ? `${this.apiBase}/admin/${encodeURIComponent(adminId)}`
-      : `${this.apiBase}/`;
+  updateTournament(payload: {
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+  }): Observable<Tournament> {
+    const body = {
+      name: payload.name.trim(),
+      start_date: this.toApiDateTime(payload.startDate),
+      end_date: this.toApiDateTime(payload.endDate),
+    };
 
-    return this.http.get<ApiTournament[]>(endpoint).pipe(
-      map((items) => items.map((item) => this.normalizeTournament(item))),
-      tap((items) => this.tournaments.set(items)),
-      catchError((error) => {
-        console.error('Error refreshing tournaments:', error);
-        return throwError(() => error);
+    return this.http.put<ApiTournament>(`${this.apiBase}/${encodeURIComponent(payload.id)}`, body).pipe(
+      map((updated) => this.normalizeTournament(updated)),
+      tap((updatedTournament) => {
+        this.tournaments.set(
+          this.tournaments().map((item) =>
+            item.id === updatedTournament.id ? updatedTournament : item,
+          ),
+        );
       }),
-    );
-  }
-
-  getTournamentDetails(tournamentId: string): Observable<Tournament> {
-    return this.http.get<ApiTournament>(`${this.apiBase}/${encodeURIComponent(tournamentId)}/details`).pipe(
-      map((item) => this.normalizeTournament(item)),
     );
   }
 
@@ -169,38 +222,16 @@ export class TournamentDataService {
     );
   }
 
-  updateTournament(payload: {
-    id: string;
-    name: string;
-    startDate: string;
-    endDate: string;
-  }): Observable<Tournament> {
-    const body = {
-      name: payload.name,
-      start_date: this.toApiDateTime(payload.startDate),
-      end_date: this.toApiDateTime(payload.endDate),
-    };
-
-    return this.http.put<ApiTournament>(`${this.apiBase}/${encodeURIComponent(payload.id)}`, body).pipe(
-      map((updated) => this.normalizeTournament(updated)),
-      tap((updatedTournament) => {
-        this.tournaments.set(
-          this.tournaments().map((item) => (item.id === updatedTournament.id ? updatedTournament : item)),
-        );
-      }),
-    );
-  }
-
   getUserTournaments(userId: string): Observable<{ past: Tournament[]; scheduled: Tournament[] }> {
     return this.http
-      .get<{ past: ApiTournament[]; scheduled: ApiTournament[] }>(`${this.apiBase}/user/${encodeURIComponent(userId)}`)
+      .get<TournamentBucketsResponse>(`${this.apiBase}/user/${encodeURIComponent(userId)}`)
       .pipe(
         map((response) => ({
           past: (response.past || []).map((item) => this.normalizeTournament(item)),
           scheduled: (response.scheduled || []).map((item) => this.normalizeTournament(item)),
         })),
         catchError((error) => {
-          console.error('Error fetching user tournaments:', error);
+          console.error('Error loading user tournaments:', error);
           return of({ past: [], scheduled: [] });
         }),
       );
@@ -209,34 +240,34 @@ export class TournamentDataService {
   getAdminTournaments(adminId: string): Observable<{ past: Tournament[]; scheduled: Tournament[] }> {
     return this.http.get<ApiTournament[]>(`${this.apiBase}/admin/${encodeURIComponent(adminId)}`).pipe(
       map((items) => {
-        const normalized = items.map((item) => this.normalizeTournament(item));
+        const tournaments = (items || []).map((item) => this.normalizeTournament(item));
 
         return {
-          past: normalized.filter((tournament) => this.effectiveStatus(tournament) === 'past'),
-          scheduled: normalized.filter((tournament) => this.effectiveStatus(tournament) !== 'past'),
+          past: tournaments.filter((item) => this.computeEffectiveStatus(item) === 'past'),
+          scheduled: tournaments.filter((item) => this.computeEffectiveStatus(item) !== 'past'),
         };
       }),
       catchError((error) => {
-        console.error('Error fetching admin tournaments:', error);
+        console.error('Error loading admin tournaments:', error);
         return of({ past: [], scheduled: [] });
       }),
     );
   }
 
   private normalizeTournament(item: ApiTournament): Tournament {
-    const registeredTeams: TournamentTeam[] = (item.registered_teams || []).map((team) => ({
-      id: team.id || '',
-      name: team.name || 'Unknown team',
-      pilot_id: team.pilot_id,
-      copilot_id: team.copilot_id,
-      pilot_name: team.pilot_name,
-      copilot_name: team.copilot_name,
-      category: team.category,
-    }));
-
     const participants: TournamentParticipant[] = (item.participants || []).map((participant) => ({
       id: participant.id || '',
       name: participant.name || 'Unknown team',
+    }));
+
+    const registeredTeams: TournamentTeam[] = (item.registered_teams || []).map((team) => ({
+      id: team.id || '',
+      name: team.name || 'Unknown team',
+      pilot_id: team.pilot_id || '',
+      copilot_id: team.copilot_id || '',
+      pilot_name: team.pilot_name || '',
+      copilot_name: team.copilot_name || '',
+      category: team.category || '',
     }));
 
     const teamsFromMap = item.teams_involved || {};
@@ -255,7 +286,7 @@ export class TournamentDataService {
       return acc;
     }, {});
 
-    const teamsInvolved = {
+    const teamsInvolved: Record<string, string> = {
       ...teamsFromMap,
       ...teamsFromParticipants,
       ...teamsFromRegistered,
@@ -263,13 +294,13 @@ export class TournamentDataService {
 
     const registeredTeamIds =
       (item.registered_team_ids || []).filter(Boolean).length > 0
-        ? (item.registered_team_ids || []).filter(Boolean)
-        : registeredTeams.map((team) => team.id).filter(Boolean).length > 0
+        ? (item.registered_team_ids || []).filter(Boolean) as string[]
+        : registeredTeams.length > 0
           ? registeredTeams.map((team) => team.id).filter(Boolean)
           : participants.map((participant) => participant.id).filter(Boolean);
 
     const matches: Match[] = (item.matches || []).map((match, index) => ({
-      id: match.id || `m-${index + 1}`,
+      id: match.id || `match-${index + 1}`,
       category: match.category || item.category || 'N/A',
       status: this.normalizeStatus(match.status),
       team_a_id: match.team_a_id || '',
@@ -299,30 +330,38 @@ export class TournamentDataService {
 
     return {
       ...tournament,
-      status: this.effectiveStatus(tournament),
+      status: this.computeEffectiveStatus(tournament),
     };
   }
 
-  private normalizeStatus(value: string | undefined): TournamentStatus {
+  private normalizeStatus(value?: string): TournamentStatus {
     if (value === 'current' || value === 'past' || value === 'scheduled') {
       return value;
     }
     return 'scheduled';
   }
 
-  private effectiveStatus(tournament: Tournament): TournamentStatus {
-    const start = new Date(tournament.start_date);
-    const end = new Date(tournament.end_date);
+  private computeEffectiveStatus(tournament: Pick<Tournament, 'start_date' | 'end_date' | 'status'>): TournamentStatus {
     const now = new Date();
+    const start = tournament.start_date ? new Date(tournament.start_date) : null;
+    const end = tournament.end_date ? new Date(tournament.end_date) : null;
 
-    if (!Number.isNaN(start.getTime()) && now < start) return 'scheduled';
-    if (!Number.isNaN(end.getTime()) && now > end) return 'past';
-    if (!Number.isNaN(start.getTime())) return 'current';
+    if (start && !Number.isNaN(start.getTime()) && now < start) {
+      return 'scheduled';
+    }
+
+    if (end && !Number.isNaN(end.getTime()) && now > end) {
+      return 'past';
+    }
+
+    if (start && !Number.isNaN(start.getTime())) {
+      return 'current';
+    }
 
     return this.normalizeStatus(tournament.status);
   }
 
   private toApiDateTime(value: string): string {
-    return value || '';
+    return String(value || '').trim();
   }
 }

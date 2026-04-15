@@ -1,50 +1,46 @@
-<main class="page-shell">
-  <section class="hero">
-    <p class="eyebrow">Team Setup</p>
-    <h1>Create new team</h1>
-    <p class="hero-copy">Create a team with a name and category. Pilot and copilot can be assigned now or later.</p>
-  </section>
+<section class="create-team-page">
+  <p class="eyebrow">Team Management</p>
+  <h1>Create Team</h1>
+  <p class="intro">
+    Create a new team using the available racing categories.
+  </p>
 
-  <form class="panel form-layout" (ngSubmit)="submit()">
-    @if (message()) {
-      <p class="notice" [class.is-error]="isError()">{{ message() }}</p>
-    }
+  @if (errorMessage()) {
+    <p class="notice is-error">{{ errorMessage() }}</p>
+  }
 
-    <section class="form-section">
-      <h2>Team details</h2>
-      <div class="field-grid">
-        <label class="field">
-          <span>Team name</span>
-          <input type="text" name="teamName" [(ngModel)]="teamName" required />
-        </label>
+  @if (successMessage()) {
+    <p class="notice is-success">{{ successMessage() }}</p>
+  }
 
-        <label class="field">
-          <span>Category</span>
-          <select name="category" [(ngModel)]="category" required>
-            <option value="" disabled>Select a category</option>
-            @for (item of categories(); track item) {
-              <option [value]="item">{{ formatCategory(item) }}</option>
-            }
-          </select>
-        </label>
+  <form class="create-team-form" (ngSubmit)="submit()">
+    <label>
+      <span>Team name</span>
+      <input
+        type="text"
+        name="teamName"
+        [ngModel]="name()"
+        (ngModelChange)="updateName($event)"
+        required
+      />
+    </label>
 
-        <label class="field">
-          <span>Pilot ID (optional)</span>
-          <input type="text" name="pilotId" [(ngModel)]="pilotId" />
-        </label>
+    <label>
+      <span>Category</span>
+      <select
+        name="category"
+        [ngModel]="category()"
+        (ngModelChange)="updateCategory($event)"
+        required
+      >
+        @for (item of availableCategories(); track item) {
+          <option [value]="item">{{ formatCategory(item) }}</option>
+        }
+      </select>
+    </label>
 
-        <label class="field">
-          <span>Copilot ID (optional)</span>
-          <input type="text" name="copilotId" [(ngModel)]="copilotId" />
-        </label>
-      </div>
-    </section>
-
-    <div class="actions">
-      <button type="submit" class="primary-action" [disabled]="isSubmitting()">
-        {{ isSubmitting() ? 'Creating...' : 'Create team' }}
-      </button>
-      <button type="reset" class="secondary-action">Clear</button>
-    </div>
+    <button type="submit" [disabled]="isSubmitting()">
+      {{ isSubmitting() ? 'Creating team...' : 'Create team' }}
+    </button>
   </form>
-</main>
+</section>

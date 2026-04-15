@@ -1,7 +1,11 @@
 @if (isLoading()) {
-  <p>Loading team...</p>
+  <div class="loading-state">
+    <p>Loading team...</p>
+  </div>
 } @else if (errorMessage()) {
-  <p>{{ errorMessage() }}</p>
+  <div class="error-state">
+    <p>{{ errorMessage() }}</p>
+  </div>
 } @else if (team(); as currentTeam) {
   <section class="team-profile">
     <p class="eyebrow">Team Profile</p>
