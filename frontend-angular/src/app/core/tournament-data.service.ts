@@ -106,7 +106,7 @@ interface ApiTournament {
 export class TournamentDataService {
   private readonly apiBase = 'http://127.0.0.1:5000/api/tournaments';
   readonly tournaments = signal<Tournament[]>(this.createMockTournaments());
-  private readonly teamProfiles = this.createMockTeamProfiles();
+  private readonly teamProfiles = signal<Record<string, TeamProfile>>(this.createMockTeamProfiles());
 
   constructor(private readonly http: HttpClient) {
     this.refreshTournaments();
@@ -117,15 +117,74 @@ export class TournamentDataService {
   }
 
   getTeamProfile(teamId: string): TeamProfile | undefined {
-    return this.teamProfiles[teamId];
+    return this.teamProfiles()[teamId];
   }
 
   getTeamProfiles(): TeamProfile[] {
-    return Object.values(this.teamProfiles);
+    return Object.values(this.teamProfiles());
   }
 
   getTeamName(teamId: string): string {
-    return this.teamProfiles[teamId]?.name ?? 'TBD';
+    return this.teamProfiles()[teamId]?.name ?? 'TBD';
+  }
+
+  addCustomTeam(payload: {
+    id: string;
+    name: string;
+    category: string;
+    pilotId?: string | null;
+    copilotId?: string | null;
+  }): void {
+    const cleanPilot = (payload.pilotId || '').trim();
+    const cleanCopilot = (payload.copilotId || '').trim();
+    const fallbackTournamentCategory = payload.category || 'N/A';
+
+    const profile: TeamProfile = {
+      id: payload.id,
+      name: payload.name || payload.id,
+      category: fallbackTournamentCategory,
+      status: 'scheduled',
+      homeBase: 'Pending',
+      bio: 'Newly created team. Profile details can be extended later.',
+      crew: {
+        driver: {
+          name: cleanPilot || 'TBD',
+          age: 0,
+          nationality: 'N/A',
+          style: 'N/A'
+        },
+        codriver: {
+          name: cleanCopilot || 'TBD',
+          age: 0,
+          nationality: 'N/A',
+          notes: 'N/A'
+        }
+      },
+      car: {
+        model: 'N/A',
+        drivetrain: 'N/A',
+        tirePreference: 'N/A',
+        topSpeed: 'N/A',
+        accel: 'N/A',
+        setupBias: 'N/A'
+      },
+      stats: {
+        events: 0,
+        podiums: 0,
+        stageWins: 0,
+        bestResult: 'N/A',
+        avgStageTime: 'N/A',
+        dnfRate: 'N/A',
+        penalties: 'N/A',
+        points2026: 0
+      },
+      tournaments: []
+    };
+
+    this.teamProfiles.update((current) => ({
+      ...current,
+      [payload.id]: profile
+    }));
   }
 
   createTournament(payload: {

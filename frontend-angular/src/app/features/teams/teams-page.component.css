@@ -25,6 +25,31 @@
   line-height: 0.96;
 }
 
+.hero-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.create-team-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: #ec4899;
+  color: #ffffff;
+  border: 1px solid #f472b6;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.create-team-button:hover {
+  background: #db2777;
+}
+
 .hero-copy,
 .panel-copy {
   margin: 12px 0 0;
@@ -198,5 +223,14 @@ tbody tr:last-child td {
 
   .filters-row {
     grid-template-columns: 1fr;
+  }
+
+  .hero-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .create-team-button {
+    width: 100%;
   }
 }

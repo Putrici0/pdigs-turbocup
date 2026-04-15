@@ -12,6 +12,8 @@ import { ViewStatisticsPageComponent } from './features/view-statistics/view-sta
 import { ViewTournamentStatisticPageComponent } from './features/view-tournament-statistic/view-tournament-statistic-page.component';
 import { ProfilePageComponent } from './features/profile/profile-page.component';
 import { EditTournamentPageComponent } from './features/edit-tournament/edit-tournament-page.component';
+import { TeamsPageComponent } from './features/teams/teams-page.component';
+import { CreateTeamPageComponent } from './features/create-team/create-team-page.component';
 import { adminGuard } from './core/admin.guard';
 import { authGuard } from './core/auth.guard';
 import { MyTournamentsComponent } from './features/my-tournaments/my-tournaments';
@@ -23,6 +25,8 @@ export const routes: Routes = [
     children: [
       { path: '', component: HomePageComponent },
       { path: 'view-tournaments', component: ViewTournamentsPageComponent },
+      { path: 'teams', component: TeamsPageComponent },
+      { path: 'create-team', component: CreateTeamPageComponent },
       { path: 'view-tournament/:id', component: ViewTournamentPageComponent },
       { path: 'teams', component: TeamsPageComponent },
       { path: 'view-team/:teamId', component: ViewTeamPageComponent },
