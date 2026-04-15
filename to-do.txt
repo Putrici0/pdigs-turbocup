@@ -1,9 +1,2 @@
-written on 14-04-2026 morning
-tournaments model is not properly implemented
-teams page is not accesible
-tournaments backend is not properly implemented
-- has 2 entries for teams
-- model is not properly implemented so modification is not possible
-categories must come from enum categories
-need a form to create a team
-
+but still need to change colors
+please add more things
