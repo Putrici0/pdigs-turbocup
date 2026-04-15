@@ -11,6 +11,7 @@ import { ViewStatisticsPageComponent } from './features/view-statistics/view-sta
 import { ViewTournamentStatisticPageComponent } from './features/view-tournament-statistic/view-tournament-statistic-page.component';
 import { ProfilePageComponent } from './features/profile/profile-page.component';
 import { EditTournamentPageComponent } from './features/edit-tournament/edit-tournament-page.component';
+import { CreateTeamPageComponent } from './features/create-team/create-team-page.component';
 import { TeamsPageComponent } from './features/teams/teams-page.component';
 import { adminGuard } from './core/admin.guard';
 import { authGuard } from './core/auth.guard';
@@ -25,6 +26,7 @@ export const routes: Routes = [
       { path: 'view-tournaments', component: ViewTournamentsPageComponent },
       { path: 'view-tournament/:id', component: ViewTournamentPageComponent },
       { path: 'teams', component: TeamsPageComponent },
+      { path: 'create-team', component: CreateTeamPageComponent, canActivate: [authGuard] },
       { path: 'view-team/:teamId', component: ViewTeamPageComponent },
       { path: 'view-statistics', component: ViewStatisticsPageComponent },
       {
