@@ -169,21 +169,21 @@ tbody tr:last-child td {
 }
 
 .status-pill.scheduled {
-  color: #fde68a;
-  border-color: rgba(251, 191, 36, 0.45);
-  background: rgba(146, 64, 14, 0.3);
+  color: #fbcfe8;
+  border-color: rgba(249, 168, 212, 0.5);
+  background: rgba(190, 24, 93, 0.28);
 }
 
 .status-pill.current {
-  color: #bae6fd;
-  border-color: rgba(56, 189, 248, 0.5);
-  background: rgba(3, 105, 161, 0.3);
+  color: #f9a8d4;
+  border-color: rgba(220, 36, 126, 0.62);
+  background: rgba(220, 36, 126, 0.22);
 }
 
 .status-pill.past {
-  color: #bbf7d0;
-  border-color: rgba(134, 239, 172, 0.45);
-  background: rgba(22, 101, 52, 0.3);
+  color: #d1d5db;
+  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(55, 65, 81, 0.45);
 }
 
 .stats-link {
@@ -216,7 +216,7 @@ tbody tr:last-child td {
   justify-content: center;
   padding: 10px 14px;
   border-radius: 999px;
-  background: #dc2626;
+  background: #4b5563;
   color: #ffffff;
   border: 0;
   font: inherit;
@@ -225,7 +225,7 @@ tbody tr:last-child td {
 }
 
 .delete-link:hover {
-  background: #b91c1c;
+  background: #374151;
 }
 
 .edit-link {
@@ -234,7 +234,7 @@ tbody tr:last-child td {
   justify-content: center;
   padding: 10px 14px;
   border-radius: 999px;
-  background: #2563eb;
+  background: #dc247e;
   color: #ffffff;
   border: 0;
   text-decoration: none;
@@ -242,7 +242,7 @@ tbody tr:last-child td {
 }
 
 .edit-link:hover {
-  background: #1d4ed8;
+  background: #b91c68;
 }
 
 .empty-state {

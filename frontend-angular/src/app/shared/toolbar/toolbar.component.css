@@ -9,10 +9,10 @@
   z-index: 1200;
   min-height: 42px;
   padding: 0.7rem 1rem;
-  border: 1px solid rgba(255, 47, 146, 0.35);
+  border: 1px solid rgba(220, 36, 126, 0.35);
   border-radius: 14px;
-  background: rgba(18, 27, 47, 0.92);
-  color: #f3f5fb;
+  background: rgba(17, 24, 39, 0.92);
+  color: #e5e7eb;
   font: inherit;
   font-weight: 800;
   cursor: pointer;
@@ -22,14 +22,14 @@
 
 .toolbar-toggle:hover {
   transform: translateY(-1px);
-  border-color: rgba(255, 47, 146, 0.55);
+  border-color: rgba(220, 36, 126, 0.55);
 }
 
 .toolbar-backdrop {
   position: fixed;
   inset: 0;
   z-index: 1190;
-  background: rgba(5, 10, 20, 0.52);
+  background: rgba(0, 0, 0, 0.52);
   backdrop-filter: blur(4px);
 }
 
@@ -42,8 +42,8 @@
   height: 100vh;
   padding: 1.4rem 1.25rem 1.5rem;
   background:
-    linear-gradient(180deg, rgba(11, 18, 34, 0.98), rgba(12, 23, 45, 0.98));
-  border-right: 1px solid rgba(111, 131, 175, 0.2);
+    linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(31, 41, 55, 0.98));
+  border-right: 1px solid rgba(229, 231, 235, 0.14);
   box-shadow: 18px 0 40px rgba(0, 0, 0, 0.34);
   overflow-y: auto;
 }
@@ -58,7 +58,7 @@
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.05);
-  color: #f3f5fb;
+  color: #e5e7eb;
   font-size: 1.35rem;
   line-height: 1;
   cursor: pointer;
@@ -75,7 +75,7 @@
   font-size: 2.35rem;
   line-height: 1;
   font-weight: 800;
-  color: #f3f5fb;
+  color: #f9fafb;
 }
 
 .toolbar-nav {
@@ -92,7 +92,7 @@
   min-height: 46px;
   padding: 0.85rem 1rem;
   border-radius: 14px;
-  color: #d8dfef;
+  color: #e5e7eb;
   text-decoration: none;
   font-weight: 700;
   transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
@@ -107,8 +107,8 @@
 }
 
 .active-link {
-  background: rgba(255, 47, 146, 0.14);
-  color: #ff5bb1 !important;
+  background: rgba(220, 36, 126, 0.14);
+  color: #f9a8d4 !important;
 }
 
 .toolbar-account {
@@ -121,10 +121,10 @@
   width: 100%;
   min-height: 48px;
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(111, 131, 175, 0.24);
+  border: 1px solid rgba(229, 231, 235, 0.18);
   border-radius: 14px;
-  background: rgba(18, 27, 47, 0.9);
-  color: #f3f5fb;
+  background: rgba(17, 24, 39, 0.9);
+  color: #f9fafb;
   text-align: left;
   font: inherit;
   font-weight: 700;
@@ -153,7 +153,7 @@
   z-index: 1300;
   display: grid;
   place-items: center;
-  background: rgba(5, 10, 20, 0.58);
+  background: rgba(0, 0, 0, 0.58);
   backdrop-filter: blur(4px);
 }
 
@@ -161,10 +161,10 @@
   width: min(440px, calc(100% - 24px));
   padding: 1.4rem;
   border-radius: 22px;
-  background: rgba(16, 28, 51, 0.98);
-  border: 1px solid rgba(108, 129, 173, 0.2);
+  background: rgba(31, 41, 55, 0.98);
+  border: 1px solid rgba(229, 231, 235, 0.14);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
-  color: #edf2fb;
+  color: #e5e7eb;
 }
 
 .logout-dialog h2 {
@@ -175,7 +175,7 @@
 
 .logout-dialog p {
   margin: 0 0 1rem;
-  color: #b3bdd1;
+  color: #cbd5e1;
   line-height: 1.5;
 }
 
@@ -184,11 +184,15 @@
   padding: 0.7rem 1rem;
   border: none;
   border-radius: 12px;
-  background: #ff2f92;
+  background: #dc247e;
   color: #ffffff;
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+}
+
+.logout-dialog button:hover {
+  background: #be185d;
 }
 
 @media (max-width: 640px) {

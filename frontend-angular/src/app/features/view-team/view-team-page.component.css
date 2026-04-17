@@ -3,79 +3,73 @@
 }
 
 .team-profile {
-  position: relative;
-  z-index: 1;
-  width: min(1180px, calc(100% - 48px));
+  width: min(980px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 2.5rem 0 4.5rem;
-  color: #e8ecf7;
+  padding: 56px 0 72px;
 }
 
 .eyebrow {
-  margin: 0 0 0.35rem;
-  font-size: 0.9rem;
-  font-weight: 800;
+  margin: 0 0 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #ff2f92;
+  color: #dc247e;
 }
 
 .team-profile h1 {
-  margin: 0 0 1.15rem;
-  font-size: clamp(2.5rem, 5vw, 4.4rem);
-  line-height: 0.98;
-  font-weight: 800;
-  color: #f2f4fb;
+  margin: 0 0 20px;
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  line-height: 0.96;
 }
 
 .team-meta {
-  margin-bottom: 2rem;
+  margin-bottom: 22px;
+  padding: 22px;
+  border: 1px solid rgba(229, 231, 235, 0.14);
+  border-radius: 22px;
+  background: rgba(55, 65, 81, 0.42);
 }
 
 .team-meta p {
-  margin: 0 0 0.75rem;
-  font-size: 1.05rem;
-  color: #f1f4fa;
+  margin: 0 0 10px;
+  color: #e5e7eb;
 }
 
 .team-meta strong {
-  color: #d7ddeb;
+  color: #f3f4f6;
 }
 
 .team-crew {
-  position: relative;
-  z-index: 2;
+  border: 1px solid rgba(229, 231, 235, 0.14);
+  border-radius: 28px;
+  background: #1f2937;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  padding: 28px;
 }
 
 .team-crew h2 {
-  margin: 0 0 1rem;
-  font-size: 2rem;
-  font-weight: 800;
-  color: #f2f4fb;
+  margin: 0 0 16px;
+  font-size: 1.6rem;
 }
 
 .crew-card {
-  background: rgba(16, 28, 51, 0.96);
-  border: 1px solid rgba(108, 129, 173, 0.18);
-  border-radius: 24px;
-  padding: 1.5rem 1.4rem;
-  margin-bottom: 1rem;
-  box-shadow:
-    0 18px 40px rgba(0, 0, 0, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(229, 231, 235, 0.14);
+  border-radius: 22px;
+  background: rgba(55, 65, 81, 0.42);
+  padding: 22px;
+  margin-bottom: 14px;
 }
 
 .crew-card h3 {
-  margin: 0 0 1rem;
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: #f2f4fb;
+  margin: 0 0 12px;
+  font-size: 1.35rem;
 }
 
 .crew-card p {
-  margin: 0 0 0.8rem;
-  color: #eef2fb;
-  line-height: 1.55;
+  margin: 0 0 10px;
+  color: #e5e7eb;
+  line-height: 1.6;
 }
 
 .crew-card p:last-child {
@@ -83,53 +77,46 @@
 }
 
 .crew-card strong {
-  color: #d4dbeb;
+  color: #f3f4f6;
 }
 
 .loading-state,
 .error-state {
-  width: min(1180px, calc(100% - 48px));
+  width: min(980px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 2.5rem 0 2rem;
-  color: #e8ecf7;
+  padding: 56px 0 0;
 }
 
-.error-state {
-  color: #ffd9df;
+.loading-state p,
+.error-state p {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: rgba(6, 78, 59, 0.25);
+  color: #d1fae5;
 }
 
-/* Keep background decoration behind cards */
-.bg-decoration,
-.neon-decoration,
-.hero-decoration,
-.page-decoration,
-.decor-line,
-.decor-shape,
-.glow-shape,
-.left-glow,
-.right-glow {
-  z-index: 0 !important;
-  pointer-events: none;
-}
-
-.team-profile .background-art,
-.team-profile .decorative-image,
-.team-profile img[alt=''] {
-  z-index: 0 !important;
-  pointer-events: none;
-  opacity: 0.4;
+.error-state p {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.25);
+  color: #fecaca;
 }
 
 @media (max-width: 960px) {
   .team-profile,
   .loading-state,
   .error-state {
-    width: min(100%, calc(100% - 24px));
-    padding: 1.5rem 0 3rem;
+    width: min(100% - 20px, 980px);
+    padding-top: 32px;
   }
 
   .team-profile h1 {
     font-size: clamp(2.2rem, 11vw, 3.4rem);
+  }
+
+  .team-crew {
+    padding: 20px;
   }
 
   .team-crew h2 {

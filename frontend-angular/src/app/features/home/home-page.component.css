@@ -57,20 +57,20 @@
 .visual-one {
   background:
     radial-gradient(circle at 22% 25%, rgba(220, 36, 126, 0.75), transparent 38%),
-    radial-gradient(circle at 82% 68%, rgba(14, 165, 233, 0.65), transparent 42%),
+    radial-gradient(circle at 82% 68%, rgba(249, 168, 212, 0.38), transparent 42%),
     linear-gradient(160deg, #111827, #374151);
 }
 
 .visual-two {
   background:
-    radial-gradient(circle at 70% 25%, rgba(59, 130, 246, 0.72), transparent 40%),
-    radial-gradient(circle at 30% 78%, rgba(236, 72, 153, 0.6), transparent 40%),
-    linear-gradient(170deg, #1f2937, #0f172a);
+    radial-gradient(circle at 70% 25%, rgba(220, 36, 126, 0.62), transparent 40%),
+    radial-gradient(circle at 30% 78%, rgba(249, 168, 212, 0.4), transparent 40%),
+    linear-gradient(170deg, #1f2937, #111827);
 }
 
 .visual-three {
   background:
-    radial-gradient(circle at 50% 20%, rgba(251, 146, 60, 0.72), transparent 42%),
+    radial-gradient(circle at 50% 20%, rgba(220, 36, 126, 0.58), transparent 42%),
     radial-gradient(circle at 25% 75%, rgba(220, 36, 126, 0.62), transparent 46%),
     linear-gradient(145deg, #111827, #3f3f46);
 }
