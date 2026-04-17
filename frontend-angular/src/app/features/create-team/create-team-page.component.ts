@@ -19,6 +19,7 @@ export class CreateTeamPageComponent {
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal('');
   readonly successMessage = signal('');
+  readonly showSuccessDialog = signal(false);
   readonly backendCategories = signal<string[]>([]);
 
   readonly availableCategories = computed(() => this.backendCategories());
@@ -83,7 +84,7 @@ export class CreateTeamPageComponent {
       next: () => {
         this.successMessage.set('Team created successfully.');
         this.isSubmitting.set(false);
-        this.router.navigate(['/teams']);
+        this.showSuccessDialog.set(true);
       },
       error: (error) => {
         console.error('Error creating team:', error);
@@ -91,5 +92,11 @@ export class CreateTeamPageComponent {
         this.isSubmitting.set(false);
       },
     });
+  }
+
+  async continueAfterSuccess(): Promise<void> {
+    this.showSuccessDialog.set(false);
+    this.successMessage.set('');
+    await this.router.navigate(['/teams']);
   }
 }
