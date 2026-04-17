@@ -42,10 +42,15 @@ export class TeamsPageComponent implements OnInit {
   );
 
   readonly availableCategories = computed(() => {
-    const fromTeams = this.teams().map((team) => team.category);
-    const merged = new Set([...this.backendCategories(), ...fromTeams]);
+    const normalize = (val: string) => val.toLowerCase().trim().replace(/\s+/g, '_');
+
+    const fromTeams = this.teams().map((team) => normalize(team.category));
+    const fromBackend = this.backendCategories().map(c => normalize(c));
+
+    const merged = new Set([...fromBackend, ...fromTeams]);
+
     return Array.from(merged)
-      .filter((item) => !!item && item.trim().length > 0)
+      .filter((item) => !!item && item.length > 0)
       .sort((a, b) => a.localeCompare(b));
   });
 
@@ -54,6 +59,8 @@ export class TeamsPageComponent implements OnInit {
     const listFilter = this.listFilter();
     const categoryFilter = this.categoryFilter();
 
+    const normalize = (val: string) => val.toLowerCase().trim().replace(/\s+/g, '_');
+
     return this.teams().filter((team) => {
       const isOpen = this.hasOpenSlot(team);
       const queryMatch = !text || team.name.toLowerCase().includes(text);
@@ -61,7 +68,8 @@ export class TeamsPageComponent implements OnInit {
         listFilter === 'all'
         || (listFilter === 'open' && isOpen)
         || (listFilter === 'full' && !isOpen);
-      const categoryMatch = categoryFilter === 'all' || team.category === categoryFilter;
+
+      const categoryMatch = categoryFilter === 'all' || normalize(team.category) === categoryFilter;
 
       return queryMatch && listMatch && categoryMatch;
     });

@@ -1,4 +1,3 @@
 Hover y mensajes sobre las opciones de la pagina
 Explicacion de como funcionan los equipos en la parte de Registro(En el despliegue).
 Cuando crees un equipo debe salir un mensaje de equipo creado correctamente
-Las categorias estan repetidas en el desplegable de unirse a un equipo
