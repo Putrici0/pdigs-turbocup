@@ -1,46 +1,55 @@
-<section class="create-team-page">
-  <p class="eyebrow">Team Management</p>
-  <h1>Create Team</h1>
-  <p class="intro">
-    Create a new team using the available racing categories.
-  </p>
+<main class="page-shell">
+  <section class="hero">
+    <p class="eyebrow">Team Management</p>
+    <h1>Create team</h1>
+    <p class="hero-copy">
+      Create a new team using the available racing categories.
+    </p>
+  </section>
 
-  @if (errorMessage()) {
-    <p class="notice is-error">{{ errorMessage() }}</p>
-  }
+  <form class="panel form-layout" (ngSubmit)="submit()">
+    @if (errorMessage()) {
+      <p class="notice is-error">{{ errorMessage() }}</p>
+    }
 
-  @if (successMessage()) {
-    <p class="notice is-success">{{ successMessage() }}</p>
-  }
+    @if (successMessage()) {
+      <p class="notice">{{ successMessage() }}</p>
+    }
 
-  <form class="create-team-form" (ngSubmit)="submit()">
-    <label>
-      <span>Team name</span>
-      <input
-        type="text"
-        name="teamName"
-        [ngModel]="name()"
-        (ngModelChange)="updateName($event)"
-        required
-      />
-    </label>
+    <section class="form-section">
+      <h2>Team details</h2>
+      <div class="field-grid">
+        <label class="field">
+          <span>Team name</span>
+          <input
+            type="text"
+            name="teamName"
+            [ngModel]="name()"
+            (ngModelChange)="updateName($event)"
+            required
+          />
+        </label>
 
-    <label>
-      <span>Category</span>
-      <select
-        name="category"
-        [ngModel]="category()"
-        (ngModelChange)="updateCategory($event)"
-        required
-      >
-        @for (item of availableCategories(); track item) {
-          <option [value]="item">{{ formatCategory(item) }}</option>
-        }
-      </select>
-    </label>
+        <label class="field">
+          <span>Category</span>
+          <select
+            name="category"
+            [ngModel]="category()"
+            (ngModelChange)="updateCategory($event)"
+            required
+          >
+            @for (item of availableCategories(); track item) {
+              <option [value]="item">{{ formatCategory(item) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </section>
 
-    <button type="submit" [disabled]="isSubmitting()">
-      {{ isSubmitting() ? 'Creating team...' : 'Create team' }}
-    </button>
+    <div class="actions">
+      <button type="submit" class="primary-action" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Creating team...' : 'Create team' }}
+      </button>
+    </div>
   </form>
-</section>
+</main>

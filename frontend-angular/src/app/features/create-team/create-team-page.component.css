@@ -5,7 +5,7 @@
 .page-shell {
   width: min(980px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 56px 0 72px;
+  padding: 84px 0 72px;
 }
 
 .hero {
@@ -18,7 +18,7 @@
   font-weight: 700;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: #ec4899;
+  color: #dc247e;
 }
 
 .hero h1 {
@@ -88,8 +88,8 @@
 
 .field input:focus,
 .field select:focus {
-  outline: 2px solid rgba(236, 72, 153, 0.25);
-  border-color: #ec4899;
+  outline: 2px solid rgba(220, 36, 126, 0.25);
+  border-color: #dc247e;
 }
 
 .actions {
@@ -109,12 +109,12 @@
 }
 
 .primary-action {
-  background: #ec4899;
+  background: #dc247e;
   color: #ffffff;
 }
 
 .primary-action:hover {
-  background: #db2777;
+  background: #be185d;
 }
 
 .secondary-action {
@@ -140,7 +140,7 @@
 @media (max-width: 760px) {
   .page-shell {
     width: min(100% - 20px, 980px);
-    padding-top: 32px;
+    padding-top: 72px;
   }
 
   .form-layout {
