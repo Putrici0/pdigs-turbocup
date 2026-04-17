@@ -52,9 +52,15 @@
           <div><strong>UID:</strong> <span class="uid">{{ session()!.uid }}</span></div>
         </div>
 
-        <button type="submit" class="primary-action" [disabled]="isSubmitting()">
-          {{ isSubmitting() ? 'Saving...' : 'Save changes' }}
-        </button>
+        <div class="form-actions">
+          <button type="submit" class="primary-action" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Saving...' : 'Save changes' }}
+          </button>
+
+          <button type="button" class="danger-action" (click)="openDeleteDialog()" [disabled]="isSubmitting()">
+            Delete Account
+          </button>
+        </div>
       </form>
     </section>
   }
@@ -71,6 +77,27 @@
       <h2 id="profile-success-title">Account updated</h2>
       <p>Your profile information has been saved successfully.</p>
       <button type="button" class="profile-dialog-primary" (click)="closeSuccessDialog()">Continue</button>
+    </section>
+  </div>
+}
+
+@if (showDeleteDialog()) {
+  <div class="profile-dialog-backdrop" (click)="closeDeleteDialog()">
+    <section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-account-title" (click)="$event.stopPropagation()">
+      <div class="profile-dialog-icon icon-danger" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+        </svg>
+      </div>
+      <h2 id="delete-account-title">Delete Account</h2>
+      <p>Are you sure you want to permanently delete your account? This action cannot be undone.</p>
+
+      <div class="dialog-actions-row">
+        <button type="button" class="profile-dialog-secondary" (click)="closeDeleteDialog()" [disabled]="isDeleting()">Cancel</button>
+        <button type="button" class="profile-dialog-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
+          {{ isDeleting() ? 'Deleting...' : 'Yes, delete' }}
+        </button>
+      </div>
     </section>
   </div>
 }

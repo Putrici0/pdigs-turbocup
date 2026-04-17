@@ -51,3 +51,17 @@ def get_user(user_id):
 
     return jsonify(user.to_dict()), 200
 
+@users_bp.route('/<user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    try:
+        auth.delete_user(user_id)
+
+        db.collection("users").document(user_id).delete()
+
+        return jsonify({"message": f"User {user_id} deleted successfully"}), 200
+
+    except auth.UserNotFoundError:
+        return jsonify({"error": "User not found in Auth"}), 404
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

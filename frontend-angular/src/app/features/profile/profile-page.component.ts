@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
 
 @Component({
@@ -19,6 +21,10 @@ export class ProfilePageComponent {
   readonly message = signal('');
   readonly isError = signal(false);
   readonly showSuccessDialog = signal(false);
+
+  readonly showDeleteDialog = signal(false);
+  readonly isDeleting = signal(false);
+
   readonly session = computed(() => this.authService.session());
 
   readonly initials = computed(() => {
@@ -37,7 +43,11 @@ export class ProfilePageComponent {
     return 'Participant pilot';
   });
 
-  constructor(public readonly authService: AuthService) {
+  constructor(
+    public readonly authService: AuthService,
+    private readonly http: HttpClient,
+    private readonly router: Router
+  ) {
     effect(() => {
       const session = this.session();
       if (!session) return;
@@ -76,6 +86,38 @@ export class ProfilePageComponent {
 
   closeSuccessDialog(): void {
     this.showSuccessDialog.set(false);
+  }
+
+  openDeleteDialog(): void {
+    this.showDeleteDialog.set(true);
+  }
+
+  closeDeleteDialog(): void {
+    if (this.isDeleting()) return;
+    this.showDeleteDialog.set(false);
+  }
+
+  confirmDelete(): void {
+    const uid = this.session()?.uid;
+    if (!uid || this.isDeleting()) return;
+
+    this.isDeleting.set(true);
+
+    this.http.delete(`http://127.0.0.1:5000/api/user/${uid}`).subscribe({
+      next: async () => {
+        await this.authService.logout();
+        this.isDeleting.set(false);
+        this.showDeleteDialog.set(false);
+        this.router.navigate(['/login']);
+      },
+      error: (err) => {
+        console.error('Error al borrar la cuenta:', err);
+        this.message.set('An error occurred while deleting your account.');
+        this.isError.set(true);
+        this.isDeleting.set(false);
+        this.showDeleteDialog.set(false);
+      }
+    });
   }
 
   private splitFullName(value: string): { name: string; surname: string } {

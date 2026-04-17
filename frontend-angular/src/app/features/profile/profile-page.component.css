@@ -226,3 +226,81 @@
     grid-template-columns: 1fr;
   }
 }
+
+.form-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.danger-action {
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 8px;
+  padding: 11px 14px;
+  background: transparent;
+  color: #ef4444; /* Rojo peligro */
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.danger-action:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+.danger-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon-danger {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.icon-danger svg {
+  stroke: #ef4444;
+}
+
+.dialog-actions-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.profile-dialog-secondary {
+  border: 1px solid #4b5563;
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: #1f2937;
+  color: #e5e7eb;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-dialog-secondary:hover:not(:disabled) {
+  background: #374151;
+}
+
+.profile-dialog-danger {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: #ef4444;
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.profile-dialog-danger:hover:not(:disabled) {
+  background: #dc2626;
+}
+
+.profile-dialog-danger:disabled,
+.profile-dialog-secondary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
