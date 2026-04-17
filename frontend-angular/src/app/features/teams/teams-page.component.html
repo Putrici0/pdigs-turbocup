@@ -6,7 +6,12 @@
   </p>
 
   <section class="teams-summary-card">
-    <h2>Available teams</h2>
+    <div class="summary-header">
+      <h2>Available teams</h2>
+      <button type="button" class="create-team-button" (click)="goToCreateTeam()">
+        Create team
+      </button>
+    </div>
     <p>Each team can have up to 2 members.</p>
   </section>
 
@@ -42,7 +47,7 @@
   </section>
 
   @if (infoMessage()) {
-    <p class="notice">{{ infoMessage() }}</p>
+    <p class="notice" [class.is-error]="infoIsError()">{{ infoMessage() }}</p>
   }
 
   @if (isLoading()) {

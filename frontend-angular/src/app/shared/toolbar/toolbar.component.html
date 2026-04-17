@@ -26,16 +26,6 @@
         Explore Teams
       </a>
 
-      @if (authService.session()) {
-        <a
-          routerLink="/create-team"
-          routerLinkActive="active-link"
-          (click)="closeToolbar()"
-        >
-          Create team
-        </a>
-      }
-
       <a
         routerLink="/view-statistics"
         routerLinkActive="active-link"

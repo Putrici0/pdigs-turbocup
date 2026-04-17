@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
 import { TeamCategoryService } from '../../core/team-category.service';
 import { Team, TeamService } from '../../core/team.service';
 
@@ -26,6 +27,7 @@ export class TeamsPageComponent implements OnInit {
   readonly allTeams = signal<Team[]>([]);
   readonly isLoading = signal(true);
   readonly infoMessage = signal('');
+  readonly infoIsError = signal(false);
 
   readonly teams = computed<TeamListItem[]>(() =>
     this.allTeams()
@@ -67,6 +69,8 @@ export class TeamsPageComponent implements OnInit {
   constructor(
     private readonly teamService: TeamService,
     private readonly teamCategoryService: TeamCategoryService,
+    private readonly authService: AuthService,
+    private readonly router: Router,
   ) {}
 
   ngOnInit(): void {
@@ -105,6 +109,21 @@ export class TeamsPageComponent implements OnInit {
   }
 
   joinTeam(_teamId: string): void {
+    this.infoIsError.set(false);
     this.infoMessage.set('Joining a team is not implemented in this page yet.');
+  }
+
+  async goToCreateTeam(): Promise<void> {
+    const session = this.authService.session();
+
+    if (!session || session.role !== 'participant_pilot') {
+      this.infoIsError.set(true);
+      this.infoMessage.set('Only users with the Pilot role can access Create Team.');
+      return;
+    }
+
+    this.infoIsError.set(false);
+    this.infoMessage.set('');
+    await this.router.navigate(['/create-team']);
   }
 }

@@ -45,8 +45,16 @@ h1 {
   margin-bottom: 20px;
 }
 
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
 .teams-summary-card h2 {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 1.55rem;
 }
 
@@ -54,6 +62,23 @@ h1 {
   margin: 0;
   color: #9ca3af;
   line-height: 1.5;
+}
+
+.create-team-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  min-height: 40px;
+  background: #dc247e;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+
+.create-team-button:hover {
+  background: #b91c68;
 }
 
 .filters-card {
@@ -209,6 +234,11 @@ h1 {
   .teams-summary-card,
   .filters-card {
     padding: 20px;
+  }
+
+  .summary-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .filters-card {
