@@ -50,9 +50,9 @@
       <label class="field">
         <span>Role</span>
         <select name="role" [(ngModel)]="role" required class="form-select">
-          <option value="participant_pilot">Racer (Pilot)</option>
-          <option value="participant_copilot">Racer (Co-pilot)</option>
-          <option value="tournament_admin">Tournament Administrator</option>
+          <option value="participant_pilot" title="Can create teams and register the car in tournaments.">Racer (Pilot)</option>
+          <option value="participant_copilot" title="Can join teams." >Racer (Co-pilot)</option>
+          <option value="tournament_admin" title="Can manage tournaments.">Tournament Administrator</option>
         </select>
       </label>
 

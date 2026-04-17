@@ -69,7 +69,9 @@
             <tr>
               <td>{{ team.name }}</td>
               <td>{{ formatCategory(team.category) }}</td>
-              <td>{{ team.memberCount }}/2</td>
+              <td title="Teams require exactly 1 Pilot and 1 Co-pilot to be complete.">
+                {{ team.memberCount }}/2
+              </td>
               <td>{{ hasOpenSlot(team) ? 'Open slot' : 'Full' }}</td>
               <td class="actions-cell">
                 <a [routerLink]="['/view-team', team.id]">View team</a>
