@@ -37,7 +37,6 @@ def _resolve_user_name(user_id: str) -> str:
     except Exception:
         pass
 
-    # Fallback to Firebase Authentication profile when Firestore profile is missing.
     try:
         firebase_user = auth.get_user(user_id)
         display_name = (firebase_user.display_name or '').strip()
@@ -100,9 +99,24 @@ def create_team():
             "message": f"Invalid category. Must be one of: {', '.join(ALLOWED_CATEGORIES)}"
         }), 400
 
+    pilot_id = data['pilot_id']
+    category = data['category'].strip().lower()
+
+    existing_teams = db.collection('teams').where(
+        filter=FieldFilter('pilot_id', '==', pilot_id)
+    ).stream()
+
+    for team_doc in existing_teams:
+        team_data = team_doc.to_dict() or {}
+        existing_cat = str(team_data.get('category', '')).strip().lower()
+        if existing_cat == category:
+            return jsonify({
+                "message": f"You are already the pilot of a '{category}' team. You cannot create another one."
+            }), 409
+
     team_data = {
         "name": data['name'],
-        "pilot_id": data['pilot_id'],
+        "pilot_id": pilot_id,
         "copilot_id": data['copilot_id'],
         "category": data['category']
     }
@@ -148,7 +162,6 @@ def join_team(team_id):
     if copilot_id:
         return jsonify({"message": "This team already has a co-pilot."}), 409
 
-    # Co-pilots can join multiple teams only if categories are different.
     existing_as_copilot = db.collection('teams').where(
         filter=FieldFilter('copilot_id', '==', user_id)
     ).stream()

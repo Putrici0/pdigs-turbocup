@@ -57,6 +57,9 @@
                 <td data-label="Action">
                   <div class="action-buttons">
                     <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
+
+                    <button type="button" class="stats-link" (click)="joinTournament(tournament)">Join</button>
+
                     @if (canDeleteTournament(tournament)) {
                       <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>
                     }
@@ -109,6 +112,7 @@
                 <td data-label="Action">
                   <div class="action-buttons">
                     <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
+
                     @if (canDeleteTournament(tournament)) {
                       <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>
                     }

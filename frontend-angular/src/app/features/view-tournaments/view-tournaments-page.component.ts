@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http'; // <-- AÑADIDO
 import { AuthService } from '../../core/auth.service';
 import { Tournament, TournamentDataService, TournamentStatus } from '../../core/tournament-data.service';
 
@@ -15,6 +16,7 @@ type TabKey = TournamentStatus;
 })
 export class ViewTournamentsPageComponent implements OnInit {
   private readonly tournamentDataService = inject(TournamentDataService);
+  private readonly http = inject(HttpClient);
   readonly activeTab = signal<TabKey>('current');
   readonly query = signal('');
   readonly isLoading = signal(true);
@@ -134,6 +136,54 @@ export class ViewTournamentsPageComponent implements OnInit {
     this.tournamentDataService.deleteTournament(tournament.id).subscribe({
       error: () => {
         this.errorMessage.set('Could not delete tournament. Please try again.');
+      }
+    });
+  }
+
+  joinTournament(tournament: Tournament): void {
+    const session = this.authService.session();
+
+    if (!session) {
+      window.alert('You must be logged in to perform this action.');
+      return;
+    }
+
+    if (session.role !== 'participant_pilot') {
+      window.alert('Only the drivers can register the team in a tournament.');
+      return;
+    }
+
+    const uid = session.uid;
+
+    this.http.get<any[]>('http://127.0.0.1:5050/api/teams/').subscribe({
+      next: (teams) => {
+        const myTeam = teams.find(t =>
+          t.pilot_id === uid &&
+          t.category.toLowerCase() === tournament.category.toLowerCase()
+        );
+
+        if (!myTeam) {
+          window.alert(`You do not have a team registered for the category: ${tournament.category}.`);
+          return;
+        }
+
+        if (!myTeam.copilot_id || myTeam.member_count < 2) {
+          window.alert('Your team is incomplete. You need a co-pilot before joining a tournament.');
+          return;
+        }
+
+        this.http.post(`http://127.0.0.1:5050/api/tournaments/${tournament.id}/join`, { team_id: myTeam.id }).subscribe({
+          next: () => {
+            window.alert(`¡Successful registration to ${tournament.name}!`);
+            this.ngOnInit();
+          },
+          error: (err) => {
+            window.alert(err.error?.message || 'There was an error when trying to join the tournament.');
+          }
+        });
+      },
+      error: () => {
+        window.alert('Error verifying your device. Please try again later.');
       }
     });
   }
