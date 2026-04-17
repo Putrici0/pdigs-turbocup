@@ -137,6 +137,7 @@ def join_team(team_id):
     team_data = team_doc.to_dict() or {}
     pilot_id = (team_data.get('pilot_id') or '').strip()
     copilot_id = (team_data.get('copilot_id') or '').strip()
+    team_category = str(team_data.get('category') or '').strip().lower()
 
     if pilot_id == user_id:
         return jsonify({"message": "You are already the pilot of this team."}), 409
@@ -147,18 +148,18 @@ def join_team(team_id):
     if copilot_id:
         return jsonify({"message": "This team already has a co-pilot."}), 409
 
-    # A co-pilot can belong to only one team at a time.
-    existing_as_copilot = list(
-        db.collection('teams').where(filter=FieldFilter('copilot_id', '==', user_id)).limit(1).stream()
-    )
-    if existing_as_copilot:
-        return jsonify({"message": "You are already assigned as co-pilot in another team."}), 409
+    # Co-pilots can join multiple teams only if categories are different.
+    existing_as_copilot = db.collection('teams').where(
+        filter=FieldFilter('copilot_id', '==', user_id)
+    ).stream()
 
-    existing_as_pilot = list(
-        db.collection('teams').where(filter=FieldFilter('pilot_id', '==', user_id)).limit(1).stream()
-    )
-    if existing_as_pilot:
-        return jsonify({"message": "You are already assigned as pilot in another team."}), 409
+    for existing_doc in existing_as_copilot:
+        existing_data = existing_doc.to_dict() or {}
+        existing_category = str(existing_data.get('category') or '').strip().lower()
+        if existing_category == team_category:
+            return jsonify({
+                "message": "You are already a co-pilot in a team of this category."
+            }), 409
 
     try:
         team_ref.update({'copilot_id': user_id})
@@ -166,3 +167,35 @@ def join_team(team_id):
         return jsonify(_serialize_team(updated_team)), 200
     except Exception as error:
         return jsonify({"message": f"Error joining team: {str(error)}"}), 500
+
+
+@teams_bp.route('/<team_id>/leave', methods=['POST'])
+def leave_team(team_id):
+    data = request.get_json() or {}
+    user_id = (data.get('user_id') or '').strip()
+    role = (data.get('role') or '').strip()
+
+    if not user_id:
+        return jsonify({"message": "Missing required field: user_id"}), 400
+
+    if role != 'participant_copilot':
+        return jsonify({"message": "Only users with the Co-pilot role can leave a team from this action."}), 403
+
+    team_ref = db.collection('teams').document(team_id)
+    team_doc = team_ref.get()
+
+    if not team_doc.exists:
+        return jsonify({"message": "Team not found"}), 404
+
+    team_data = team_doc.to_dict() or {}
+    copilot_id = (team_data.get('copilot_id') or '').strip()
+
+    if copilot_id != user_id:
+        return jsonify({"message": "You are not the co-pilot of this team."}), 409
+
+    try:
+        team_ref.update({'copilot_id': ''})
+        updated_team = team_ref.get()
+        return jsonify(_serialize_team(updated_team)), 200
+    except Exception as error:
+        return jsonify({"message": f"Error leaving team: {str(error)}"}), 500
