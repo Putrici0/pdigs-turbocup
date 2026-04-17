@@ -43,6 +43,16 @@
       </a>
 
       @if (authService.session()) {
+        @if (authService.session()?.role === 'participant_pilot' || authService.session()?.role === 'participant_copilot') {
+          <a
+            routerLink="/my-teams"
+            routerLinkActive="active-link"
+            (click)="closeToolbar()"
+          >
+            My Teams
+          </a>
+        }
+
         <a
           routerLink="/my-tournaments"
           routerLinkActive="active-link"
