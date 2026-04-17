@@ -24,7 +24,7 @@
         <h3>Pilot</h3>
         @if (hasPilot(currentTeam)) {
           <p><strong>ID:</strong> {{ currentTeam.pilot_id }}</p>
-          <p><strong>Name:</strong> {{ currentTeam.pilot_name || 'Unknown user' }}</p>
+          <p><strong>Name:</strong> {{ getMemberDisplayName(currentTeam.pilot_id, currentTeam.pilot_name) }}</p>
         } @else {
           <p>No pilot assigned.</p>
         }
@@ -34,7 +34,7 @@
         <h3>Co-pilot</h3>
         @if (hasCoPilot(currentTeam)) {
           <p><strong>ID:</strong> {{ currentTeam.copilot_id }}</p>
-          <p><strong>Name:</strong> {{ currentTeam.copilot_name || 'Unknown user' }}</p>
+          <p><strong>Name:</strong> {{ getMemberDisplayName(currentTeam.copilot_id, currentTeam.copilot_name) }}</p>
         } @else {
           <p>No co-pilot assigned.</p>
         }

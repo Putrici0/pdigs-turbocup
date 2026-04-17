@@ -52,4 +52,15 @@ export class ViewTeamPageComponent implements OnInit {
   hasCoPilot(team: Team): boolean {
     return !!team.copilot_id;
   }
+
+  getMemberDisplayName(memberId: string, memberName: string): string {
+    const normalizedName = (memberName || '').trim();
+    const normalizedId = (memberId || '').trim();
+
+    if (!normalizedName || normalizedName === normalizedId) {
+      return 'Unknown user';
+    }
+
+    return normalizedName;
+  }
 }

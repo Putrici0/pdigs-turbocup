@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from firebase_admin import auth
 
 from backend.app.db import db
 from backend.app.models.racing_category import racing_category
@@ -15,18 +16,39 @@ def _resolve_user_name(user_id: str) -> str:
 
     try:
         user_doc = db.collection('users').document(user_id).get()
-        if not user_doc.exists:
-            return user_id
+        if user_doc.exists:
+            user_data = user_doc.to_dict() or {}
+            full_name = (user_data.get('fullName') or '').strip()
+            name = (user_data.get('name') or '').strip()
+            surname = (user_data.get('surname') or '').strip()
+            composed_name = f"{name} {surname}".strip()
+            username = (user_data.get('username') or '').strip()
+            email = (user_data.get('email') or '').strip()
 
-        user_data = user_doc.to_dict() or {}
-        return (
-                user_data.get('fullName')
-                or user_data.get('username')
-                or user_data.get('email')
-                or user_id
-        )
+            if full_name:
+                return full_name
+            if composed_name:
+                return composed_name
+            if username:
+                return username
+            if email:
+                return email
     except Exception:
-        return user_id
+        pass
+
+    # Fallback to Firebase Authentication profile when Firestore profile is missing.
+    try:
+        firebase_user = auth.get_user(user_id)
+        display_name = (firebase_user.display_name or '').strip()
+        email = (firebase_user.email or '').strip()
+        if display_name:
+            return display_name
+        if email:
+            return email
+    except Exception:
+        pass
+
+    return ''
 
 
 def _serialize_team(doc):
