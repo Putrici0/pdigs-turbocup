@@ -2,6 +2,7 @@ from firebase_admin import auth, firestore
 from datetime import datetime
 
 from flask import Blueprint, jsonify, request
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 from backend.app.db import db
 
@@ -54,8 +55,45 @@ def get_user(user_id):
 @users_bp.route('/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
     try:
-        auth.delete_user(user_id)
+        # 1) Delete all teams where this user is the pilot.
+        pilot_team_docs = list(
+            db.collection("teams").where(filter=FieldFilter("pilot_id", "==", user_id)).stream()
+        )
+        pilot_team_ids = {doc.id for doc in pilot_team_docs}
 
+        for team_doc in pilot_team_docs:
+            team_doc.reference.delete()
+
+        # 2) If this user is a co-pilot in any team, remove them from that slot.
+        copilot_team_docs = list(
+            db.collection("teams").where(filter=FieldFilter("copilot_id", "==", user_id)).stream()
+        )
+        for team_doc in copilot_team_docs:
+            team_doc.reference.update({"copilot_id": ""})
+
+        # 3) Remove deleted pilot teams from tournaments to avoid dangling references.
+        if pilot_team_ids:
+            tournament_docs = list(db.collection("tournaments").stream())
+            for tournament_doc in tournament_docs:
+                tournament_data = tournament_doc.to_dict() or {}
+                registered_team_ids = tournament_data.get("registered_team_ids", [])
+                participants = tournament_data.get("participants", [])
+
+                filtered_team_ids = [team_id for team_id in registered_team_ids if team_id not in pilot_team_ids]
+                filtered_participants = [
+                    participant
+                    for participant in participants
+                    if participant.get("id") not in pilot_team_ids
+                ]
+
+                if filtered_team_ids != registered_team_ids or filtered_participants != participants:
+                    tournament_doc.reference.update({
+                        "registered_team_ids": filtered_team_ids,
+                        "participants": filtered_participants
+                    })
+
+        # 4) Delete auth account and user profile document.
+        auth.delete_user(user_id)
         db.collection("users").document(user_id).delete()
 
         return jsonify({"message": f"User {user_id} deleted successfully"}), 200

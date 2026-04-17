@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { API_BASE_URL } from '../../core/api.config';
 
 @Component({
   selector: 'app-profile-page',
@@ -103,7 +104,7 @@ export class ProfilePageComponent {
 
     this.isDeleting.set(true);
 
-    this.http.delete(`http://127.0.0.1:5000/api/user/${uid}`).subscribe({
+    this.http.delete(`${API_BASE_URL}/user/${encodeURIComponent(uid)}`).subscribe({
       next: async () => {
         await this.authService.logout();
         this.isDeleting.set(false);
@@ -111,8 +112,12 @@ export class ProfilePageComponent {
         this.router.navigate(['/login']);
       },
       error: (err) => {
-        console.error('Error al borrar la cuenta:', err);
-        this.message.set('An error occurred while deleting your account.');
+        console.error('Error deleting the account:', err);
+        const backendMessage =
+          err?.error?.error && typeof err.error.error === 'string'
+            ? err.error.error
+            : 'An error occurred while deleting your account.';
+        this.message.set(backendMessage);
         this.isError.set(true);
         this.isDeleting.set(false);
         this.showDeleteDialog.set(false);
