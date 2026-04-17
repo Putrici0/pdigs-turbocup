@@ -1,2 +1,2 @@
-but still need to change colors
-please add more things
+Name displayed in view team page is the ID of the participant
+Team page shouldnt be shown to Administrators
