@@ -40,6 +40,41 @@
   color: #f3f4f6;
 }
 
+.notice {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  background: rgba(6, 78, 59, 0.25);
+  color: #d1fae5;
+}
+
+.notice.is-error {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.25);
+  color: #fecaca;
+}
+
+.actions-row {
+  margin-top: 14px;
+}
+
+.leave-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  min-height: 40px;
+  background: #4b5563;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.leave-button:hover {
+  background: #374151;
+}
+
 .team-crew {
   border: 1px solid rgba(229, 231, 235, 0.14);
   border-radius: 28px;
@@ -101,6 +136,72 @@
   border-color: rgba(248, 113, 113, 0.45);
   background: rgba(127, 29, 29, 0.25);
   color: #fecaca;
+}
+
+.confirm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.58);
+  padding: 16px;
+}
+
+.confirm-dialog {
+  width: min(420px, 100%);
+  border-radius: 12px;
+  padding: 20px;
+  background: #111827;
+  border: 1px solid rgba(220, 36, 126, 0.35);
+  color: #f9fafb;
+}
+
+.confirm-dialog h2 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+}
+
+.confirm-dialog p {
+  margin: 0 0 16px;
+  color: #cbd5e1;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirm-cancel,
+.confirm-primary {
+  border: 0;
+  border-radius: 8px;
+  min-height: 38px;
+  padding: 8px 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.confirm-cancel {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.confirm-primary {
+  background: #dc247e;
+  color: #ffffff;
+}
+
+.confirm-primary:hover {
+  background: #be185d;
+}
+
+.confirm-cancel:disabled,
+.confirm-primary:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
 }
 
 @media (max-width: 960px) {

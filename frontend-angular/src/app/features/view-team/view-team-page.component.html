@@ -11,10 +11,22 @@
     <p class="eyebrow">Team Profile</p>
     <h1>{{ currentTeam.name }}</h1>
 
+    @if (actionMessage()) {
+      <p class="notice" [class.is-error]="actionIsError()">{{ actionMessage() }}</p>
+    }
+
     <div class="team-meta">
       <p><strong>Category:</strong> {{ formatCategory(currentTeam.category) }}</p>
       <p><strong>Members:</strong> {{ currentTeam.member_count }}/2</p>
       <p><strong>Status:</strong> {{ currentTeam.member_count < 2 ? 'Open slot' : 'Full' }}</p>
+
+      @if (canLeaveTeam(currentTeam)) {
+        <div class="actions-row">
+          <button type="button" class="leave-button" (click)="openLeaveConfirmation()">
+            Leave team
+          </button>
+        </div>
+      }
     </div>
 
     <section class="team-crew">
@@ -41,4 +53,21 @@
       </article>
     </section>
   </section>
+}
+
+@if (showLeaveConfirmDialog()) {
+  <div class="confirm-dialog-backdrop" (click)="closeLeaveConfirmation()">
+    <div class="confirm-dialog" (click)="$event.stopPropagation()">
+      <h2>Leave team</h2>
+      <p>Are you sure you want to leave this team as co-pilot?</p>
+      <div class="confirm-actions">
+        <button type="button" class="confirm-cancel" [disabled]="isLeaving()" (click)="closeLeaveConfirmation()">
+          Cancel
+        </button>
+        <button type="button" class="confirm-primary" [disabled]="isLeaving()" (click)="confirmLeaveTeam()">
+          {{ isLeaving() ? 'Leaving...' : 'Leave team' }}
+        </button>
+      </div>
+    </div>
+  </div>
 }

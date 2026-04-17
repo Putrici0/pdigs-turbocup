@@ -75,6 +75,12 @@ export class TeamService {
     );
   }
 
+  leaveTeam(teamId: string, payload: JoinTeamPayload): Observable<Team> {
+    return this.http.post<ApiTeam>(`${this.apiBase}/${encodeURIComponent(teamId)}/leave`, payload).pipe(
+      map((item) => this.normalizeTeam(item)),
+    );
+  }
+
   private normalizeTeam(item: ApiTeam): Team {
     const pilotId = item.pilot_id || '';
     const copilotId = item.copilot_id || '';
