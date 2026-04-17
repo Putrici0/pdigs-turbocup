@@ -28,6 +28,7 @@ export class TeamsPageComponent implements OnInit {
   readonly isLoading = signal(true);
   readonly infoMessage = signal('');
   readonly infoIsError = signal(false);
+  readonly joiningTeamId = signal('');
 
   readonly teams = computed<TeamListItem[]>(() =>
     this.allTeams()
@@ -78,6 +79,11 @@ export class TeamsPageComponent implements OnInit {
       this.backendCategories.set(categories);
     });
 
+    this.loadTeams();
+  }
+
+  private loadTeams(): void {
+    this.isLoading.set(true);
     this.teamService.getTeams().subscribe((teams) => {
       this.allTeams.set(teams);
       this.isLoading.set(false);
@@ -104,13 +110,62 @@ export class TeamsPageComponent implements OnInit {
     return team.memberCount < 2;
   }
 
-  hasJoined(_teamId: string): boolean {
-    return false;
+  hasJoined(teamId: string): boolean {
+    const session = this.authService.session();
+    if (!session) {
+      return false;
+    }
+
+    const team = this.allTeams().find((item) => item.id === teamId);
+    if (!team) {
+      return false;
+    }
+
+    return team.pilot_id === session.uid || team.copilot_id === session.uid;
   }
 
-  joinTeam(_teamId: string): void {
-    this.infoIsError.set(false);
-    this.infoMessage.set('Joining a team is not implemented in this page yet.');
+  joinTeam(teamId: string): void {
+    const session = this.authService.session();
+
+    if (!session) {
+      this.infoIsError.set(true);
+      this.infoMessage.set('You must be logged in to join a team.');
+      return;
+    }
+
+    if (session.role !== 'participant_copilot') {
+      this.infoIsError.set(true);
+      this.infoMessage.set('Only users with the Co-pilot role can join a team.');
+      return;
+    }
+
+    if (this.hasJoined(teamId)) {
+      this.infoIsError.set(true);
+      this.infoMessage.set('You are already part of this team.');
+      return;
+    }
+
+    this.joiningTeamId.set(teamId);
+    this.teamService.joinTeam(teamId, {
+      user_id: session.uid,
+      role: session.role,
+    }).subscribe({
+      next: () => {
+        this.infoIsError.set(false);
+        this.infoMessage.set('You joined the team successfully.');
+        this.joiningTeamId.set('');
+        this.loadTeams();
+      },
+      error: (error) => {
+        const backendMessage =
+          error?.error?.message && typeof error.error.message === 'string'
+            ? error.error.message
+            : 'Could not join this team.';
+        this.infoIsError.set(true);
+        this.infoMessage.set(backendMessage);
+        this.joiningTeamId.set('');
+      },
+    });
   }
 
   async goToCreateTeam(): Promise<void> {

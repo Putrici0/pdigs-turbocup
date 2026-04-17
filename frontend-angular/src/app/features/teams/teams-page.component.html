@@ -77,7 +77,14 @@
                 @if (hasJoined(team.id)) {
                   <span>Joined</span>
                 } @else if (hasOpenSlot(team)) {
-                  <button type="button" class="join-button" (click)="joinTeam(team.id)">Join</button>
+                  <button
+                    type="button"
+                    class="join-button"
+                    [disabled]="joiningTeamId() === team.id"
+                    (click)="joinTeam(team.id)"
+                  >
+                    {{ joiningTeamId() === team.id ? 'Joining...' : 'Join' }}
+                  </button>
                 }
               </td>
             </tr>

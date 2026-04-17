@@ -200,6 +200,11 @@ h1 {
   background: #b91c68;
 }
 
+.join-button:disabled {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
 .notice {
   margin: 0 0 1rem;
   padding: 10px 14px;

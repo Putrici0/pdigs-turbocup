@@ -32,6 +32,11 @@ export interface CreateTeamPayload {
   copilot_id: string;
 }
 
+export interface JoinTeamPayload {
+  user_id: string;
+  role: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TeamService {
   private readonly apiBase = `${API_BASE_URL}/teams`;
@@ -60,6 +65,12 @@ export class TeamService {
 
   createTeam(payload: CreateTeamPayload): Observable<Team> {
     return this.http.post<ApiTeam>(`${this.apiBase}/`, payload).pipe(
+      map((item) => this.normalizeTeam(item)),
+    );
+  }
+
+  joinTeam(teamId: string, payload: JoinTeamPayload): Observable<Team> {
+    return this.http.post<ApiTeam>(`${this.apiBase}/${encodeURIComponent(teamId)}/join`, payload).pipe(
       map((item) => this.normalizeTeam(item)),
     );
   }
