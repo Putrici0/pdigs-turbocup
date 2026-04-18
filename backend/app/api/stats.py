@@ -69,82 +69,66 @@ def get_user_stats(user_id):
             if performance["matchesPlayed"] > 0:
                 performance["win_rate"] = round((performance["win"] / performance["matchesPlayed"]) * 100, 2)
 
-        pilot_query = db.collection("teams").where(filter=FieldFilter("pilot_id", "==", user_id))
-        copilot_query = db.collection("teams").where(filter=FieldFilter("copilot_id", "==", user_id))
+        # Optimization: O(1) count for teams
+        pilot_count = _count_query(db.collection("teams").where(filter=FieldFilter("pilot_id", "==", user_id)))
+        copilot_count = _count_query(db.collection("teams").where(filter=FieldFilter("copilot_id", "==", user_id)))
+        total_teams = pilot_count + copilot_count
         
-        team_ids = [doc.id for doc in pilot_query.stream()] + [doc.id for doc in copilot_query.stream()]
-        
+        # Tournaments participation (Chunked query)
         tournaments_count = 0
+        # For the count we still need the team IDs, so we fetch them selectively
+        team_ids = [doc.id for doc in db.collection("teams").where(filter=FieldFilter("pilot_id", "==", user_id)).select([]).stream()]
+        team_ids += [doc.id for doc in db.collection("teams").where(filter=FieldFilter("copilot_id", "==", user_id)).select([]).stream()]
+        
         if team_ids:
             for i in range(0, len(team_ids), 30):
                 chunk = team_ids[i:i + 30]
-                query = db.collection("tournaments").where(
-                    filter=FieldFilter("registered_team_ids", "array_contains_any", chunk)
-                )
+                query = db.collection("tournaments").where(filter=FieldFilter("registered_team_ids", "array_contains_any", chunk))
                 tournaments_count += _count_query(query)
 
         return jsonify({
             "user_id": user_id,
             "performance": performance,
-            "total_teams": len(team_ids),
+            "total_teams": total_teams,
             "total_tournaments": tournaments_count
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# --- OPTIMIZED MATCH STATS ENDPOINT (BATCH GET) ---
+# --- OPTIMIZED MATCH STATS ENDPOINT (ZERO EXTRA READS) ---
 
 @stats_bp.route('/match/<match_id>', methods=['GET'])
 def get_match_stats(match_id):
-    """Returns detailed match information using Batch Get for teams to minimize round-trips."""
+    """
+    ULTRA OPTIMIZED: Uses desnormalized names from the match document.
+    Reduces Firestore reads to the bare minimum.
+    """
     try:
-        # 1. Get Match Document
         match_doc = db.collection("matches").document(match_id).get()
         if not match_doc.exists:
             return jsonify({"error": "Match not found"}), 404
         
-        match_data = match_doc.to_dict()
-        team_ids_to_fetch = filter(None, [
-            match_data.get("team_a_id"),
-            match_data.get("team_b_id"),
-            match_data.get("winner_id")
-        ])
-        
-        # 2. Batch Get Teams (This is the Level 1 optimization)
-        # We create unique references and fetch them all at once
-        unique_team_ids = list(set(team_ids_to_fetch))
-        team_names_map = {}
-        
-        if unique_team_ids:
-            team_refs = [db.collection("teams").document(tid) for tid in unique_team_ids]
-            # db.get_all() performs a single multi-document fetch
-            team_docs = db.get_all(team_refs)
-            for doc in team_docs:
-                if doc.exists:
-                    team_names_map[doc.id] = doc.to_dict().get("name", "Unknown Team")
+        m = match_doc.to_dict()
 
-        # 3. Build Response using the map
-        team_a_id = match_data.get("team_a_id")
-        team_b_id = match_data.get("team_b_id")
-        winner_id = match_data.get("winner_id")
-
+        # Build response directly from the match document
+        # No more db.get_all() needed for names!
         detailed_response = {
             "id": match_id,
-            "category": match_data.get("category"),
-            "status": match_data.get("status"),
-            "round": match_data.get("round"),
+            "category": m.get("category"),
+            "status": m.get("status"),
+            "round": m.get("round"),
             "teams": {
-                "team_a": {"id": team_a_id, "name": team_names_map.get(team_a_id, "TBD")},
-                "team_b": {"id": team_b_id, "name": team_names_map.get(team_b_id, "TBD")}
+                "team_a": {"id": m.get("team_a_id"), "name": m.get("team_a_name", "TBD")},
+                "team_b": {"id": m.get("team_b_id"), "name": m.get("team_b_name", "TBD")}
             },
             "result": {
-                "winner_id": winner_id,
-                "winner_name": team_names_map.get(winner_id, "TBD") if winner_id else "TBD"
+                "winner_id": m.get("winner_id"),
+                "winner_name": m.get("winner_name", "TBD")
             },
             "performance": []
         }
 
-        # 4. Fetch Telemetry
+        # Fetch telemetry
         stats_query = db.collection("match_stats").where(filter=FieldFilter("match_id", "==", match_id)).stream()
         for stat_doc in stats_query:
             stat_data = stat_doc.to_dict()
