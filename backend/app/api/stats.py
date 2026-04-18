@@ -1,17 +1,143 @@
 from flask import Blueprint, jsonify
+from google.cloud.firestore_v1.base_query import FieldFilter
+from google.cloud.firestore_v1.aggregate import AggregateQuery
 
 from backend.app.db import db
 from backend.app.utils import serialize_firestore
+from backend.app.models.racing_category import racing_category
 
 stats_bp = Blueprint('stats', __name__)
 
+# --- HELPERS ---
+
+def _count_query(query):
+    """Efficiently counts documents in a query using Firestore Aggregations."""
+    aggregate_query = AggregateQuery(query)
+    aggregate_query.count()
+    results = aggregate_query.get()
+    return results[0][0].value
+
+def _get_team_name(team_id):
+    """Helper to resolve team name from ID."""
+    if not team_id:
+        return "TBD"
+    doc = db.collection("teams").document(team_id).get()
+    return doc.to_dict().get("name", "Unknown Team") if doc.exists else "Unknown Team"
+
+@stats_bp.route('/global/summary', methods=['GET'])
+def get_global_summary():
+    try:
+        return jsonify({
+            "total_users": _count_query(db.collection("users")),
+            "total_teams": _count_query(db.collection("teams")),
+            "total_tournaments": _count_query(db.collection("tournaments")),
+            "total_matches": _count_query(db.collection("matches"))
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@stats_bp.route('/global/tournaments', methods=['GET'])
+def get_global_tournaments_stats():
+    try:
+        stats = {"total": _count_query(db.collection("tournaments"))}
+        for status in ["current", "past", "scheduled"]:
+            query = db.collection("tournaments").where(filter=FieldFilter("status", "==", status))
+            stats[status] = _count_query(query)
+        return jsonify(stats), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@stats_bp.route('/global/categories', methods=['GET'])
+def get_global_categories_stats():
+    try:
+        categories_data = {}
+        for cat in racing_category:
+            cat_val = cat.value
+            teams_query = db.collection("teams").where(filter=FieldFilter("category", "==", cat_val))
+            tourn_query = db.collection("tournaments").where(filter=FieldFilter("category", "==", cat_val))
+            categories_data[cat_val] = {
+                "teams": _count_query(teams_query),
+                "tournaments": _count_query(tourn_query)
+            }
+        return jsonify(categories_data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# --- USER STATS ENDPOINT ---
+@stats_bp.route('/user/<user_id>', methods=['GET'])
+def get_user_stats(user_id):
+    try:
+        participant_doc = db.collection("participants").document(user_id).get()
+        performance = {"win": 0, "loss": 0, "matchesPlayed": 0, "win_rate": 0}
+        if participant_doc.exists:
+            p_data = participant_doc.to_dict().get("stats", {})
+            performance.update(p_data)
+            if performance["matchesPlayed"] > 0:
+                performance["win_rate"] = round((performance["win"] / performance["matchesPlayed"]) * 100, 2)
+        
+        pilot_query = db.collection("teams").where(filter=FieldFilter("pilot_id", "==", user_id))
+        copilot_query = db.collection("teams").where(filter=FieldFilter("copilot_id", "==", user_id))
+        team_ids = [doc.id for doc in pilot_query.stream()] + [doc.id for doc in copilot_query.stream()]
+        
+        tournaments_count = 0
+        if team_ids:
+            for i in range(0, len(team_ids), 30):
+                chunk = team_ids[i:i + 30]
+                query = db.collection("tournaments").where(filter=FieldFilter("registered_team_ids", "array_contains_any", chunk))
+                tournaments_count += _count_query(query)
+
+        return jsonify({
+            "user_id": user_id,
+            "performance": performance,
+            "total_teams": len(team_ids),
+            "total_tournaments": tournaments_count
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @stats_bp.route('/match/<match_id>', methods=['GET'])
 def get_match_stats(match_id):
-    match_ref = db.collection("matches").document(match_id)
-    match = match_ref.get()
+    """Returns detailed match information, including team names and performance data."""
+    try:
+        # 1. Get Match Document
+        match_doc = db.collection("matches").document(match_id).get()
+        if not match_doc.exists:
+            return jsonify({"error": "Match not found"}), 404
+        
+        match_data = match_doc.to_dict()
+        team_a_id = match_data.get("team_a_id")
+        team_b_id = match_data.get("team_b_id")
+        winner_id = match_data.get("winner_id")
 
-    if not match.exists:
-        return jsonify({"error": "Match not found"}), 404
+        # 2. Resolve Context (Names and Results)
+        detailed_response = {
+            "id": match_id,
+            "category": match_data.get("category"),
+            "status": match_data.get("status"),
+            "round": match_data.get("round"),
+            "teams": {
+                "team_a": {"id": team_a_id, "name": _get_team_name(team_a_id)},
+                "team_b": {"id": team_b_id, "name": _get_team_name(team_b_id)}
+            },
+            "result": {
+                "winner_id": winner_id,
+                "winner_name": _get_team_name(winner_id) if winner_id else "TBD"
+            },
+            "performance": []
+        }
 
-    data = serialize_firestore(match)
-    return jsonify(data), 200
+        # 3. Fetch Telemetry/Detailed Stats (from match_stats collection)
+        # We look for documents where match_id matches
+        stats_query = db.collection("match_stats").where(filter=FieldFilter("match_id", "==", match_id)).stream()
+        
+        for stat_doc in stats_query:
+            stat_data = stat_doc.to_dict()
+            # Clean up the internal match_id from the nested dict
+            stat_data.pop("match_id", None)
+            detailed_response["performance"].append(stat_data)
+
+        return jsonify(detailed_response), 200
+
+    except Exception as e:
+        return jsonify({"error": f"Internal server error: {str(e)}"}), 500

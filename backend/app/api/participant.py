@@ -69,6 +69,35 @@ def delete_participant(participant_id):
     return jsonify({"success": f"Participant {participant_id} deleted"}), 200
 
 
+@participants_bp.route('/<participant_id>', methods=['PUT'])
+def update_participant(participant_id):
+    try:
+        data = request.json
+        if not data:
+            return jsonify({"error": "No data provided"}), 400
+
+        participant_ref = db.collection("participants").document(participant_id)
+        if not participant_ref.get().exists:
+            return jsonify({"error": "Participant not found"}), 404
+
+        # Fields allowed to be updated
+        allowed_fields = ['name', 'last_name', 'dob', 'license', 'licenseExpedition']
+        update_data = {k: v for k, v in data.items() if k in allowed_fields}
+
+        if not update_data:
+            return jsonify({"error": "No valid fields to update"}), 400
+
+        participant_ref.update(update_data)
+
+        return jsonify({
+            "id": participant_id,
+            "message": "Participant updated successfully"
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @participants_bp.route('/<participant_id>/stats', methods=['GET'])
 def get_participant_stats(participant_id):
     participant_ref = db.collection("participants").document(participant_id)
