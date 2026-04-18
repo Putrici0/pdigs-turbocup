@@ -340,6 +340,23 @@ def update_tournament(tournament_id):
     if end_date_str and _parse_iso_datetime(end_date_str) is None:
         return jsonify({"message": "end_date must be in YYYY-MM-DDTHH:MM format"}), 400
 
+    old_start_date = existing_data.get('start_date')
+    if old_start_date and old_start_date != start_date_str:
+        registered_teams = existing_data.get('registered_team_ids', [])
+        for t_id in registered_teams:
+            team_doc = db.collection('teams').document(t_id).get()
+            if team_doc.exists:
+                t_data = team_doc.to_dict()
+                msg = f"The admin has changed the start time of '{new_name}' to {start_date_str}."
+                for role_id in [t_data.get('pilot_id'), t_data.get('copilot_id')]:
+                    if role_id:
+                        db.collection('notifications').add({
+                            "user_id": role_id,
+                            "message": msg,
+                            "read": False,
+                            "created_at": datetime.now().isoformat()
+                        })
+
     update_data = {
         "name": new_name,
         "start_date": start_date_str,

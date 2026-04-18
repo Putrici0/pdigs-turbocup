@@ -17,6 +17,7 @@ import { adminGuard } from './core/admin.guard';
 import { authGuard } from './core/auth.guard';
 import { MyTournamentsComponent } from './features/my-tournaments/my-tournaments';
 import { MyTeamsPageComponent } from './features/my-teams/my-teams-page.component';
+import {NotificationsPageComponent} from './features/notifications/notifications-page.component';
 
 export const routes: Routes = [
   {
@@ -36,6 +37,7 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       { path: 'view-tournament-statistic/:id', component: ViewTournamentStatisticPageComponent },
+      { path: 'notifications', component: NotificationsPageComponent, canActivate: [authGuard] },
       { path: 'create-tournament', component: CreateTournamentPageComponent, canActivate: [adminGuard] },
       { path: 'edit-tournament/:id', component: EditTournamentPageComponent, canActivate: [adminGuard] },
       { path: 'my-tournaments', component: MyTournamentsComponent, canActivate: [authGuard] },

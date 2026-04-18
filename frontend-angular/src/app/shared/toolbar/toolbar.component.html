@@ -43,6 +43,13 @@
       </a>
 
       @if (authService.session()) {
+          <a
+            routerLink="/notifications"
+            routerLinkActive="active-link"
+            (click)="closeToolbar()"
+          >
+            Notifications
+          </a>
         @if (authService.session()?.role === 'participant_pilot' || authService.session()?.role === 'participant_copilot') {
           <a
             routerLink="/my-teams"
