@@ -38,8 +38,8 @@ export class HomePageComponent implements OnInit, OnDestroy {
     },
     {
       kicker: 'Ready for Growth',
-      title: 'Prepared for Firebase integration',
-      description: 'Start with preload data now, then connect your backend and Firestore with minimal changes.',
+      title: 'Prepared for rapid responses and growth',
+      description: 'Cater to a wide range of rallying needs with a robust platform for tournament management.',
       visualClass: 'visual-three',
       visualLabel: 'Sunset desert rally route'
     }
