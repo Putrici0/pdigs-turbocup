@@ -11,6 +11,12 @@ import { AuthService, UserRole } from '../../core/auth.service';
   styleUrl: './auth-pages.css',
 })
 export class RegisterPageComponent {
+  private readonly roleDescriptions: Record<UserRole, string> = {
+    participant_pilot: 'Can create teams and register them in tournaments.',
+    participant_copilot: 'Can join a team as co-pilot.',
+    tournament_admin: 'Can create, edit, and manage tournaments.',
+  };
+
   name = '';
   surname = '';
   username = '';
@@ -37,6 +43,10 @@ export class RegisterPageComponent {
 
   toggleConfirmPassword(): void {
     this.showConfirmPassword.set(!this.showConfirmPassword());
+  }
+
+  selectedRoleDescription(): string {
+    return this.roleDescriptions[this.role];
   }
 
   async submit(): Promise<void> {
