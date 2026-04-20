@@ -18,6 +18,10 @@
     <p class="empty-state">{{ errorMessage() }}</p>
   }
 
+  @if (actionMessage()) {
+    <p class="notice" [class.is-error]="actionIsError()">{{ actionMessage() }}</p>
+  }
+
   <div class="view-tabs" role="tablist" aria-label="Tournament status tabs">
     <button type="button" class="tab-button" [class.active]="activeTab() === 'scheduled'" (click)="setTab('scheduled')">Scheduled</button>
     <button type="button" class="tab-button" [class.active]="activeTab() === 'current'" (click)="setTab('current')">Current</button>
@@ -57,6 +61,16 @@
                 <td data-label="Action">
                   <div class="action-buttons">
                     <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
+                    @if (canShowLeaveAction(tournament)) {
+                      <button
+                        type="button"
+                        class="leave-link"
+                        [disabled]="leavingTournamentId() === tournament.id"
+                        (click)="leaveTournament(tournament)"
+                      >
+                        {{ leavingTournamentId() === tournament.id ? 'Leaving...' : 'Leave' }}
+                      </button>
+                    }
                     @if (canDeleteTournament(tournament)) {
                       <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>
                     }

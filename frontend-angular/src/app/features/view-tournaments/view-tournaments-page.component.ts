@@ -1,9 +1,11 @@
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http'; // <-- AÑADIDO
+import { API_BASE_URL } from '../../core/api.config';
 import { AuthService } from '../../core/auth.service';
+import { Team, TeamService } from '../../core/team.service';
 import { Tournament, TournamentDataService, TournamentStatus } from '../../core/tournament-data.service';
 
 type TabKey = TournamentStatus;
@@ -16,11 +18,18 @@ type TabKey = TournamentStatus;
 })
 export class ViewTournamentsPageComponent implements OnInit {
   private readonly tournamentDataService = inject(TournamentDataService);
+  private readonly teamService = inject(TeamService);
   private readonly http = inject(HttpClient);
+
   readonly activeTab = signal<TabKey>('current');
   readonly query = signal('');
   readonly isLoading = signal(true);
   readonly errorMessage = signal('');
+  readonly actionMessage = signal('');
+  readonly actionIsError = signal(false);
+  readonly joiningTournamentId = signal('');
+  readonly leavingTournamentId = signal('');
+  readonly myPilotTeams = signal<Team[]>([]);
   readonly tournaments = this.tournamentDataService.tournaments;
   readonly filtered = computed(() => {
     const text = this.query().trim().toLowerCase();
@@ -30,6 +39,8 @@ export class ViewTournamentsPageComponent implements OnInit {
   constructor(public readonly authService: AuthService) {}
 
   ngOnInit(): void {
+    this.loadMyPilotTeams();
+
     const adminId = this.authService.session()?.role === 'tournament_admin'
       ? this.authService.session()?.uid
       : undefined;
@@ -140,50 +151,103 @@ export class ViewTournamentsPageComponent implements OnInit {
     });
   }
 
+  canShowJoinAction(tournament: Tournament): boolean {
+    return this.isPilotUser() && !this.isAlreadyJoined(tournament);
+  }
+
+  canShowLeaveAction(tournament: Tournament): boolean {
+    return this.isPilotUser()
+      && this.isAlreadyJoined(tournament)
+      && this.effectiveStatus(tournament) === 'scheduled';
+  }
+
+  isAlreadyJoined(tournament: Tournament): boolean {
+    const myTeam = this.getMyTeamForTournamentCategory(tournament);
+    if (!myTeam) {
+      return false;
+    }
+    return (tournament.registered_team_ids || []).includes(myTeam.id);
+  }
+
   joinTournament(tournament: Tournament): void {
     const session = this.authService.session();
 
     if (!session) {
-      window.alert('You must be logged in to perform this action.');
+      this.showActionMessage('You must be logged in to perform this action.', true);
       return;
     }
 
     if (session.role !== 'participant_pilot') {
-      window.alert('Only the drivers can register the team in a tournament.');
+      this.showActionMessage('Only users with the Pilot role can join tournaments.', true);
       return;
     }
 
-    const uid = session.uid;
+    const myTeam = this.getMyTeamForTournamentCategory(tournament);
+    if (!myTeam) {
+      this.showActionMessage(`You do not have a team registered for the category: ${tournament.category}.`, true);
+      return;
+    }
 
-    this.http.get<any[]>('http://127.0.0.1:5050/api/teams/').subscribe({
-      next: (teams) => {
-        const myTeam = teams.find(t =>
-          t.pilot_id === uid &&
-          t.category.toLowerCase() === tournament.category.toLowerCase()
-        );
+    if (this.isAlreadyJoined(tournament)) {
+      this.showActionMessage('Your team is already registered in this tournament.', false);
+      return;
+    }
 
-        if (!myTeam) {
-          window.alert(`You do not have a team registered for the category: ${tournament.category}.`);
-          return;
-        }
+    if (!myTeam.copilot_id || myTeam.member_count < 2) {
+      this.showActionMessage('Your team is incomplete. You need a co-pilot before joining a tournament.', true);
+      return;
+    }
 
-        if (!myTeam.copilot_id || myTeam.member_count < 2) {
-          window.alert('Your team is incomplete. You need a co-pilot before joining a tournament.');
-          return;
-        }
-
-        this.http.post(`http://127.0.0.1:5050/api/tournaments/${tournament.id}/join`, { team_id: myTeam.id }).subscribe({
-          next: () => {
-            window.alert(`¡Successful registration to ${tournament.name}!`);
-            this.ngOnInit();
-          },
-          error: (err) => {
-            window.alert(err.error?.message || 'There was an error when trying to join the tournament.');
-          }
-        });
+    this.joiningTournamentId.set(tournament.id);
+    this.http.post(`${API_BASE_URL}/tournaments/${tournament.id}/join`, { team_id: myTeam.id }).subscribe({
+      next: () => {
+        this.showActionMessage(`Successfully registered in ${tournament.name}.`, false);
+        this.joiningTournamentId.set('');
+        this.tournamentDataService.refreshTournaments().subscribe();
       },
-      error: () => {
-        window.alert('Error verifying your device. Please try again later.');
+      error: (err) => {
+        const backendMessage =
+          err?.error?.message && typeof err.error.message === 'string'
+            ? err.error.message
+            : 'There was an error when trying to join the tournament.';
+        this.showActionMessage(backendMessage, true);
+        this.joiningTournamentId.set('');
+      }
+    });
+  }
+
+  leaveTournament(tournament: Tournament): void {
+    const session = this.authService.session();
+    if (!session || session.role !== 'participant_pilot') {
+      this.showActionMessage('Only users with the Pilot role can leave tournaments.', true);
+      return;
+    }
+
+    if (this.effectiveStatus(tournament) !== 'scheduled') {
+      this.showActionMessage('You can only leave a tournament while it is scheduled.', true);
+      return;
+    }
+
+    const myTeam = this.getMyTeamForTournamentCategory(tournament);
+    if (!myTeam || !this.isAlreadyJoined(tournament)) {
+      this.showActionMessage('Your team is not enrolled in this tournament.', true);
+      return;
+    }
+
+    this.leavingTournamentId.set(tournament.id);
+    this.http.post(`${API_BASE_URL}/tournaments/${tournament.id}/leave`, { team_id: myTeam.id }).subscribe({
+      next: () => {
+        this.showActionMessage(`Your team left ${tournament.name}.`, false);
+        this.leavingTournamentId.set('');
+        this.tournamentDataService.refreshTournaments().subscribe();
+      },
+      error: (err) => {
+        const backendMessage =
+          err?.error?.message && typeof err.error.message === 'string'
+            ? err.error.message
+            : 'There was an error when trying to leave the tournament.';
+        this.showActionMessage(backendMessage, true);
+        this.leavingTournamentId.set('');
       }
     });
   }
@@ -204,5 +268,35 @@ export class ViewTournamentsPageComponent implements OnInit {
     if (status === 'current') return 'On going';
     if (status === 'past') return 'Completed';
     return 'Scheduled';
+  }
+
+  private loadMyPilotTeams(): void {
+    if (!this.isPilotUser()) {
+      this.myPilotTeams.set([]);
+      return;
+    }
+
+    const uid = this.authService.session()?.uid || '';
+    this.teamService.getTeams().subscribe((teams) => {
+      this.myPilotTeams.set((teams || []).filter((team) => team.pilot_id === uid));
+    });
+  }
+
+  private getMyTeamForTournamentCategory(tournament: Tournament): Team | undefined {
+    const targetCategory = this.normalizeCategory(tournament.category);
+    return this.myPilotTeams().find((team) => this.normalizeCategory(team.category) === targetCategory);
+  }
+
+  private isPilotUser(): boolean {
+    return this.authService.session()?.role === 'participant_pilot';
+  }
+
+  private normalizeCategory(value: string): string {
+    return String(value || '').trim().toLowerCase().replace(/\s+/g, '_');
+  }
+
+  private showActionMessage(message: string, isError: boolean): void {
+    this.actionMessage.set(message);
+    this.actionIsError.set(isError);
   }
 }

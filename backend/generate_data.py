@@ -7,6 +7,8 @@ from google.cloud import firestore
 
 fake = Faker()
 CATEGORIES = [cat.value for cat in racing_category]
+MIN_TEAMS_PER_TOURNAMENT = 12
+MAX_TEAMS_PER_TOURNAMENT = 16
 
 def clear_collection(collection_name):
     """Helper to delete all documents in a collection (use with caution)."""
@@ -83,18 +85,37 @@ def generate_tournaments(team_info, user_ids, count=5):
     """Iteration 2b: Create tournaments and enroll teams of the same category."""
     tournament_ids = []
     states = ["past", "current", "scheduled"]
+    teams_by_category = {
+        category: [team_id for team_id, team_category in team_info if team_category == category]
+        for category in CATEGORIES
+    }
     
     print(f"Generating {count} tournaments...")
     
     for _ in range(count):
         state = random.choice(states)
-        category = random.choice(CATEGORIES)
-        
-        eligible_teams = [t[0] for t in team_info if t[1] == category]
+
+        categories_with_enough_teams = [
+            cat for cat, teams in teams_by_category.items() if len(teams) >= MIN_TEAMS_PER_TOURNAMENT
+        ]
+        selectable_categories = categories_with_enough_teams or [
+            cat for cat, teams in teams_by_category.items() if teams
+        ]
+        if not selectable_categories:
+            continue
+
+        category = random.choice(selectable_categories)
+        eligible_teams = teams_by_category[category]
         if not eligible_teams:
             continue
-            
-        enrolled_teams = random.sample(eligible_teams, min(len(eligible_teams), 8))
+
+        max_enrollment = min(len(eligible_teams), MAX_TEAMS_PER_TOURNAMENT)
+        if max_enrollment >= MIN_TEAMS_PER_TOURNAMENT:
+            enrollment_size = random.randint(MIN_TEAMS_PER_TOURNAMENT, max_enrollment)
+        else:
+            enrollment_size = max_enrollment
+
+        enrolled_teams = random.sample(eligible_teams, enrollment_size)
         
         start_date = fake.date_time_this_year()
         if state == "past":
@@ -114,7 +135,7 @@ def generate_tournaments(team_info, user_ids, count=5):
             "end_date": end_date.isoformat(),
             "registered_team_ids": enrolled_teams,
             "participants": [{"id": tid, "name": "Team " + tid[:4]} for tid in enrolled_teams],
-            "max_participants": 16,
+            "max_participants": MAX_TEAMS_PER_TOURNAMENT,
             "creator_id": random.choice(user_ids) if user_ids else "admin"
         }
         
@@ -201,7 +222,8 @@ if __name__ == "__main__":
         clear_collection("matches")
         clear_collection("match_stats")
     
-    uids = generate_users_and_participants(40)
+    # Keep enough teams per category so tournaments can reach ~12-16 teams.
+    uids = generate_users_and_participants(180)
     teams = generate_teams(uids)
     tournament_ids = generate_tournaments(teams, uids, 8)
     generate_matches_and_stats(tournament_ids)

@@ -245,6 +245,29 @@ tbody tr:last-child td {
   background: #b91c68;
 }
 
+.leave-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #4b5563;
+  color: #ffffff;
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.leave-link:hover {
+  background: #374151;
+}
+
+.leave-link:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 .empty-state {
   margin: 24px 0 0;
   padding: 18px 20px;
@@ -252,6 +275,38 @@ tbody tr:last-child td {
   border-radius: 16px;
   color: #9ca3af;
   text-align: center;
+}
+
+.notice {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  background: rgba(6, 78, 59, 0.22);
+  color: #d1fae5;
+}
+
+.notice.is-error {
+  border-color: rgba(248, 113, 113, 0.45);
+  background: rgba(127, 29, 29, 0.22);
+  color: #fecaca;
+}
+
+.joined-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  background: rgba(6, 78, 59, 0.25);
+  color: #d1fae5;
+  font-weight: 700;
+}
+
+.stats-link:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .actions-row {

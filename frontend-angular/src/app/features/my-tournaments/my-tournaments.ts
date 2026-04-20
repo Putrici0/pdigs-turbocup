@@ -1,8 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, effect, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { API_BASE_URL } from '../../core/api.config';
 import { AuthService } from '../../core/auth.service';
+import { Team, TeamService } from '../../core/team.service';
 import { Tournament, TournamentDataService, TournamentStatus } from '../../core/tournament-data.service';
 
 type TabKey = TournamentStatus;
@@ -17,11 +20,17 @@ type TabKey = TournamentStatus;
 export class MyTournamentsComponent {
   private readonly authService = inject(AuthService);
   private readonly tournamentService = inject(TournamentDataService);
+  private readonly teamService = inject(TeamService);
+  private readonly http = inject(HttpClient);
 
   readonly activeTab = signal<TabKey>('current');
   readonly query = signal('');
   readonly isLoading = signal(true);
   readonly errorMessage = signal('');
+  readonly actionMessage = signal('');
+  readonly actionIsError = signal(false);
+  readonly leavingTournamentId = signal('');
+  readonly myPilotTeams = signal<Team[]>([]);
   readonly allTournaments = signal<Tournament[]>([]);
 
   readonly filtered = computed(() => {
@@ -37,9 +46,11 @@ export class MyTournamentsComponent {
         this.isLoading.set(false);
         this.errorMessage.set('You need to be logged in to view your tournaments.');
         this.allTournaments.set([]);
+        this.myPilotTeams.set([]);
         return;
       }
 
+      this.loadMyPilotTeams();
       this.isLoading.set(true);
       this.errorMessage.set('');
 
@@ -117,6 +128,20 @@ export class MyTournamentsComponent {
     return !tournament.creator_id || tournament.creator_id === currentUid;
   }
 
+  canShowLeaveAction(tournament: Tournament): boolean {
+    return this.isPilotUser()
+      && this.effectiveStatus(tournament) === 'scheduled'
+      && this.isAlreadyJoined(tournament);
+  }
+
+  isAlreadyJoined(tournament: Tournament): boolean {
+    const myTeam = this.getMyTeamForTournamentCategory(tournament);
+    if (!myTeam) {
+      return false;
+    }
+    return (tournament.registered_team_ids || []).includes(myTeam.id);
+  }
+
   deleteTournament(tournament: Tournament): void {
     if (!this.canDeleteTournament(tournament)) {
       return;
@@ -137,6 +162,42 @@ export class MyTournamentsComponent {
     });
   }
 
+  leaveTournament(tournament: Tournament): void {
+    const session = this.authService.session();
+    if (!session || session.role !== 'participant_pilot') {
+      this.showActionMessage('Only users with the Pilot role can leave tournaments.', true);
+      return;
+    }
+
+    if (this.effectiveStatus(tournament) !== 'scheduled') {
+      this.showActionMessage('You can only leave a tournament while it is scheduled.', true);
+      return;
+    }
+
+    const myTeam = this.getMyTeamForTournamentCategory(tournament);
+    if (!myTeam || !this.isAlreadyJoined(tournament)) {
+      this.showActionMessage('Your team is not enrolled in this tournament.', true);
+      return;
+    }
+
+    this.leavingTournamentId.set(tournament.id);
+    this.http.post(`${API_BASE_URL}/tournaments/${tournament.id}/leave`, { team_id: myTeam.id }).subscribe({
+      next: () => {
+        this.showActionMessage(`Your team left ${tournament.name}.`, false);
+        this.leavingTournamentId.set('');
+        this.allTournaments.set(this.allTournaments().filter((item) => item.id !== tournament.id));
+      },
+      error: (err) => {
+        const backendMessage =
+          err?.error?.message && typeof err.error.message === 'string'
+            ? err.error.message
+            : 'There was an error when trying to leave the tournament.';
+        this.showActionMessage(backendMessage, true);
+        this.leavingTournamentId.set('');
+      },
+    });
+  }
+
   effectiveStatus(tournament: Tournament): TournamentStatus {
     const start = new Date(tournament.start_date);
     const end = new Date(tournament.end_date);
@@ -153,5 +214,35 @@ export class MyTournamentsComponent {
     if (status === 'current') return 'On going';
     if (status === 'past') return 'Completed';
     return 'Scheduled';
+  }
+
+  private loadMyPilotTeams(): void {
+    if (!this.isPilotUser()) {
+      this.myPilotTeams.set([]);
+      return;
+    }
+
+    const uid = this.authService.session()?.uid || '';
+    this.teamService.getTeams().subscribe((teams) => {
+      this.myPilotTeams.set((teams || []).filter((team) => team.pilot_id === uid));
+    });
+  }
+
+  private getMyTeamForTournamentCategory(tournament: Tournament): Team | undefined {
+    const targetCategory = this.normalizeCategory(tournament.category);
+    return this.myPilotTeams().find((team) => this.normalizeCategory(team.category) === targetCategory);
+  }
+
+  private isPilotUser(): boolean {
+    return this.authService.session()?.role === 'participant_pilot';
+  }
+
+  private normalizeCategory(value: string): string {
+    return String(value || '').trim().toLowerCase().replace(/\s+/g, '_');
+  }
+
+  private showActionMessage(message: string, isError: boolean): void {
+    this.actionMessage.set(message);
+    this.actionIsError.set(isError);
   }
 }

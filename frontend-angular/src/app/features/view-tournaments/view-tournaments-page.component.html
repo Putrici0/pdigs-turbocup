@@ -18,6 +18,10 @@
     <p class="empty-state">{{ errorMessage() }}</p>
   }
 
+  @if (actionMessage()) {
+    <p class="notice" [class.is-error]="actionIsError()">{{ actionMessage() }}</p>
+  }
+
   <div class="view-tabs" role="tablist" aria-label="Tournament status tabs">
     <button type="button" class="tab-button" [class.active]="activeTab() === 'scheduled'" (click)="setTab('scheduled')">Scheduled</button>
     <button type="button" class="tab-button" [class.active]="activeTab() === 'current'" (click)="setTab('current')">Current</button>
@@ -58,7 +62,27 @@
                   <div class="action-buttons">
                     <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
 
-                    <button type="button" class="stats-link" (click)="joinTournament(tournament)">Join</button>
+                    @if (canShowJoinAction(tournament)) {
+                      <button
+                        type="button"
+                        class="stats-link"
+                        [disabled]="joiningTournamentId() === tournament.id"
+                        (click)="joinTournament(tournament)"
+                      >
+                        {{ joiningTournamentId() === tournament.id ? 'Joining...' : 'Join' }}
+                      </button>
+                    } @else if (canShowLeaveAction(tournament)) {
+                      <button
+                        type="button"
+                        class="leave-link"
+                        [disabled]="leavingTournamentId() === tournament.id"
+                        (click)="leaveTournament(tournament)"
+                      >
+                        {{ leavingTournamentId() === tournament.id ? 'Leaving...' : 'Leave' }}
+                      </button>
+                    } @else if (isAlreadyJoined(tournament)) {
+                      <span class="joined-pill">Joined</span>
+                    }
 
                     @if (canDeleteTournament(tournament)) {
                       <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>

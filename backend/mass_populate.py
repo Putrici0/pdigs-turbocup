@@ -7,6 +7,8 @@ from backend.app.logic.simulator import resolve_match_mechanics, update_particip
 
 fake = Faker()
 CATEGORIES = [cat.value for cat in racing_category]
+LARGE_BRACKET_SIZE = 16
+BASE_BRACKET_SIZE = 8
 
 def get_existing_data():
     """Optimized: Builds O(1) cache from existing Firestore data."""
@@ -64,9 +66,10 @@ def simulate_season(year, count, teams_dict, user_ids):
     for i in range(count):
         cat = random.choice(CATEGORIES)
         eligible = [t for t in all_teams if t["category"] == cat]
-        if len(eligible) < 4: continue
-        
-        num_p = 8 if len(eligible) >= 8 else 4
+        if len(eligible) < BASE_BRACKET_SIZE:
+            continue
+
+        num_p = LARGE_BRACKET_SIZE if len(eligible) >= LARGE_BRACKET_SIZE else BASE_BRACKET_SIZE
         current_round_teams = random.sample(eligible, num_p)
         start_date = datetime(year, 1, 1, tzinfo=timezone.utc) + timedelta(days=i * (360//count))
         

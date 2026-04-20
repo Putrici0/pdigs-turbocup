@@ -63,6 +63,20 @@ def _serialize_team(doc):
 
     return data
 
+def _serialize_team_light(doc):
+    """
+    Fast serializer for list views.
+    Avoids user-name lookups (N+1 Firestore/Auth calls) and computes only fields
+    required by the teams directory table.
+    """
+    data = serialize_firestore(doc)
+    pilot_id = data.get('pilot_id', '')
+    copilot_id = data.get('copilot_id', '')
+    data['member_count'] = int(bool(pilot_id)) + int(bool(copilot_id))
+    data.setdefault('pilot_name', '')
+    data.setdefault('copilot_name', '')
+    return data
+
 
 @teams_bp.route('/categories', methods=['GET'])
 def list_categories():
@@ -72,7 +86,7 @@ def list_categories():
 @teams_bp.route('/', methods=['GET'])
 def list_teams():
     teams = db.collection('teams').stream()
-    data = [_serialize_team(doc) for doc in teams]
+    data = [_serialize_team_light(doc) for doc in teams]
     data.sort(key=lambda item: item.get('name', '').lower())
     return jsonify(data), 200
 
