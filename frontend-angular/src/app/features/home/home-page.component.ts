@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/auth.service';
 
 type Slide = {
   kicker: string;
@@ -17,6 +18,9 @@ type Slide = {
   styleUrl: './home-page.component.css'
 })
 export class HomePageComponent implements OnInit, OnDestroy {
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+
   readonly slides: Slide[] = [
     {
       kicker: 'TurboCup Platform',
@@ -42,6 +46,7 @@ export class HomePageComponent implements OnInit, OnDestroy {
   ];
 
   readonly activeSlideIndex = signal(0);
+  readonly createTournamentNotice = signal('');
   private autoPlayId?: number;
 
   ngOnInit(): void {
@@ -66,5 +71,16 @@ export class HomePageComponent implements OnInit, OnDestroy {
 
   goToSlide(index: number): void {
     this.activeSlideIndex.set(index);
+  }
+
+  goToCreateTournament(): void {
+    const role = this.authService.session()?.role;
+    if (role !== 'tournament_admin') {
+      this.createTournamentNotice.set('You must be a Tournament Admin to create tournaments.');
+      return;
+    }
+
+    this.createTournamentNotice.set('');
+    void this.router.navigate(['/create-tournament']);
   }
 }

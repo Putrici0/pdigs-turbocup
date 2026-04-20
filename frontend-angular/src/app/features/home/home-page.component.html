@@ -38,9 +38,12 @@
       across each tournament phase.
     </p>
     <div class="cta-row">
-      <a class="cta-primary" routerLink="/create-tournament">Create tournament</a>
+      <button type="button" class="cta-primary" (click)="goToCreateTournament()">Create tournament</button>
       <a class="cta-secondary" routerLink="/view-tournaments">View tournaments</a>
     </div>
+    @if (createTournamentNotice()) {
+      <p class="access-notice">{{ createTournamentNotice() }}</p>
+    }
   </section>
 
   <section class="stats section-shell" aria-label="Platform stats">
@@ -54,7 +57,7 @@
     </article>
     <article class="stat-card">
       <p class="stat-value">100%</p>
-      <p class="stat-label">Prepared for Firebase backend</p>
+      <p class="stat-label">Easy to use</p>
     </article>
     <article class="stat-card">
       <p class="stat-value">Live</p>
