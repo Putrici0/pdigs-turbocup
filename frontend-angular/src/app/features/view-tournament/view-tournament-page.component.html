@@ -14,12 +14,25 @@
       </span>
       <span class="meta-chip">{{ tournament().category }} - ID: {{ tournament().id }}</span>
     </div>
+    @if (championName()) {
+      <div class="champion-banner" role="status" aria-live="polite">
+        <p class="champion-title">Champion</p>
+        <p class="champion-name">{{ championName() }}</p>
+      </div>
+    }
   </section>
 
   <section class="panel">
     <div class="panel-header">
-      <h2>Bracket</h2>
-      <p class="panel-copy">Read-only bracket view for participants and guests.</p>
+      <div>
+        <h2>Bracket</h2>
+        <p class="panel-copy">Admins can start the tournament and select winners per match.</p>
+      </div>
+      @if (isAdmin()) {
+        <button class="start-btn" type="button" [disabled]="started()" (click)="startTournament()">
+          {{ started() ? 'Tournament Started' : 'Start Tournament' }}
+        </button>
+      }
     </div>
     <div class="status-legend">
       <span class="legend-item"><span class="legend-dot scheduled"></span>Scheduled</span>
@@ -36,17 +49,23 @@
             <article class="match-card">
               <div class="teams-row">
                 @if (item.leftTeamId) {
-                  <a [routerLink]="['/view-team', item.leftTeamId]">{{ item.leftName }}</a>
+                  <a [routerLink]="['/view-team', item.leftTeamId]" [class.team-winner]="isWinner(item, 'left')">{{ item.leftName }}</a>
                 } @else {
-                  <p>{{ item.leftName }}</p>
+                  <p [class.team-winner]="isWinner(item, 'left')">{{ item.leftName }}</p>
                 }
                 @if (item.rightTeamId) {
-                  <a [routerLink]="['/view-team', item.rightTeamId]">{{ item.rightName }}</a>
+                  <a [routerLink]="['/view-team', item.rightTeamId]" [class.team-winner]="isWinner(item, 'right')">{{ item.rightName }}</a>
                 } @else {
-                  <p>{{ item.rightName }}</p>
+                  <p [class.team-winner]="isWinner(item, 'right')">{{ item.rightName }}</p>
                 }
               </div>
               <span [class]="stateClass(item.state)">{{ formatMatchState(item.state) }}</span>
+              @if (canPickWinner(item)) {
+                <div class="winner-actions">
+                  <button type="button" class="winner-btn" (click)="chooseWinner(0, $index, 'left')">{{ item.leftName }} Wins</button>
+                  <button type="button" class="winner-btn" (click)="chooseWinner(0, $index, 'right')">{{ item.rightName }} Wins</button>
+                </div>
+              }
             </article>
           }
         </section>
@@ -56,10 +75,16 @@
           @for (item of quarterfinals(); track item.id) {
             <article class="match-card">
               <div class="teams-row">
-                <p>{{ item.leftName }}</p>
-                <p>{{ item.rightName }}</p>
+                <p [class.team-winner]="isWinner(item, 'left')">{{ item.leftName }}</p>
+                <p [class.team-winner]="isWinner(item, 'right')">{{ item.rightName }}</p>
               </div>
               <span [class]="stateClass(item.state)">{{ formatMatchState(item.state) }}</span>
+              @if (canPickWinner(item)) {
+                <div class="winner-actions">
+                  <button type="button" class="winner-btn" (click)="chooseWinner(1, $index, 'left')">{{ item.leftName }} Wins</button>
+                  <button type="button" class="winner-btn" (click)="chooseWinner(1, $index, 'right')">{{ item.rightName }} Wins</button>
+                </div>
+              }
             </article>
           }
         </section>
@@ -69,10 +94,16 @@
           @for (item of semifinals(); track item.id) {
             <article class="match-card">
               <div class="teams-row">
-                <p>{{ item.leftName }}</p>
-                <p>{{ item.rightName }}</p>
+                <p [class.team-winner]="isWinner(item, 'left')">{{ item.leftName }}</p>
+                <p [class.team-winner]="isWinner(item, 'right')">{{ item.rightName }}</p>
               </div>
               <span [class]="stateClass(item.state)">{{ formatMatchState(item.state) }}</span>
+              @if (canPickWinner(item)) {
+                <div class="winner-actions">
+                  <button type="button" class="winner-btn" (click)="chooseWinner(2, $index, 'left')">{{ item.leftName }} Wins</button>
+                  <button type="button" class="winner-btn" (click)="chooseWinner(2, $index, 'right')">{{ item.rightName }} Wins</button>
+                </div>
+              }
             </article>
           }
         </section>
@@ -81,10 +112,16 @@
           <h3>Final</h3>
           <article class="match-card">
             <div class="teams-row">
-              <p>{{ final().leftName }}</p>
-              <p>{{ final().rightName }}</p>
+              <p [class.team-winner]="isWinner(final(), 'left')">{{ final().leftName }}</p>
+              <p [class.team-winner]="isWinner(final(), 'right')">{{ final().rightName }}</p>
             </div>
             <span [class]="stateClass(final().state)">{{ formatMatchState(final().state) }}</span>
+            @if (canPickWinner(final())) {
+              <div class="winner-actions">
+                <button type="button" class="winner-btn" (click)="chooseWinner(3, 0, 'left')">{{ final().leftName }} Wins</button>
+                <button type="button" class="winner-btn" (click)="chooseWinner(3, 0, 'right')">{{ final().rightName }} Wins</button>
+              </div>
+            }
           </article>
         </section>
       </div>
@@ -139,22 +176,53 @@
           </tr>
           </thead>
           <tbody>
-            @for (match of tournament().matches; track match.id) {
+            @for (row of flatMatches(); track row.id) {
               <tr>
-                <td>{{ match.team_a_name }} vs {{ match.team_b_name }}</td>
-                <td><span [class]="stateClass(match.status === 'past' ? 'completed' : (match.status === 'current' ? 'ongoing' : 'scheduled'))">{{ formatTournamentStatus(match.status) }}</span></td>
-                <td>{{ match.category }}</td>
-                <td>{{ bestTime(match) }}</td>
-                <td>{{ winnerName(match) }}</td>
+                <td>{{ row.match.leftName }} vs {{ row.match.rightName }}<br><small>{{ row.roundName }} - M{{ row.order }}</small></td>
+                <td><span [class]="stateClass(row.match.state)">{{ formatMatchState(row.match.state) }}</span></td>
+                <td>{{ tournament().category }}</td>
+                <td>{{ bestTime(row.match) }}</td>
+                <td><span class="winner-badge">{{ winnerName(row.match) }}</span></td>
               </tr>
             }
           </tbody>
         </table>
       </div>
-      @if (tournament().matches.length === 0) {
+      @if (flatMatches().length === 0) {
         <p class="empty-state">No matches were found for this tournament.</p>
       }
     </div>
   </section>
 </main>
+
+@if (winnerDialog(); as dialog) {
+  <div class="dialog-backdrop" (click)="cancelWinnerDialog()">
+    <section class="dialog-card" (click)="$event.stopPropagation()">
+      <h3>Confirm Match Result</h3>
+      <p class="dialog-copy"><strong>{{ dialog.winnerName }}</strong> wins against <strong>{{ dialog.loserName }}</strong>.</p>
+      <label class="dialog-label" for="winner-time-input">Winner Time (optional, format m:ss.sss)</label>
+      <input id="winner-time-input" type="text" placeholder="1:23.450" [value]="dialog.winnerTimeInput" (input)="updateWinnerTimeInput($any($event.target).value)" />
+      <label class="dialog-label" for="loser-time-input">Opponent Time (optional, format m:ss.sss)</label>
+      <input id="loser-time-input" type="text" placeholder="1:24.120" [value]="dialog.loserTimeInput" (input)="updateLoserTimeInput($any($event.target).value)" />
+      @if (dialog.errorMessage) {
+        <p class="dialog-error">{{ dialog.errorMessage }}</p>
+      }
+      <div class="dialog-actions">
+        <button type="button" class="dialog-btn secondary" (click)="cancelWinnerDialog()">Cancel</button>
+        <button type="button" class="dialog-btn primary" (click)="confirmWinnerDialog()">Confirm Result</button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (championName()) {
+  <div class="celebration-overlay" aria-hidden="true">
+    <span class="burst burst-a"></span>
+    <span class="burst burst-b"></span>
+    <span class="burst burst-c"></span>
+    <span class="burst burst-d"></span>
+    <span class="burst burst-e"></span>
+    <span class="burst burst-f"></span>
+  </div>
+}
 }

@@ -5,6 +5,28 @@ import { AuthService } from '../../core/auth.service';
 import { Team, TeamService } from '../../core/team.service';
 import { TeamCategoryService } from '../../core/team-category.service';
 
+interface TeamShowcaseStats {
+  races: number;
+  wins: number;
+  podiums: number;
+  avgLap: string;
+  bestLap: string;
+}
+
+interface TeamShowcaseResult {
+  event: string;
+  track: string;
+  finish: string;
+  lap: string;
+}
+
+interface TeamShowcaseProfile {
+  banner: string;
+  summary: string;
+  stats: TeamShowcaseStats;
+  recentResults: TeamShowcaseResult[];
+}
+
 @Component({
   selector: 'app-view-team-page',
   imports: [CommonModule],
@@ -19,6 +41,26 @@ export class ViewTeamPageComponent implements OnInit {
   readonly actionIsError = signal(false);
   readonly showLeaveConfirmDialog = signal(false);
   readonly isLeaving = signal(false);
+  readonly showcase = signal<TeamShowcaseProfile | null>(null);
+
+  private readonly demoShowcaseByTeamId: Record<string, TeamShowcaseProfile> = {
+    'team-01': {
+      banner: 'Factory Team',
+      summary: 'Speed Demons is a high-tempo 150cc team focused on clean exits and stable cornering.',
+      stats: {
+        races: 24,
+        wins: 16,
+        podiums: 21,
+        avgLap: '1:23.884',
+        bestLap: '1:21.772',
+      },
+      recentResults: [
+        { event: 'TurboCup Qualifier', track: 'Neon Circuit', finish: 'P1', lap: '1:22.114' },
+        { event: 'TurboCup Group Stage', track: 'Coastal Loop', finish: 'P2', lap: '1:23.008' },
+        { event: 'TurboCup Knockout', track: 'Desert Ring', finish: 'P1', lap: '1:21.772' },
+      ],
+    },
+  };
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -37,9 +79,11 @@ export class ViewTeamPageComponent implements OnInit {
     }
 
     this.teamService.getTeamById(teamId).subscribe((team) => {
-      this.team.set(team);
+      const resolvedTeam = team || this.fallbackTeam(teamId);
+      this.team.set(resolvedTeam);
+      this.showcase.set(this.demoShowcaseByTeamId[teamId] || null);
 
-      if (!team) {
+      if (!resolvedTeam) {
         this.errorMessage.set('Team not found.');
       }
 
@@ -120,5 +164,20 @@ export class ViewTeamPageComponent implements OnInit {
         this.isLeaving.set(false);
       },
     });
+  }
+
+  private fallbackTeam(teamId: string): Team | null {
+    if (teamId !== 'team-01') return null;
+
+    return {
+      id: 'team-01',
+      name: 'Speed Demons',
+      category: '150cc',
+      pilot_id: 'pilot-01',
+      copilot_id: 'copilot-01',
+      pilot_name: 'Alex Carter',
+      copilot_name: 'Mia Stone',
+      member_count: 2,
+    };
   }
 }

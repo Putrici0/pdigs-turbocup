@@ -23,8 +23,13 @@
 
     <section class="panel" aria-labelledby="bracket-heading">
         <div class="panel-header">
-            <h2 id="bracket-heading">Bracket</h2>
-            <p class="panel-copy">Read-only bracket view for participants and guests.</p>
+            <div>
+                <h2 id="bracket-heading">Bracket</h2>
+                <p class="panel-copy">Admins can start the tournament and pick winners per match.</p>
+            </div>
+            <div id="admin-controls" class="admin-controls" hidden>
+                <button id="start-tournament-btn" type="button">Start tournament</button>
+            </div>
         </div>
         <div class="status-legend" aria-label="Match status legend">
             <span class="legend-item"><span class="legend-dot dot-scheduled"></span>Scheduled</span>

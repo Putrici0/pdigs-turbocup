@@ -10,6 +10,10 @@
   <section class="team-profile">
     <p class="eyebrow">Team Profile</p>
     <h1>{{ currentTeam.name }}</h1>
+    @if (showcase(); as profile) {
+      <p class="profile-banner">{{ profile.banner }}</p>
+      <p class="profile-summary">{{ profile.summary }}</p>
+    }
 
     @if (actionMessage()) {
       <p class="notice" [class.is-error]="actionIsError()">{{ actionMessage() }}</p>
@@ -52,6 +56,45 @@
         }
       </article>
     </section>
+
+    @if (showcase(); as profile) {
+      <section class="team-showcase">
+        <h2>Performance Snapshot</h2>
+        <div class="showcase-grid">
+          <article class="showcase-card"><p class="stat-label">Races</p><p class="stat-value">{{ profile.stats.races }}</p></article>
+          <article class="showcase-card"><p class="stat-label">Wins</p><p class="stat-value">{{ profile.stats.wins }}</p></article>
+          <article class="showcase-card"><p class="stat-label">Podiums</p><p class="stat-value">{{ profile.stats.podiums }}</p></article>
+          <article class="showcase-card"><p class="stat-label">Avg lap</p><p class="stat-value">{{ profile.stats.avgLap }}</p></article>
+          <article class="showcase-card"><p class="stat-label">Best lap</p><p class="stat-value">{{ profile.stats.bestLap }}</p></article>
+        </div>
+
+        <div class="recent-results">
+          <h3>Recent Results</h3>
+          <div class="results-table-wrap">
+            <table>
+              <thead>
+              <tr>
+                <th>Event</th>
+                <th>Track</th>
+                <th>Finish</th>
+                <th>Best lap</th>
+              </tr>
+              </thead>
+              <tbody>
+                @for (result of profile.recentResults; track result.event + result.track) {
+                  <tr>
+                    <td>{{ result.event }}</td>
+                    <td>{{ result.track }}</td>
+                    <td>{{ result.finish }}</td>
+                    <td>{{ result.lap }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    }
   </section>
 }
 

@@ -123,6 +123,40 @@ body {
     margin-bottom: 20px;
 }
 
+.admin-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-controls button,
+.winner-btn {
+    border: 1px solid rgba(220, 36, 126, 0.65);
+    background: rgba(220, 36, 126, 0.18);
+    color: #fce7f3;
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.admin-controls button:hover,
+.winner-btn:hover {
+    background: rgba(220, 36, 126, 0.28);
+}
+
+.winner-btn[disabled] {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.winner-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .panel h2 {
     margin: 0;
     font-size: 1.6rem;

@@ -70,6 +70,53 @@
   font-size: 1.6rem;
 }
 
+.champion-banner {
+  margin-top: 14px;
+  border: 1px solid rgba(250, 204, 21, 0.55);
+  background: linear-gradient(135deg, rgba(133, 77, 14, 0.55), rgba(202, 138, 4, 0.35));
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.champion-title {
+  margin: 0;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  color: #fde68a;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.champion-name {
+  margin: 2px 0 0;
+  font-size: 1.35rem;
+  color: #fef3c7;
+  font-weight: 800;
+}
+
+.start-btn,
+.winner-btn {
+  border: 1px solid rgba(220, 36, 126, 0.65);
+  background: rgba(220, 36, 126, 0.2);
+  color: #fce7f3;
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.start-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.winner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .status-pill.scheduled {
   border-color: rgba(249, 168, 212, 0.5);
   color: #fbcfe8;
@@ -177,6 +224,119 @@
   gap: 10px;
 }
 
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+
+.dialog-card {
+  width: min(520px, 100%);
+  background: #111827;
+  border: 1px solid rgba(229, 231, 235, 0.2);
+  border-radius: 14px;
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.dialog-card h3 {
+  margin: 0;
+  color: #f9a8d4;
+}
+
+.dialog-copy {
+  margin: 0;
+  color: #e5e7eb;
+}
+
+.dialog-error {
+  margin: 0;
+  color: #fda4af;
+  font-size: 0.84rem;
+}
+
+.dialog-label {
+  color: #cbd5e1;
+  font-size: 0.86rem;
+}
+
+.dialog-card input {
+  width: 100%;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(17, 24, 39, 0.9);
+  color: #f9fafb;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.dialog-btn {
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dialog-btn.secondary {
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(55, 65, 81, 0.45);
+  color: #e5e7eb;
+}
+
+.dialog-btn.primary {
+  border: 1px solid rgba(220, 36, 126, 0.65);
+  background: rgba(220, 36, 126, 0.25);
+  color: #fce7f3;
+}
+
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 900;
+  overflow: hidden;
+}
+
+.burst {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #facc15;
+  box-shadow:
+    0 0 0 12px rgba(250, 204, 21, 0.18),
+    0 0 0 28px rgba(244, 114, 182, 0.12),
+    0 0 18px rgba(250, 204, 21, 0.8);
+  animation: burst-pop 1.6s ease-out infinite;
+}
+
+.burst-a { top: 15%; left: 12%; animation-delay: 0s; }
+.burst-b { top: 23%; left: 78%; animation-delay: 0.35s; background: #f472b6; }
+.burst-c { top: 62%; left: 20%; animation-delay: 0.6s; background: #60a5fa; }
+.burst-d { top: 68%; left: 82%; animation-delay: 0.9s; background: #34d399; }
+.burst-e { top: 40%; left: 50%; animation-delay: 1.15s; background: #facc15; }
+.burst-f { top: 10%; left: 52%; animation-delay: 1.35s; background: #fb7185; }
+
+@keyframes burst-pop {
+  0% { transform: scale(0.2); opacity: 0; }
+  18% { opacity: 1; }
+  70% { transform: scale(1.08); opacity: 0.9; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
 .teams-row {
   display: grid;
   gap: 6px;
@@ -188,6 +348,15 @@
   color: #f3f4f6;
   font-weight: 600;
   text-decoration: none;
+}
+
+.teams-row .team-winner {
+  color: #86efac;
+  font-weight: 800;
+  background: rgba(22, 101, 52, 0.32);
+  border: 1px solid rgba(134, 239, 172, 0.45);
+  border-radius: 8px;
+  padding: 4px 8px;
 }
 
 .teams-row a:hover {
@@ -311,6 +480,17 @@ tbody td {
 
 tbody tr:last-child td {
   border-bottom: none;
+}
+
+.winner-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  border: 1px solid rgba(134, 239, 172, 0.45);
+  background: rgba(22, 101, 52, 0.32);
+  color: #bbf7d0;
+  font-weight: 800;
 }
 
 .empty-state {
