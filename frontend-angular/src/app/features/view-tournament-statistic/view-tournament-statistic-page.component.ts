@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Match, TournamentDataService } from '../../core/tournament-data.service';
+import { Match, Tournament, TournamentDataService } from '../../core/tournament-data.service';
 
 @Component({
   selector: 'app-view-tournament-statistic-page',
@@ -9,16 +9,18 @@ import { Match, TournamentDataService } from '../../core/tournament-data.service
   templateUrl: './view-tournament-statistic-page.component.html',
   styleUrl: './view-tournament-statistic-page.component.css'
 })
-export class ViewTournamentStatisticPageComponent {
+export class ViewTournamentStatisticPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly tournamentDataService = inject(TournamentDataService);
-  readonly tournament = computed(() => {
-    const id = this.route.snapshot.paramMap.get('id') || '5vdGkUSsaRYUnB9FBiiQ';
-    return this.tournamentDataService.getTournamentById(id) ?? this.tournamentDataService.tournaments()[0];
-  });
+
+  readonly tournament = signal<Tournament | null>(null);
+  readonly isLoading = signal(true);
 
   readonly ranking = computed(() => {
-    const rows = this.tournament()
+    const current = this.tournament();
+    if (!current) return [];
+
+    const rows = current
       .matches.filter((match) => !!match.winner_id)
       .map((match) => {
         const winnerId = match.winner_id as string;
@@ -33,6 +35,23 @@ export class ViewTournamentStatisticPageComponent {
       .sort((a, b) => a.time - b.time);
     return rows;
   });
+
+  ngOnInit(): void {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.tournamentDataService.getTournamentDetails(id).subscribe({
+        next: (data) => {
+          this.tournament.set(data);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+        }
+      });
+    } else {
+      this.isLoading.set(false);
+    }
+  }
 
   formatTime(value: number | null): string {
     if (value === null || value === undefined) return 'N/A';

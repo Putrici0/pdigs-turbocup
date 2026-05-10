@@ -8,7 +8,10 @@
   </div>
 } @else if (team(); as currentTeam) {
   <section class="team-profile">
-    <p class="eyebrow">Team Profile</p>
+    <div class="hero-header-row">
+      <a class="back-link" href="javascript:history.back()">← Back</a>
+      <p class="eyebrow">Team Profile</p>
+    </div>
     <h1>{{ currentTeam.name }}</h1>
     @if (showcase(); as profile) {
       <p class="profile-banner">{{ profile.banner }}</p>

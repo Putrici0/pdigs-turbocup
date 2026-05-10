@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { API_BASE_URL } from '../../core/api.config';
 import { AuthService } from '../../core/auth.service';
 import { Team, TeamService } from '../../core/team.service';
@@ -20,6 +20,8 @@ export class ViewTournamentsPageComponent implements OnInit {
   private readonly tournamentDataService = inject(TournamentDataService);
   private readonly teamService = inject(TeamService);
   private readonly http = inject(HttpClient);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly activeTab = signal<TabKey>('current');
   readonly query = signal('');
@@ -36,46 +38,51 @@ export class ViewTournamentsPageComponent implements OnInit {
     return this.tournaments().filter((item) => item.name.toLowerCase().includes(text));
   });
 
-  constructor(public readonly authService: AuthService) {}
+  constructor(public readonly authService: AuthService) {
+    // Synchronize tab signal with URL query parameter
+    effect(() => {
+      const tab = this.activeTab();
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { tab },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+    });
+  }
 
   ngOnInit(): void {
-    this.loadMyPilotTeams();
+    // Initialize tab from URL query params (highest priority) or keep current
+    const initialTab = this.route.snapshot.queryParamMap.get('tab') as TabKey;
+    if (initialTab && ['current', 'scheduled', 'past'].includes(initialTab)) {
+      this.activeTab.set(initialTab);
+    }
 
+    this.loadMyPilotTeams();
+    this.refreshAll();
+  }
+
+  refreshAll(): void {
+    this.isLoading.set(true);
     const adminId = this.authService.session()?.role === 'tournament_admin'
       ? this.authService.session()?.uid
       : undefined;
 
-    if (adminId) {
-      this.tournamentDataService.refreshTournaments(adminId).subscribe({
-        next: (items) => {
-          if (items.length === 0) {
-            this.tournamentDataService.refreshTournaments().subscribe({
-              next: () => {
-                this.isLoading.set(false);
-                this.errorMessage.set('');
-              },
-              error: () => {
-                this.isLoading.set(false);
-                this.errorMessage.set('Could not load tournaments from backend.');
-              }
-            });
-            return;
-          }
+    const obs$ = adminId 
+      ? this.tournamentDataService.refreshTournaments(adminId)
+      : this.tournamentDataService.refreshTournaments();
+
+    obs$.subscribe({
+      next: (items) => {
+        if (adminId && items.length === 0) {
+          this.tournamentDataService.refreshTournaments().subscribe(() => {
+            this.isLoading.set(false);
+            this.errorMessage.set('');
+          });
+        } else {
           this.isLoading.set(false);
           this.errorMessage.set('');
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.errorMessage.set('Could not load tournaments from backend.');
         }
-      });
-      return;
-    }
-
-    this.tournamentDataService.refreshTournaments().subscribe({
-      next: () => {
-        this.isLoading.set(false);
-        this.errorMessage.set('');
       },
       error: () => {
         this.isLoading.set(false);

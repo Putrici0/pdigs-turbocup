@@ -214,16 +214,17 @@ def generate_matches_and_stats(tournament_ids):
 
 if __name__ == "__main__":
     # Change to True if you want to clear collections first
-    if False:
+    if True:
         clear_collection("users")
         clear_collection("participants")
         clear_collection("teams")
         clear_collection("tournaments")
         clear_collection("matches")
         clear_collection("match_stats")
-    
+    """
     # Keep enough teams per category so tournaments can reach ~12-16 teams.
     uids = generate_users_and_participants(180)
     teams = generate_teams(uids)
     tournament_ids = generate_tournaments(teams, uids, 8)
     generate_matches_and_stats(tournament_ids)
+    """

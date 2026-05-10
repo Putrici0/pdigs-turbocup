@@ -7,6 +7,8 @@ from backend.app.api.tournaments import tournaments_bp
 from backend.app.api.users import users_bp
 from backend.app.api.stats import stats_bp
 from backend.app.api.participant import participants_bp
+from backend.app.api.predictions import predictions_bp
+from backend.app.api.matches import matches_bp
 
 def create_app():
     app = Flask(__name__)
@@ -19,6 +21,8 @@ def create_app():
     app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
     app.register_blueprint(stats_bp, url_prefix='/api/stats')
     app.register_blueprint(participants_bp, url_prefix='/api/participants')
+    app.register_blueprint(predictions_bp, url_prefix='/api/predictions')
+    app.register_blueprint(matches_bp, url_prefix='/api/matches')
 
 
     return app

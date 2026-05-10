@@ -33,8 +33,16 @@ def resolve_match_mechanics(team_a_data, team_b_data):
         "winner_id": winner_id,
         "winner_name": winner_name,
         "telemetry": {
-            team_a_data["id"]: {"average_speed": round(random.uniform(210, 310), 2), "section_times": stats_a},
-            team_b_data["id"]: {"average_speed": round(random.uniform(210, 310), 2), "section_times": stats_b}
+            team_a_data["id"]: {
+                "average_speed": round(random.uniform(210, 310), 2), 
+                "section_times": stats_a,
+                "total_time": round(total_a, 3)
+            },
+            team_b_data["id"]: {
+                "average_speed": round(random.uniform(210, 310), 2), 
+                "section_times": stats_b,
+                "total_time": round(total_b, 3)
+            }
         }
     }
 

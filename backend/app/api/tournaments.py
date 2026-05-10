@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import random
 
 from flask import Blueprint, jsonify, request
@@ -13,6 +13,27 @@ tournaments_bp = Blueprint('tournaments', __name__)
 
 # --- HELPERS ---
 
+def _resolve_pending_predictions(match_id, actual_winner_id):
+    """Auto-resolve any pending predictions for a simulated match."""
+    pred_docs = list(
+        db.collection("predictions")
+        .where(filter=FieldFilter("match_id", "==", match_id))
+        .where(filter=FieldFilter("is_correct", "==", None))
+        .limit(1)
+        .stream()
+    )
+    if not pred_docs:
+        return
+    pred_doc = pred_docs[0]
+    pred_data = pred_doc.to_dict()
+    predicted = pred_data.get("predicted_winner_id")
+    is_correct = (predicted == actual_winner_id)
+    pred_doc.reference.update({
+        "actual_winner_id": actual_winner_id,
+        "is_correct": is_correct,
+        "resolved_at": datetime.now(timezone.utc).isoformat(),
+    })
+
 def _parse_iso_datetime(value):
     if not value: return None
     try: return datetime.fromisoformat(value)
@@ -21,7 +42,14 @@ def _parse_iso_datetime(value):
 def _compute_status(start_date_str, end_date_str):
     start_date = _parse_iso_datetime(start_date_str)
     end_date = _parse_iso_datetime(end_date_str)
-    now = datetime.now()
+    
+    # Ensure 'now' has timezone if dates have it, or both are naive.
+    # ISO-8601 from mass_populate often includes UTC offset.
+    if start_date and start_date.tzinfo:
+        now = datetime.now(timezone.utc)
+    else:
+        now = datetime.now()
+
     if start_date and start_date > now: return 'scheduled'
     if end_date and end_date < now: return 'past'
     return 'current' if start_date else 'scheduled'
@@ -186,6 +214,7 @@ def generate_tournament_matches(tournament_id):
     round_num = 1
     total_generated = 0
     start_time = datetime.utcnow()
+    resolved_matches = []
 
     # Loop for Full Bracket Simulation if simulate=true
     # Otherwise, it runs only once for Round 1
@@ -226,6 +255,7 @@ def generate_tournament_matches(tournament_id):
                         "section_times": tel["section_times"]
                     })
                     update_participant_stats(batch, db, teams_map[tid], winner_id)
+                resolved_matches.append({"match_id": m_ref.id, "winner_id": winner_id})
             total_generated += 1
 
         if not simulate:
@@ -236,6 +266,10 @@ def generate_tournament_matches(tournament_id):
         start_time += timedelta(hours=6)
 
     batch.commit()
+
+    for rm in resolved_matches:
+        _resolve_pending_predictions(rm["match_id"], rm["winner_id"])
+
     return jsonify({"message": f"Successfully generated {total_generated} matches.", "rounds": round_num - 1 if simulate else 1}), 201
 
 @tournaments_bp.route('/<tournament_id>/join', methods=['POST'])

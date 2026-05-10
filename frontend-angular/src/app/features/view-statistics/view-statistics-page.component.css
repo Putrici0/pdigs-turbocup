@@ -1,147 +1,235 @@
-:host {
-  display: block;
-}
-
 .page-shell {
-  width: min(1180px, calc(100% - 32px));
+  width: min(1200px, calc(100% - 32px));
   margin: 0 auto;
   padding: 56px 0 72px;
   display: grid;
-  gap: 22px;
+  gap: 24px;
 }
 
 .panel {
   padding: 28px;
-  border: 1px solid rgba(229, 231, 235, 0.14);
   border-radius: 28px;
   background: #1f2937;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
-}
-
-.eyebrow {
-  margin: 0 0 10px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #dc247e;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.25);
 }
 
 .hero h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-size: clamp(2.4rem, 5vw, 4rem);
+  line-height: 1;
 }
 
 .hero-copy {
-  margin: 10px 0 0;
   color: #9ca3af;
-}
-
-.panel-header h2 {
-  margin: 0 0 14px;
+  margin-top: 10px;
 }
 
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
 }
 
 .stat-card {
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 14px;
-  background: rgba(17, 24, 39, 0.72);
-  padding: 14px;
+  padding: 24px;
+  border-radius: 20px;
+  background: rgba(55, 65, 81, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
 }
 
 .stat-label {
-  margin: 0 0 6px;
   color: #9ca3af;
-  font-size: 0.78rem;
   text-transform: uppercase;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
 }
 
 .stat-value {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #dc247e;
+  line-height: 1;
 }
 
+/* PODIUM STYLES */
+.podium-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  margin: 40px 0 60px;
+  padding-bottom: 20px;
+}
+
+.podium-spot {
+  flex: 1;
+  max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.podium-spot:hover {
+  transform: translateY(-10px);
+}
+
+.spot-content {
+  text-align: center;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.spot-content h3 {
+  margin: 10px 0 4px;
+  font-size: 1.1rem;
+  color: #f3f4f6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.points {
+  font-weight: 800;
+  color: #dc247e;
+  margin-bottom: 12px;
+}
+
+.view-team-link {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: white;
+  background: rgba(255,255,255,0.1);
+  padding: 4px 12px;
+  border-radius: 20px;
+  text-decoration: none;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.view-team-link:hover {
+  background: #dc247e;
+}
+
+.rank-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 1.2rem;
+  margin: 0 auto;
+  border: 3px solid rgba(255,255,255,0.2);
+}
+
+.base {
+  width: 100%;
+  border-radius: 12px 12px 4px 4px;
+  background: linear-gradient(180deg, #374151 0%, #111827 100%);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+}
+
+/* Gold specific */
+.gold .base { height: 160px; background: linear-gradient(180deg, #f59e0b 0%, #78350f 100%); }
+.gold .rank-badge { background: #fbce07; color: #78350f; border-color: #fde68a; }
+.gold { z-index: 2; transform: scale(1.1); }
+.gold:hover { transform: scale(1.15) translateY(-10px); }
+.crown { font-size: 2rem; position: absolute; top: -35px; left: 50%; transform: translateX(-50%); }
+
+/* Silver specific */
+.silver .base { height: 110px; background: linear-gradient(180deg, #9ca3af 0%, #374151 100%); }
+.silver .rank-badge { background: #d1d5db; color: #374151; border-color: #f3f4f6; }
+
+/* Bronze specific */
+.bronze .base { height: 80px; background: linear-gradient(180deg, #b45309 0%, #451a03 100%); }
+.bronze .rank-badge { background: #d97706; color: #451a03; border-color: #fbbf24; }
+
+/* TABLE REFINEMENT */
 .table-wrap {
+  width: 100%;
   overflow-x: auto;
+  border-radius: 20px;
+  background: rgba(17, 24, 39, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
 }
 
-thead th {
-  padding: 13px 12px;
+th {
+  padding: 20px;
   text-align: left;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.14);
-  color: #9ca3af;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
+  color: #9ca3af;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-tbody td {
-  padding: 14px 12px;
-  border-bottom: 1px solid rgba(229, 231, 235, 0.08);
+td {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.in-podium {
+  background: rgba(220, 36, 126, 0.05);
 }
 
 .link-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 12px;
-  border-radius: 999px;
+  display: inline-block;
+  padding: 8px 16px;
   background: #dc247e;
-  color: #ffffff;
+  color: white;
+  border-radius: 12px;
   text-decoration: none;
   font-weight: 700;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.link-button:hover {
+  background: #be185d;
+  transform: translateY(-2px);
 }
 
 .list-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
 }
 
 .list-card {
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  border-radius: 14px;
-  background: rgba(17, 24, 39, 0.72);
-  padding: 14px;
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(55, 65, 81, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.list-card h3 {
-  margin: 0 0 8px;
-}
+.list-card h3 { margin: 0 0 4px; font-size: 1.1rem; }
+.list-card p { margin: 0 0 16px; color: #9ca3af; font-size: 0.9rem; }
 
-.list-card p {
-  margin: 0 0 12px;
-  color: #9ca3af;
-}
-
-@media (max-width: 980px) {
-  .cards-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (max-width: 768px) {
+  .podium-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
   }
-
-  .list-grid {
-    grid-template-columns: 1fr;
+  
+  .podium-spot {
+    width: 100%;
+    max-width: 300px;
   }
-}
-
-@media (max-width: 860px) {
-  .page-shell {
-    width: min(100% - 20px, 1180px);
-    padding-top: 32px;
-  }
-
-  .panel {
-    padding: 20px;
+  
+  .base {
+    height: 40px !important;
   }
 }

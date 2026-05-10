@@ -1,9 +1,12 @@
+@if (isLoading()) {
+  <p class="empty-state">Loading tournament statistics...</p>
+} @else if (tournament(); as t) {
 <main class="page-shell">
   <section class="hero panel">
     <p class="eyebrow">Tournament Metrics</p>
-    <h1>{{ tournament().name }}</h1>
+    <h1>{{ t.name }}</h1>
     <p class="hero-copy">Detailed per-match results and leaderboard snapshot.</p>
-    <a class="link-button" [routerLink]="['/view-tournament', tournament().id]">Back to bracket</a>
+    <a class="link-button" [routerLink]="['/view-tournament', t.id]">Back to bracket</a>
   </section>
 
   <section class="panel">
@@ -23,7 +26,7 @@
         </tr>
         </thead>
         <tbody>
-          @for (match of tournament().matches; track match.id) {
+          @for (match of t.matches; track match.id) {
             <tr>
               <td>{{ match.id }}</td>
               <td>{{ match.team_a_name }}</td>
@@ -68,3 +71,6 @@
     </div>
   </section>
 </main>
+} @else {
+  <p class="empty-state">Tournament not found.</p>
+}

@@ -21,28 +21,76 @@
 
   <section class="panel">
     <div class="panel-header">
-      <h2>Top teams (ranking points)</h2>
+      <h2>Global performance ranking</h2>
+      <p class="panel-copy">The fastest and most successful teams in the circuit.</p>
     </div>
+
+    @if (podium().length > 0) {
+      <div class="podium-container">
+        <!-- 2nd Place -->
+        @if (podium()[1]; as runnerUp) {
+          <div class="podium-spot silver">
+            <div class="spot-content">
+              <span class="rank-badge">2</span>
+              <h3>{{ runnerUp.name }}</h3>
+              <p class="points">{{ runnerUp.points }} pts</p>
+              <a class="view-team-link" [routerLink]="['/view-team', runnerUp.id]">Profile</a>
+            </div>
+            <div class="base"></div>
+          </div>
+        }
+
+        <!-- 1st Place -->
+        @if (podium()[0]; as champion) {
+          <div class="podium-spot gold">
+            <div class="spot-content">
+              <span class="rank-badge">1</span>
+              <span class="crown">👑</span>
+              <h3>{{ champion.name }}</h3>
+              <p class="points">{{ champion.points }} pts</p>
+              <a class="view-team-link" [routerLink]="['/view-team', champion.id]">Profile</a>
+            </div>
+            <div class="base"></div>
+          </div>
+        }
+
+        <!-- 3rd Place -->
+        @if (podium()[2]; as third) {
+          <div class="podium-spot bronze">
+            <div class="spot-content">
+              <span class="rank-badge">3</span>
+              <h3>{{ third.name }}</h3>
+              <p class="points">{{ third.points }} pts</p>
+              <a class="view-team-link" [routerLink]="['/view-team', third.id]">Profile</a>
+            </div>
+            <div class="base"></div>
+          </div>
+        }
+      </div>
+    }
+
     <div class="table-wrap">
       <table>
         <thead>
         <tr>
+          <th>Pos</th>
           <th>Team</th>
           <th>Points</th>
-          <th>Podiums</th>
-          <th>Stage wins</th>
-          <th>Average time</th>
+          <th>Matches</th>
+          <th>Win Rate</th>
+          <th>Category</th>
           <th>Action</th>
         </tr>
         </thead>
         <tbody>
-          @for (team of teams(); track team.id) {
-            <tr>
+          @for (team of teamRanking(); track team.id) {
+            <tr [class.in-podium]="$index < 3">
+              <td><strong>#{{ $index + 1 }}</strong></td>
               <td>{{ team.name }}</td>
-              <td>{{ team.stats.points2026 }}</td>
-              <td>{{ team.stats.podiums }}</td>
-              <td>{{ team.stats.stageWins }}</td>
-              <td>{{ team.stats.avgStageTime }}</td>
+              <td>{{ team.points }}</td>
+              <td>{{ team.matches }}</td>
+              <td>{{ team.win_rate }}%</td>
+              <td>{{ team.category }}</td>
               <td><a class="link-button" [routerLink]="['/view-team', team.id]">Team page</a></td>
             </tr>
           }
@@ -50,6 +98,7 @@
       </table>
     </div>
   </section>
+
 
   <section class="panel">
     <div class="panel-header">

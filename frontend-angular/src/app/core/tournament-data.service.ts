@@ -98,6 +98,16 @@ interface TournamentBucketsResponse {
   scheduled?: ApiTournament[];
 }
 
+export interface Prediction {
+  id: string;
+  match_id: string;
+  team_a_win_prob: number;
+  team_b_win_prob: number;
+  predicted_winner_id: string;
+  predicted_winner_name: string;
+  confidence: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TournamentDataService {
   private readonly apiBase = `${API_BASE_URL}/tournaments`;
@@ -105,6 +115,11 @@ export class TournamentDataService {
   readonly tournaments = signal<Tournament[]>([]);
 
   constructor(private readonly http: HttpClient) {}
+
+  getPrediction(matchId: string): Observable<Prediction> {
+    return this.http.post<Prediction>(`${API_BASE_URL}/predictions/matches/${matchId}/predict`, {});
+  }
+
 
   getTournamentById(id: string): Tournament | undefined {
     return this.tournaments().find((item) => item.id === id);

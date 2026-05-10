@@ -95,6 +95,61 @@ def get_user_stats(user_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# --- RANKING ENDPOINTS ---
+
+@stats_bp.route('/ranking/teams', methods=['GET'])
+def get_team_ranking():
+    """
+    Returns the top 10 teams based on the performance of their pilots.
+    Optimized with batch reads (db.get_all) to be extremely fast.
+    """
+    try:
+        teams_list = list(db.collection("teams").limit(40).stream())
+        if not teams_list:
+            return jsonify([]), 200
+
+        # Collect all unique user IDs to fetch them in one go
+        uids = set()
+        for doc in teams_list:
+            t = doc.to_dict()
+            if t.get("pilot_id"): uids.add(t["pilot_id"])
+            if t.get("copilot_id"): uids.add(t["copilot_id"])
+        
+        # Batch fetch all participants
+        participants_map = {}
+        if uids:
+            p_refs = [db.collection("participants").document(uid) for uid in uids]
+            p_docs = db.get_all(p_refs)
+            participants_map = {doc.id: doc.to_dict() for doc in p_docs if doc.exists}
+
+        ranking = []
+        for team_doc in teams_list:
+            t = team_doc.to_dict()
+            score = 0
+            matches = 0
+            
+            for role in ["pilot_id", "copilot_id"]:
+                uid = t.get(role)
+                p_data = participants_map.get(uid)
+                if p_data:
+                    p_stats = p_data.get("stats", {})
+                    score += p_stats.get("win", 0) * 3
+                    matches += p_stats.get("matchesPlayed", 0)
+            
+            ranking.append({
+                "id": team_doc.id,
+                "name": t.get("name", "Unknown"),
+                "category": t.get("category", "N/A"),
+                "points": score,
+                "matches": matches,
+                "win_rate": round((score / (matches * 3) * 100), 2) if matches > 0 else 0
+            })
+            
+        ranking.sort(key=lambda x: x["points"], reverse=True)
+        return jsonify(ranking[:10]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # --- OPTIMIZED MATCH STATS ENDPOINT (ZERO EXTRA READS) ---
 
 @stats_bp.route('/match/<match_id>', methods=['GET'])
