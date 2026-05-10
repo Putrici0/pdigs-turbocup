@@ -56,6 +56,25 @@
 
   <section class="panel">
     <div class="panel-header">
+      <h2>Registered teams</h2>
+    </div>
+    @if (registeredTeams().length > 0) {
+      <div class="teams-columns">
+        @for (team of registeredTeams(); track team.id + team.name) {
+          <a class="teams-card-link" [routerLink]="['/view-team', teamRouteId(team)]">
+            <article class="teams-card mini interactive">
+              <div class="card-content">
+                <h3>{{ team.name }}</h3>
+              </div>
+            </article>
+          </a>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
       <h2>Match Results & Telemetry</h2>
     </div>
     <div class="table-wrap">
@@ -98,7 +117,7 @@
                         <p class="team-label">{{ row.match.leftName }}</p>
                         <div class="sectors">
                           @for (sec of getSectors(row.match.leftTime, row.match.leftTeamId, row.match.id); track $index) {
-                            <div class="sector">S{{ $index + 1 }}: <span [class]="getSectorClass(row.match, row.match.leftTeamId, $index)">{{ sec | number:'1.3-3' }}s</span></div>
+                            <div class="sector">Sector {{ $index + 1 }}: <span [class]="getSectorClass(row.match, row.match.leftTeamId, $index)">{{ sec | number:'1.3-3' }}s</span></div>
                           }
                         </div>
                       </div>
@@ -107,7 +126,7 @@
                         <p class="team-label">{{ row.match.rightName }}</p>
                         <div class="sectors">
                           @for (sec of getSectors(row.match.rightTime, row.match.rightTeamId, row.match.id); track $index) {
-                            <div class="sector">S{{ $index + 1 }}: <span [class]="getSectorClass(row.match, row.match.rightTeamId, $index)">{{ sec | number:'1.3-3' }}s</span></div>
+                            <div class="sector">Sector {{ $index + 1 }}: <span [class]="getSectorClass(row.match, row.match.rightTeamId, $index)">{{ sec | number:'1.3-3' }}s</span></div>
                           }
                         </div>
                       </div>

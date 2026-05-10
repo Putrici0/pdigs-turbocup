@@ -228,7 +228,16 @@ export class ViewTournamentPageComponent implements OnInit {
   
   formatMatchState(s: string): string { return s; }
   stateClass(s: string): string { return s; }
-  bestTime(m: BracketItem): string { return m.leftTime ? m.leftTime.toString() : 'N/A'; }
+  formatRaceTime(totalSeconds: number | null): string {
+    if (totalSeconds === null || Number.isNaN(totalSeconds) || totalSeconds < 0) return 'N/A';
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds - (minutes * 60);
+    return `${minutes}:${seconds.toFixed(3).padStart(6, '0')}`;
+  }
+
+  bestTime(m: BracketItem): string { 
+    return m.leftTime ? this.formatRaceTime(m.leftTime) : 'N/A'; 
+  }
   winnerName(m: BracketItem): string { return m.winnerId || 'TBD'; }
   isWinner(match: BracketItem, side: 'left' | 'right'): boolean {
     if (!match.winnerId) return false;
