@@ -1,0 +1,133 @@
+<button class="toolbar-toggle" type="button" (click)="openToolbar()">Menu</button>
+
+@if (isOpen()) {
+  <div class="toolbar-backdrop" (click)="closeToolbar()"></div>
+
+  <aside class="toolbar-panel">
+    <button class="toolbar-close" type="button" (click)="closeToolbar()">×</button>
+
+    <h1 class="toolbar-brand">TurboCup</h1>
+
+    <nav class="toolbar-nav">
+      <a
+        routerLink="/"
+        routerLinkActive="active-link"
+        [routerLinkActiveOptions]="{ exact: true }"
+        (click)="closeToolbar()"
+      >
+        Home
+      </a>
+
+      <a
+        routerLink="/teams"
+        routerLinkActive="active-link"
+        (click)="closeToolbar()"
+      >
+        Explore Teams
+      </a>
+
+      <a
+        routerLink="/view-statistics"
+        routerLinkActive="active-link"
+        (click)="closeToolbar()"
+      >
+        Statistics
+      </a>
+
+      <a
+        routerLink="/view-tournaments"
+        routerLinkActive="active-link"
+        (click)="closeToolbar()"
+      >
+        All Tournaments
+      </a>
+
+      @if (authService.session()) {
+          <a
+            routerLink="/notifications"
+            routerLinkActive="active-link"
+            (click)="closeToolbar()"
+          >
+            Notifications
+          </a>
+        @if (authService.session()?.role === 'participant_pilot' || authService.session()?.role === 'participant_copilot') {
+          <a
+            routerLink="/my-teams"
+            routerLinkActive="active-link"
+            (click)="closeToolbar()"
+          >
+            My Teams
+          </a>
+        }
+
+        <a
+          routerLink="/my-tournaments"
+          routerLinkActive="active-link"
+          (click)="closeToolbar()"
+        >
+          My Tournaments
+        </a>
+      }
+    </nav>
+
+    <div class="toolbar-account">
+      <button class="account-toggle" type="button" (click)="toggleAccount()">
+        {{ authService.session()?.fullName || 'Account' }}
+      </button>
+
+      @if (isAccountOpen()) {
+        <div class="account-menu">
+          @if (authService.session()) {
+            <a
+              routerLink="/profile"
+              routerLinkActive="active-link"
+              (click)="closeToolbar()"
+            >
+              Account
+            </a>
+
+            @if (authService.session()?.role === 'tournament_admin') {
+              <a
+                routerLink="/create-tournament"
+                routerLinkActive="active-link"
+                (click)="closeToolbar()"
+              >
+                Create tournament
+              </a>
+            }
+
+            <button type="button" class="logout-button" (click)="logout()">
+              {{ isLoggingOut() ? 'Closing session...' : 'Logout' }}
+            </button>
+          } @else {
+            <a
+              routerLink="/login"
+              routerLinkActive="active-link"
+              (click)="closeToolbar()"
+            >
+              Login
+            </a>
+
+            <a
+              routerLink="/register"
+              routerLinkActive="active-link"
+              (click)="closeToolbar()"
+            >
+              Register
+            </a>
+          }
+        </div>
+      }
+    </div>
+  </aside>
+}
+
+@if (showLogoutDialog()) {
+  <div class="logout-dialog-backdrop">
+    <div class="logout-dialog">
+      <h2>{{ isLogoutError() ? 'Error while logging out' : 'Logged out' }}</h2>
+      <p>{{ logoutMessage() }}</p>
+      <button type="button" (click)="closeLogoutDialog()">OK</button>
+    </div>
+  </div>
+}

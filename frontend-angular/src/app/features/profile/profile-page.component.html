@@ -1,0 +1,103 @@
+<main class="page-shell">
+  <section class="hero">
+    <p class="eyebrow">Account</p>
+    <h1>My Account</h1>
+    <p class="hero-copy">Update your real profile information.</p>
+  </section>
+
+  @if (authService.loading()) {
+    <section class="profile-box">
+      <p class="state-copy">Loading account...</p>
+    </section>
+  } @else if (!session()) {
+    <section class="profile-box">
+      <p class="state-copy">There is no active session.</p>
+    </section>
+  } @else {
+    <section class="profile-box">
+      <div class="profile-head">
+        <div class="avatar-preview" aria-hidden="true">{{ initials() }}</div>
+        <div>
+          <h2>{{ session()!.fullName }}</h2>
+          <p>&commat;{{ session()!.username }}</p>
+        </div>
+      </div>
+
+      <form class="profile-form" (ngSubmit)="saveChanges()">
+        @if (message()) {
+          <p class="profile-message" [class.is-error]="isError()">{{ message() }}</p>
+        }
+
+        <div class="field-grid">
+          <label class="field">
+            <span>First name</span>
+            <input type="text" name="name" [(ngModel)]="name" required />
+          </label>
+          <label class="field">
+            <span>Last name</span>
+            <input type="text" name="surname" [(ngModel)]="surname" required />
+          </label>
+          <label class="field">
+            <span>Username</span>
+            <input type="text" name="username" [(ngModel)]="username" required />
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" [(ngModel)]="email" required />
+          </label>
+        </div>
+
+        <div class="meta-row">
+          <div><strong>Role:</strong> {{ roleLabel() }}</div>
+          <div><strong>UID:</strong> <span class="uid">{{ session()!.uid }}</span></div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="primary-action" [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Saving...' : 'Save changes' }}
+          </button>
+
+          <button type="button" class="danger-action" (click)="openDeleteDialog()" [disabled]="isSubmitting()">
+            Delete Account
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+</main>
+
+@if (showSuccessDialog()) {
+  <div class="profile-dialog-backdrop" (click)="closeSuccessDialog()">
+    <section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="profile-success-title" (click)="$event.stopPropagation()">
+      <div class="profile-dialog-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 12.5l4.2 4.2L19 7.5" />
+        </svg>
+      </div>
+      <h2 id="profile-success-title">Account updated</h2>
+      <p>Your profile information has been saved successfully.</p>
+      <button type="button" class="profile-dialog-primary" (click)="closeSuccessDialog()">Continue</button>
+    </section>
+  </div>
+}
+
+@if (showDeleteDialog()) {
+  <div class="profile-dialog-backdrop" (click)="closeDeleteDialog()">
+    <section class="profile-dialog" role="dialog" aria-modal="true" aria-labelledby="delete-account-title" (click)="$event.stopPropagation()">
+      <div class="profile-dialog-icon icon-danger" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2M10 11v6M14 11v6" />
+        </svg>
+      </div>
+      <h2 id="delete-account-title">Delete Account</h2>
+      <p>Are you sure you want to permanently delete your account? This action cannot be undone.</p>
+
+      <div class="dialog-actions-row">
+        <button type="button" class="profile-dialog-secondary" (click)="closeDeleteDialog()" [disabled]="isDeleting()">Cancel</button>
+        <button type="button" class="profile-dialog-danger" (click)="confirmDelete()" [disabled]="isDeleting()">
+          {{ isDeleting() ? 'Deleting...' : 'Yes, delete' }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

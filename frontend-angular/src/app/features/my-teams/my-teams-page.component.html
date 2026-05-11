@@ -1,0 +1,53 @@
+<main class="page-shell">
+  <section class="hero panel">
+    <p class="eyebrow">Personal Dashboard</p>
+    <h1>My Teams</h1>
+    <p class="hero-copy">Review the teams where you are currently registered.</p>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Your team roster</h2>
+      <a class="create-link" routerLink="/teams">Explore teams</a>
+    </div>
+
+    @if (notice()) {
+      <p class="notice" [class.is-error]="noticeIsError()">{{ notice() }}</p>
+    }
+
+    @if (isLoading()) {
+      <p class="empty-state">Loading your teams...</p>
+    } @else if (myTeams().length > 0) {
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Team</th>
+            <th>Category</th>
+            <th>Members</th>
+            <th>My role</th>
+            <th>Action</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (team of myTeams(); track team.id) {
+              <tr>
+                <td>{{ team.name }}</td>
+                <td>
+                  <span class="category-pill">{{ formatCategory(team.category) }}</span>
+                </td>
+                <td>{{ team.memberCount }}/2</td>
+                <td>{{ team.myRole }}</td>
+                <td>
+                  <a class="view-link" [routerLink]="['/view-team', team.id]">View team</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="empty-state">You are not part of any team yet.</p>
+    }
+  </section>
+</main>

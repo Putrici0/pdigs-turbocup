@@ -1,0 +1,202 @@
+<main class="page-shell">
+  <section class="hero">
+    <p class="eyebrow">Personal Dashboard</p>
+    <h1>My tournaments</h1>
+    <p class="hero-copy">Review your scheduled, current and past tournaments in one place.</p>
+  </section>
+
+  <label class="search-field page-search">
+    <span>Search tournament</span>
+    <input type="search" [ngModel]="query()" (ngModelChange)="updateQuery($event)" placeholder="Search by name" />
+  </label>
+
+  @if (isLoading()) {
+    <p class="empty-state">Loading tournaments...</p>
+  }
+
+  @if (errorMessage()) {
+    <p class="empty-state">{{ errorMessage() }}</p>
+  }
+
+  @if (actionMessage()) {
+    <p class="notice" [class.is-error]="actionIsError()">{{ actionMessage() }}</p>
+  }
+
+  <div class="view-tabs" role="tablist" aria-label="Tournament status tabs">
+    <button type="button" class="tab-button" [class.active]="activeTab() === 'scheduled'" (click)="setTab('scheduled')">Scheduled</button>
+    <button type="button" class="tab-button" [class.active]="activeTab() === 'current'" (click)="setTab('current')">Current</button>
+    <button type="button" class="tab-button" [class.active]="activeTab() === 'past'" (click)="setTab('past')">Past</button>
+  </div>
+
+  @if (activeTab() === 'scheduled') {
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Scheduled tournaments</h2>
+          <p class="panel-copy">Tournaments that have not started yet.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Tournament name</th>
+            <th>Category</th>
+            <th>Start date</th>
+            <th>End date</th>
+            <th>Status</th>
+            <th>Participants</th>
+            <th>Action</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (tournament of tournamentsByStatus('scheduled'); track tournament.id) {
+              <tr>
+                <td data-label="Tournament name"><strong>{{ tournament.name }}</strong></td>
+                <td data-label="Category"><span class="category-pill">{{ tournament.category }}</span></td>
+                <td data-label="Start date">{{ formatDateTime(tournament.start_date) }}</td>
+                <td data-label="End date">{{ formatDateTime(tournament.end_date) }}</td>
+                <td data-label="Status"><span class="status-pill" [class]="effectiveStatus(tournament)">{{ statusLabel(effectiveStatus(tournament)) }}</span></td>
+                <td data-label="Participants">{{ participantCount(tournament) }}</td>
+                <td data-label="Action">
+                  <div class="action-buttons">
+                    <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
+                    @if (canShowLeaveAction(tournament)) {
+                      <button
+                        type="button"
+                        class="leave-link"
+                        [disabled]="leavingTournamentId() === tournament.id"
+                        (click)="leaveTournament(tournament)"
+                      >
+                        {{ leavingTournamentId() === tournament.id ? 'Leaving...' : 'Leave' }}
+                      </button>
+                    }
+                    @if (canDeleteTournament(tournament)) {
+                      <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>
+                    }
+                    @if (canDeleteTournament(tournament)) {
+                      <button type="button" class="delete-link" (click)="deleteTournament(tournament)">Delete</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (tournamentsByStatus('scheduled').length === 0) {
+        <p class="empty-state">No scheduled tournaments are available.</p>
+      }
+    </section>
+  }
+
+  @if (activeTab() === 'current') {
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Current tournaments</h2>
+          <p class="panel-copy">Tournaments that are currently in progress.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Tournament name</th>
+            <th>Category</th>
+            <th>Start date</th>
+            <th>End date</th>
+            <th>Status</th>
+            <th>Participants</th>
+            <th>Action</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (tournament of tournamentsByStatus('current'); track tournament.id) {
+              <tr>
+                <td data-label="Tournament name"><strong>{{ tournament.name }}</strong></td>
+                <td data-label="Category"><span class="category-pill">{{ tournament.category }}</span></td>
+                <td data-label="Start date">{{ formatDateTime(tournament.start_date) }}</td>
+                <td data-label="End date">{{ formatDateTime(tournament.end_date) }}</td>
+                <td data-label="Status"><span class="status-pill" [class]="effectiveStatus(tournament)">{{ statusLabel(effectiveStatus(tournament)) }}</span></td>
+                <td data-label="Participants">{{ participantCount(tournament) }}</td>
+                <td data-label="Action">
+                  <div class="action-buttons">
+                    <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
+                    @if (canDeleteTournament(tournament)) {
+                      <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>
+                    }
+                    @if (canDeleteTournament(tournament)) {
+                      <button type="button" class="delete-link" (click)="deleteTournament(tournament)">Delete</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (tournamentsByStatus('current').length === 0) {
+        <p class="empty-state">No current tournaments are available.</p>
+      }
+    </section>
+  }
+
+  @if (activeTab() === 'past') {
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <h2>Past tournaments</h2>
+          <p class="panel-copy">Tournaments listed from newest to oldest.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Tournament name</th>
+            <th>Category</th>
+            <th>Start date</th>
+            <th>End date</th>
+            <th>Status</th>
+            <th>Participants</th>
+            <th>Action</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for (tournament of tournamentsByStatus('past'); track tournament.id) {
+              <tr>
+                <td data-label="Tournament name"><strong>{{ tournament.name }}</strong></td>
+                <td data-label="Category"><span class="category-pill">{{ tournament.category }}</span></td>
+                <td data-label="Start date">{{ formatDateTime(tournament.start_date) }}</td>
+                <td data-label="End date">{{ formatDateTime(tournament.end_date) }}</td>
+                <td data-label="Status"><span class="status-pill" [class]="effectiveStatus(tournament)">{{ statusLabel(effectiveStatus(tournament)) }}</span></td>
+                <td data-label="Participants">{{ participantCount(tournament) }}</td>
+                <td data-label="Action">
+                  <div class="action-buttons">
+                    <a class="stats-link" [routerLink]="['/view-tournament', tournament.id]">Open</a>
+                    @if (canDeleteTournament(tournament)) {
+                      <a class="edit-link" [routerLink]="['/edit-tournament', tournament.id]">Modify</a>
+                    }
+                    @if (canDeleteTournament(tournament)) {
+                      <button type="button" class="delete-link" (click)="deleteTournament(tournament)">Delete</button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      @if (tournamentsByStatus('past').length === 0) {
+        <p class="empty-state">No completed tournaments are available.</p>
+      }
+    </section>
+  }
+
+  @if (canCreateTournament()) {
+    <div class="actions-row">
+      <a class="stats-link" routerLink="/create-tournament">Create new tournament</a>
+    </div>
+  }
+</main>

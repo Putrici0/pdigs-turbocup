@@ -1,0 +1,57 @@
+<main class="page-shell">
+  <section class="hero">
+    <p class="eyebrow">Tournament Setup</p>
+    <h1>Create tournament</h1>
+    <p class="hero-copy">Enter the core information to publish a new rally tournament.</p>
+  </section>
+
+  <form class="panel form-layout" (ngSubmit)="submit()">
+    @if (!canCreate()) {
+      <p class="notice is-error">Only Tournament Admin can create tournaments from this page.</p>
+    }
+
+    @if (message()) {
+      <p class="notice" [class.is-error]="isError()">{{ message() }}</p>
+    }
+
+    <section class="form-section">
+      <h2>Tournament details</h2>
+      <div class="field-grid">
+        <label class="field">
+          <span>Tournament name</span>
+          <input type="text" name="name" [(ngModel)]="name" [disabled]="!canCreate()" required />
+        </label>
+
+        <label class="field">
+          <span>Racing category</span>
+          <select name="category" [(ngModel)]="category" [disabled]="!canCreate()" required>
+            <option value="" disabled>Select a category</option>
+            @for (item of categories(); track item) {
+              <option [value]="item">{{ formatCategory(item) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <h2>Schedule</h2>
+      <div class="field-grid">
+        <label class="field">
+          <span>Start date and time</span>
+          <input type="datetime-local" name="startDate" [(ngModel)]="startDate" [disabled]="!canCreate()" required />
+        </label>
+
+        <label class="field">
+          <span>End date and time</span>
+          <input type="datetime-local" name="endDate" [(ngModel)]="endDate" [disabled]="!canCreate()" required />
+        </label>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button type="submit" class="primary-action" [disabled]="isSubmitting() || !canCreate()">{{ isSubmitting() ? 'Creating...' : 'Create tournament' }}</button>
+      <button type="reset" class="secondary-action" [disabled]="!canCreate()">Clear</button>
+    </div>
+  </form>
+</main>

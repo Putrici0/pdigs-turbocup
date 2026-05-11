@@ -1,0 +1,93 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #444547;
+  --bg-image: url('/bg/racecar-bg-custom-2.png');
+
+  /* Core Colors */
+  --primary: #dc247e;
+  --primary-hover: #be1d6c;
+  --secondary: #374151;
+  --secondary-hover: #4b5563;
+  --accent: #fbbf24;
+  --success: #22c55e;
+  --success-hover: #16a34a;
+  --info: #3b82f6;
+  --ai: #a855f7;
+  --warning: #f59e0b;
+  --error: #ef4444;
+
+  /* Surfaces */
+  --panel-bg: #1f2937;
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --card-bg: #374151;
+  --card-border: rgba(255, 255, 255, 0.05);
+  --input-bg: #1f2937;
+  
+  /* Text */
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-dim: #6b7280;
+
+  /* Shapes & Shadows */
+  --radius-lg: 24px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+  --shadow-panel: 0 20px 40px rgba(0, 0, 0, 0.3);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35)),
+    var(--bg);
+  color: #e5e7eb;
+}
+
+body {
+  position: relative;
+  overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  background-image: var(--bg-image);
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+  opacity: 1;
+  filter: saturate(0.85) drop-shadow(0 0 12px rgba(255, 79, 163, 0.24));
+}
+
+body::before {
+  width: 60vw;
+  height: 60vw;
+  top: -15vw;
+  right: -20vw;
+  background-position: left center;
+}
+
+body::after {
+  width: 60vw;
+  height: 60vw;
+  left: -34vw;
+  bottom: -22vw;
+  background-position: right center;
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}

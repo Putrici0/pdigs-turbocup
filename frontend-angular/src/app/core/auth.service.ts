@@ -1,0 +1,372 @@
+import { Injectable, signal } from '@angular/core';
+import {
+  User as FirebaseUser,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  updateEmail,
+  updateProfile,
+} from 'firebase/auth';
+import {
+  doc,
+  getDoc,
+  setDoc,
+} from 'firebase/firestore';
+import { auth, db } from './firebase';
+
+export type UserRole = 'participant_pilot' | 'participant_copilot' | 'tournament_admin';
+
+export interface UserProfile {
+  uid: string;
+  name: string;
+  surname: string;
+  username: string;
+  usernameLowercase: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+}
+
+export interface SessionUser {
+  uid: string;
+  fullName: string;
+  email: string;
+  username: string;
+  role: UserRole;
+}
+
+export interface RegisterPayload {
+  name: string;
+  surname: string;
+  username: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
+export interface UpdateProfilePayload {
+  name: string;
+  surname: string;
+  username: string;
+  email: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  readonly session = signal<SessionUser | null>(null);
+  readonly loading = signal(true);
+
+  private readyResolved = false;
+  private resolveReady!: () => void;
+  private readonly readyPromise = new Promise<void>((resolve) => {
+    this.resolveReady = resolve;
+  });
+
+  constructor() {
+    onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        if (!firebaseUser) {
+          this.session.set(null);
+          return;
+        }
+
+        const profile = await this.getOrCreateUserProfile(firebaseUser);
+        this.session.set(this.toSession(profile));
+      } catch (error) {
+        console.error('Error restoring auth state:', error);
+        this.session.set(null);
+      } finally {
+        if (!this.readyResolved) {
+          this.readyResolved = true;
+          this.loading.set(false);
+          this.resolveReady();
+        }
+      }
+    });
+  }
+
+  waitUntilReady(): Promise<void> {
+    return this.readyPromise;
+  }
+
+  async login(email: string, password: string): Promise<{ ok: boolean; error?: string }> {
+    const normalizedEmail = this.normalizeEmail(email);
+
+    if (!normalizedEmail) {
+      return { ok: false, error: 'Email is required.' };
+    }
+
+    if (!password) {
+      return { ok: false, error: 'Password is required.' };
+    }
+
+    try {
+      const credential = await signInWithEmailAndPassword(auth, normalizedEmail, password);
+      const profile = await this.getOrCreateUserProfile(credential.user);
+      this.session.set(this.toSession(profile));
+      return { ok: true };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { ok: false, error: this.mapError(error) };
+    }
+  }
+
+  async register(payload: RegisterPayload): Promise<{ ok: boolean; error?: string }> {
+    const name = this.normalizeText(payload.name);
+    const surname = this.normalizeText(payload.surname);
+    const username = this.normalizeUsername(payload.username);
+    const email = this.normalizeEmail(payload.email);
+    const password = String(payload.password || '');
+    const role = this.normalizeRole(payload.role);
+
+    if (!name) return { ok: false, error: 'First name is required.' };
+    if (!surname) return { ok: false, error: 'Last name is required.' };
+    if (!username) return { ok: false, error: 'Username is required.' };
+    if (!email) return { ok: false, error: 'Email is required.' };
+    if (!role) return { ok: false, error: 'Role is not valid.' };
+    if (password.length < 6) {
+      return { ok: false, error: 'Password must be at least 6 characters.' };
+    }
+
+    try {
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      const firebaseUser = credential.user;
+
+      const fullName = `${name} ${surname}`.trim();
+
+      await updateProfile(firebaseUser, { displayName: fullName });
+
+      const profile: UserProfile = {
+        uid: firebaseUser.uid,
+        name,
+        surname,
+        username,
+        usernameLowercase: username.toLowerCase(),
+        fullName,
+        email,
+        role,
+        createdAt: new Date().toISOString(),
+      };
+
+      try {
+        await setDoc(doc(db, 'users', firebaseUser.uid), profile);
+      } catch (error) {
+        if (!this.isFirestorePermissionDenied(error)) {
+          throw error;
+        }
+        console.warn('Register profile write skipped by Firestore rules.');
+      }
+
+      this.session.set(this.toSession(profile));
+      return { ok: true };
+    } catch (error) {
+      console.error('Register error:', error);
+      return { ok: false, error: this.mapError(error) };
+    }
+  }
+
+  async logout(): Promise<void> {
+    await signOut(auth);
+    this.session.set(null);
+  }
+
+  async updateCurrentUserProfile(payload: UpdateProfilePayload): Promise<{ ok: boolean; error?: string }> {
+    const firebaseUser = auth.currentUser;
+    const currentSession = this.session();
+
+    if (!firebaseUser || !currentSession) {
+      return { ok: false, error: 'There is no active session.' };
+    }
+
+    const name = this.normalizeText(payload.name);
+    const surname = this.normalizeText(payload.surname);
+    const username = this.normalizeUsername(payload.username);
+    const email = this.normalizeEmail(payload.email);
+
+    if (!name) return { ok: false, error: 'First name is required.' };
+    if (!surname) return { ok: false, error: 'Last name is required.' };
+    if (!username) return { ok: false, error: 'Username is required.' };
+    if (!email) return { ok: false, error: 'Email is required.' };
+
+    const fullName = `${name} ${surname}`.trim();
+
+    try {
+      await updateProfile(firebaseUser, { displayName: fullName });
+
+      if (email !== (firebaseUser.email || '').toLowerCase()) {
+        await updateEmail(firebaseUser, email);
+      }
+
+      const userRef = doc(db, 'users', firebaseUser.uid);
+      let existingProfile: Partial<UserProfile> | null = null;
+
+      try {
+        const snapshot = await getDoc(userRef);
+        if (snapshot.exists()) {
+          existingProfile = snapshot.data() as Partial<UserProfile>;
+        }
+      } catch (error) {
+        if (!this.isFirestorePermissionDenied(error)) {
+          throw error;
+        }
+      }
+
+      const profile: UserProfile = {
+        uid: firebaseUser.uid,
+        name,
+        surname,
+        username,
+        usernameLowercase: username.toLowerCase(),
+        fullName,
+        email,
+        role: (existingProfile?.role as UserRole | undefined) ?? currentSession.role,
+        createdAt: existingProfile?.createdAt || new Date().toISOString(),
+      };
+
+      try {
+        await setDoc(userRef, profile, { merge: true });
+      } catch (error) {
+        if (!this.isFirestorePermissionDenied(error)) {
+          throw error;
+        }
+        console.warn('Profile update write skipped by Firestore rules.');
+      }
+
+      this.session.set(this.toSession(profile));
+      return { ok: true };
+    } catch (error) {
+      console.error('Profile update error:', error);
+      return { ok: false, error: this.mapError(error) };
+    }
+  }
+
+  private async getOrCreateUserProfile(firebaseUser: FirebaseUser): Promise<UserProfile> {
+    const userRef = doc(db, 'users', firebaseUser.uid);
+    let snapshot;
+    try {
+      snapshot = await getDoc(userRef);
+    } catch (error) {
+      if (this.isFirestorePermissionDenied(error)) {
+        return this.buildFallbackProfile(firebaseUser);
+      }
+      throw error;
+    }
+
+    if (snapshot.exists()) {
+      return snapshot.data() as UserProfile;
+    }
+
+    const fallbackProfile = this.buildFallbackProfile(firebaseUser);
+    try {
+      await setDoc(userRef, fallbackProfile);
+    } catch (error) {
+      if (!this.isFirestorePermissionDenied(error)) {
+        throw error;
+      }
+      console.warn('Profile bootstrap write skipped by Firestore rules.');
+    }
+    return fallbackProfile;
+  }
+
+  private buildFallbackProfile(firebaseUser: FirebaseUser): UserProfile {
+    const displayName = firebaseUser.displayName?.trim() || '';
+    const [name, ...rest] = displayName.split(/\s+/).filter(Boolean);
+    const surname = rest.join(' ').trim();
+    const fallbackUsername = this.buildFallbackUsername(firebaseUser);
+
+    return {
+      uid: firebaseUser.uid,
+      name: name || 'User',
+      surname: surname || '',
+      username: fallbackUsername,
+      usernameLowercase: fallbackUsername.toLowerCase(),
+      fullName: displayName || firebaseUser.email?.split('@')[0] || 'User',
+      email: firebaseUser.email?.toLowerCase() || '',
+      role: 'participant_pilot',
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  private buildFallbackUsername(firebaseUser: FirebaseUser): string {
+    const emailPrefix = firebaseUser.email?.split('@')[0]?.trim().toLowerCase();
+    if (emailPrefix) {
+      return emailPrefix;
+    }
+    return `user_${firebaseUser.uid.slice(0, 8).toLowerCase()}`;
+  }
+
+  private toSession(profile: UserProfile): SessionUser {
+    return {
+      uid: profile.uid,
+      fullName: profile.fullName,
+      email: profile.email,
+      username: profile.username,
+      role: profile.role,
+    };
+  }
+
+  private mapError(error: unknown): string {
+    const code =
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      typeof (error as { code?: unknown }).code === 'string'
+        ? (error as { code: string }).code
+        : '';
+
+    switch (code) {
+      case 'auth/email-already-in-use':
+        return 'This email is already registered.';
+      case 'auth/invalid-email':
+        return 'The email is not valid.';
+      case 'auth/weak-password':
+        return 'The password is too weak.';
+      case 'auth/invalid-credential':
+      case 'auth/user-not-found':
+      case 'auth/wrong-password':
+        return 'Incorrect email or password.';
+      case 'auth/too-many-requests':
+        return 'Too many attempts. Try again later.';
+      case 'auth/operation-not-allowed':
+        return 'Email/password sign-in is not enabled in Firebase Authentication.';
+      case 'permission-denied':
+      case 'firestore/permission-denied':
+        return 'Firestore is rejecting this operation due to security rules.';
+      default:
+        return 'Authentication failed. Please try again.';
+    }
+  }
+
+  private isFirestorePermissionDenied(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) {
+      return false;
+    }
+
+    const maybeCode = (error as { code?: unknown }).code;
+    return maybeCode === 'permission-denied' || maybeCode === 'firestore/permission-denied';
+  }
+
+  private normalizeText(value: string): string {
+    return String(value || '').trim();
+  }
+
+  private normalizeEmail(value: string): string {
+    return this.normalizeText(value).toLowerCase();
+  }
+
+  private normalizeUsername(value: string): string {
+    return this.normalizeText(value).toLowerCase().replace(/\s+/g, '');
+  }
+
+  private normalizeRole(value: string): UserRole | '' {
+    const normalized = this.normalizeText(value).toLowerCase();
+
+    if (normalized === 'participant_pilot') return 'participant_pilot';
+    if (normalized === 'participant_copilot') return 'participant_copilot';
+    if (normalized === 'tournament_admin') return 'tournament_admin';
+
+    return '';
+  }
+}

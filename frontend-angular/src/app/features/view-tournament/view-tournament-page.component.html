@@ -1,0 +1,235 @@
+@if (isLoading()) {
+  <p class="empty-state">Loading tournament...</p>
+} @else if (errorMessage()) {
+  <p class="empty-state">{{ errorMessage() }}</p>
+} @else {
+<main class="page-shell">
+  <section class="hero panel">
+    <div class="hero-header-row">
+       <a class="back-btn" [routerLink]="['/view-tournaments']" [queryParams]="{ tab: effectiveTournamentStatus() }">
+         <span class="arrow">←</span> Back to tournaments
+       </a>
+       <p class="eyebrow">Tournament Detail</p>
+    </div>
+    <h1>{{ tournament().name }}</h1>
+    <div class="hero-meta">
+      <span class="status-pill" [class]="stateClass(effectiveTournamentStatus())">
+        {{ formatTournamentStatus(effectiveTournamentStatus()) }}
+      </span>
+      <span class="meta-chip">{{ tournament().category }} - ID: {{ tournament().id }}</span>
+    </div>
+    @if (successMessage()) {
+      <p class="success-banner">{{ successMessage() }}</p>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Bracket</h2>
+      <div class="header-actions">
+        <button class="start-btn" type="button" [disabled]="!canStartTournament()" (click)="startTournament()">
+          {{ started() ? 'Tournament Started' : 'Start Tournament' }}
+        </button>
+        @if (canFinishTournament()) {
+          <button class="finish-btn" type="button" (click)="finishTournament()">
+            Finish Tournament
+          </button>
+        }
+      </div>
+    </div>
+    <div class="bracket-scroll">
+      <div class="bracket-grid">
+        @for (round of bracket().rounds; track $index; let roundIdx = $index) {
+          <section class="bracket-round">
+            <h3>{{ bracket().names[roundIdx] }}</h3>
+            @for (item of round; track item.id; let matchIdx = $index) {
+              <article class="match-card">
+                <div class="teams-row">
+                  <p [class.team-winner]="isWinner(item, 'left')">{{ item.leftName }}</p>
+                  <p [class.team-winner]="isWinner(item, 'right')">{{ item.rightName }}</p>
+                </div>
+                <span [class]="stateClass(item.state)">{{ formatMatchState(item.state) }}</span>
+                
+                @if (matchPredictions().get(item.id); as pred) {
+                  <div class="prediction-bar-container bracket-mode" [class.is-loading]="predictingMatchId() === item.id">
+                    <div class="prediction-bar">
+                      <div class="prob-a" [style.width.%]="pred.team_a_win_prob * 100"></div>
+                      <div class="prob-b" [style.width.%]="pred.team_b_win_prob * 100"></div>
+                    </div>
+                    <div class="prediction-info">
+                      <span>{{ pred.team_a_win_prob * 100 | number:'1.0-0' }}%</span>
+                      <span class="ai-label">AI PREDICTION</span>
+                      <span>{{ pred.team_b_win_prob * 100 | number:'1.0-0' }}%</span>
+                    </div>
+                  </div>
+                }
+
+                <div class="winner-actions">
+                  @if (canPickWinner(item)) {
+                    <button type="button" class="winner-btn" (click)="chooseWinner(roundIdx, matchIdx)">Input Results</button>
+                  }
+                  
+                  @if (!item.winnerId && item.leftTeamId && item.rightTeamId && !item.id.startsWith('placeholder')) {
+                    <button type="button" class="predict-btn-mini" (click)="requestPrediction(item.id)" [disabled]="predictingMatchId() === item.id">
+                      {{ predictingMatchId() === item.id ? '...' : '🧠' }}
+                    </button>
+                  }
+                </div>
+              </article>
+            }
+          </section>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Registered teams</h2>
+    </div>
+    @if (registeredTeams().length > 0) {
+      <div class="teams-columns">
+        @for (team of registeredTeams(); track team.id + team.name) {
+          <a class="teams-card-link" [routerLink]="['/view-team', teamRouteId(team)]">
+            <article class="teams-card mini interactive">
+              <div class="card-content">
+                <h3>{{ team.name }}</h3>
+              </div>
+            </article>
+          </a>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Match Results & Telemetry</h2>
+    </div>
+    <div class="table-wrap">
+      <table class="telemetry-table">
+        <thead>
+          <tr>
+            <th class="control-cell">Details</th>
+            <th>Round</th>
+            <th>Matchup</th>
+            <th>Best Lap</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of flatMatches(); track row.id) {
+            <tr class="main-row" [class.expanded]="row.isExpanded">
+              <td class="control-cell">
+                @if (row.match.state === 'completed') {
+                  <button class="toggle-btn" (click)="toggleMatchDetails(row.id)">{{ row.isExpanded ? '−' : '+' }}</button>
+                } @else if (row.match.leftTeamId && row.match.rightTeamId) {
+                  <button class="ai-predict-btn" (click)="requestPrediction(row.id)">🧠</button>
+                }
+              </td>
+              <td data-label="Round"><strong>{{ row.roundName }}</strong></td>
+              <td data-label="Matchup">
+                {{ row.match.leftName }} vs {{ row.match.rightName }}
+                @if (row.prediction; as pred) {
+                  <div class="prediction-bar-container table-mode" [class.is-loading]="predictingMatchId() === row.id">
+                    <div class="prediction-bar">
+                      <div class="prob-a" [style.width.%]="pred.team_a_win_prob * 100"></div>
+                      <div class="prob-b" [style.width.%]="pred.team_b_win_prob * 100"></div>
+                    </div>
+                    <div class="prediction-info">
+                      <span>{{ pred.team_a_win_prob * 100 | number:'1.0-0' }}%</span>
+                      <span class="ai-label">AI PREDICTION</span>
+                      <span>{{ pred.team_b_win_prob * 100 | number:'1.0-0' }}%</span>
+                    </div>
+                  </div>
+                }
+              </td>
+              <td data-label="Best Lap" class="time-cell">
+                @if (isTournamentRecord(row.match)) {
+                  <span class="best-lap-purple">⭐ {{ bestTime(row.match) }}</span>
+                } @else if (row.match.winnerId) {
+                  <span class="winner-lap-standard">{{ bestTime(row.match) }}</span>
+                } @else {
+                  N/A
+                }
+              </td>
+            </tr>
+            @if (row.isExpanded) {
+              <tr class="detail-row">
+                <td colspan="4">
+                  <div class="telemetry-panel">
+                    <div class="telemetry-grid">
+                      <div class="team-telemetry">
+                        <p class="team-label">{{ row.match.leftName }}</p>
+                        <div class="sectors">
+                          @for (sec of getSectors(row.match, row.match.leftTeamId); track $index) {
+                            <div class="sector">Sector {{ $index + 1 }}: <span [class]="getSectorClass(row.match, row.match.leftTeamId, $index)">{{ sec | number:'1.3-3' }}s</span></div>
+                          }
+                        </div>
+                      </div>
+                      <div class="telemetry-divider"></div>
+                      <div class="team-telemetry">
+                        <p class="team-label">{{ row.match.rightName }}</p>
+                        <div class="sectors">
+                          @for (sec of getSectors(row.match, row.match.rightTeamId); track $index) {
+                            <div class="sector">Sector {{ $index + 1 }}: <span [class]="getSectorClass(row.match, row.match.rightTeamId, $index)">{{ sec | number:'1.3-3' }}s</span></div>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+}
+
+@if (winnerDialog(); as dialog) {
+  <div class="dialog-backdrop" (click)="cancelWinnerDialog()">
+    <section class="dialog-card" (click)="$event.stopPropagation()">
+      <h3>Sector Times</h3>
+      <p class="dialog-hint">Enter seconds and milliseconds for each sector</p>
+      <div class="sector-dialog-grid">
+        <div class="team-sector-col">
+          <h4>{{ dialog.leftName }}</h4>
+          <div class="sector-row"><span class="sector-label">S1</span><input type="number" min="0" placeholder="sec" [value]="dialog.l1s" (input)="updateField('l1s', $any($event.target).value)" /><input type="number" min="0" max="999" placeholder="ms" [value]="dialog.l1ms" (input)="updateField('l1ms', $any($event.target).value)" /></div>
+          <div class="sector-row"><span class="sector-label">S2</span><input type="number" min="0" placeholder="sec" [value]="dialog.l2s" (input)="updateField('l2s', $any($event.target).value)" /><input type="number" min="0" max="999" placeholder="ms" [value]="dialog.l2ms" (input)="updateField('l2ms', $any($event.target).value)" /></div>
+          <div class="sector-row"><span class="sector-label">S3</span><input type="number" min="0" placeholder="sec" [value]="dialog.l3s" (input)="updateField('l3s', $any($event.target).value)" /><input type="number" min="0" max="999" placeholder="ms" [value]="dialog.l3ms" (input)="updateField('l3ms', $any($event.target).value)" /></div>
+        </div>
+        <div class="team-sector-col">
+          <h4>{{ dialog.rightName }}</h4>
+          <div class="sector-row"><span class="sector-label">S1</span><input type="number" min="0" placeholder="sec" [value]="dialog.r1s" (input)="updateField('r1s', $any($event.target).value)" /><input type="number" min="0" max="999" placeholder="ms" [value]="dialog.r1ms" (input)="updateField('r1ms', $any($event.target).value)" /></div>
+          <div class="sector-row"><span class="sector-label">S2</span><input type="number" min="0" placeholder="sec" [value]="dialog.r2s" (input)="updateField('r2s', $any($event.target).value)" /><input type="number" min="0" max="999" placeholder="ms" [value]="dialog.r2ms" (input)="updateField('r2ms', $any($event.target).value)" /></div>
+          <div class="sector-row"><span class="sector-label">S3</span><input type="number" min="0" placeholder="sec" [value]="dialog.r3s" (input)="updateField('r3s', $any($event.target).value)" /><input type="number" min="0" max="999" placeholder="ms" [value]="dialog.r3ms" (input)="updateField('r3ms', $any($event.target).value)" /></div>
+        </div>
+      </div>
+      @if (dialog.errorMessage) { <p class="dialog-error">{{ dialog.errorMessage }}</p> }
+      <div class="dialog-actions">
+        <button type="button" class="dialog-btn secondary" (click)="cancelWinnerDialog()">Cancel</button>
+        <button type="button" class="dialog-btn primary" (click)="confirmWinnerDialog()">Confirm</button>
+      </div>
+    </section>
+  </div>
+}
+
+@if (confirmDialog(); as config) {
+  <div class="dialog-backdrop" (click)="confirmDialog.set(null)">
+    <section class="dialog-card confirm-modal" (click)="$event.stopPropagation()">
+      <div class="modal-icon" [class]="config.type">
+        @if (config.type === 'primary') { 🏁 } @else { 🏆 }
+      </div>
+      <h3>{{ config.title }}</h3>
+      <p class="dialog-message">{{ config.message }}</p>
+      <div class="dialog-actions full-width">
+        <button type="button" class="dialog-btn secondary" (click)="confirmDialog.set(null)">Cancel</button>
+        <button type="button" class="dialog-btn" [class]="config.type" (click)="config.action()">
+          {{ config.confirmLabel }}
+        </button>
+      </div>
+    </section>
+  </div>
+}

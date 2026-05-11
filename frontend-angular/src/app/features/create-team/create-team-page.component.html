@@ -1,0 +1,76 @@
+<main class="page-shell">
+  <section class="hero">
+    <p class="eyebrow">Team Management</p>
+    <h1>Create team</h1>
+    <p class="hero-copy">
+      Create a new team using the available racing categories.
+    </p>
+  </section>
+
+  <form class="panel form-layout" (ngSubmit)="submit()">
+    @if (errorMessage()) {
+      <p class="notice is-error">{{ errorMessage() }}</p>
+    }
+
+    @if (successMessage()) {
+      <p class="notice">{{ successMessage() }}</p>
+    }
+
+    <section class="form-section">
+      <h2>Team details</h2>
+      <div class="field-grid">
+        <label class="field">
+          <span>Team name</span>
+          <input
+            type="text"
+            name="teamName"
+            [ngModel]="name()"
+            (ngModelChange)="updateName($event)"
+            required
+          />
+        </label>
+
+        <label class="field">
+          <span>Category</span>
+          <select
+            name="category"
+            [ngModel]="category()"
+            (ngModelChange)="updateCategory($event)"
+            required
+          >
+            @for (item of availableCategories(); track item) {
+              <option [value]="item">{{ formatCategory(item) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <div class="actions">
+      <button type="submit" class="primary-action" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Creating team...' : 'Create team' }}
+      </button>
+    </div>
+  </form>
+</main>
+
+@if (showSuccessDialog()) {
+  <div class="create-team-dialog-backdrop" (click)="continueAfterSuccess()">
+    <section
+      class="create-team-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-team-success-title"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="create-team-dialog-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M5 12.5l4.2 4.2L19 7.5" />
+        </svg>
+      </div>
+      <h2 id="create-team-success-title">Team created</h2>
+      <p>Your team was created successfully.</p>
+      <button type="button" class="create-team-dialog-primary" (click)="continueAfterSuccess()">Continue</button>
+    </section>
+  </div>
+}
