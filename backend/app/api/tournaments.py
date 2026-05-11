@@ -35,20 +35,21 @@ def _resolve_pending_predictions(match_id, actual_winner_id):
     })
 
 def _parse_iso_datetime(value):
-    if not value: return None
-    try: return datetime.fromisoformat(value)
-    except: return None
+    if not value:
+        return None
+    try:
+        normalized = str(value).strip().replace("Z", "+00:00")
+        dt = datetime.fromisoformat(normalized)
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+    except Exception:
+        return None
 
 def _compute_status(start_date_str, end_date_str):
     start_date = _parse_iso_datetime(start_date_str)
     end_date = _parse_iso_datetime(end_date_str)
-    
-    # Ensure 'now' has timezone if dates have it, or both are naive.
-    # ISO-8601 from mass_populate often includes UTC offset.
-    if start_date and start_date.tzinfo:
-        now = datetime.now(timezone.utc)
-    else:
-        now = datetime.now()
+    now = datetime.now(timezone.utc)
 
     if start_date and start_date > now: return 'scheduled'
     if end_date and end_date < now: return 'past'
@@ -184,6 +185,37 @@ def create_tournament():
     ref = db.collection("tournaments").document()
     ref.set(tournament_data)
     return jsonify(_serialize_tournament(ref.get())), 201
+
+@tournaments_bp.route('/<tournament_id>', methods=['PUT'])
+def update_tournament(tournament_id):
+    data = request.get_json(silent=True) or {}
+
+    tourn_ref = db.collection('tournaments').document(tournament_id)
+    tourn_doc = tourn_ref.get()
+    if not tourn_doc.exists:
+        return jsonify({"message": "Tournament not found"}), 404
+
+    current_data = tourn_doc.to_dict() or {}
+    name = str(data.get("name", current_data.get("name", ""))).strip()
+    start_date = str(data.get("start_date", current_data.get("start_date", ""))).strip()
+    end_date = str(data.get("end_date", current_data.get("end_date", ""))).strip()
+
+    if not name or not start_date or not end_date:
+        return jsonify({"message": "Missing required fields: name, start_date, end_date"}), 400
+
+    start_dt = _parse_iso_datetime(start_date)
+    end_dt = _parse_iso_datetime(end_date)
+    if not start_dt or not end_dt:
+        return jsonify({"message": "Invalid date format. Use ISO-8601 date/datetime."}), 400
+    if end_dt <= start_dt:
+        return jsonify({"message": "end_date must be later than start_date"}), 400
+
+    tourn_ref.update({
+        "name": name,
+        "start_date": start_date,
+        "end_date": end_date,
+    })
+    return jsonify(_serialize_tournament(tourn_ref.get())), 200
 
 @tournaments_bp.route('/<tournament_id>/generate-matches', methods=['POST'])
 def generate_tournament_matches(tournament_id):
