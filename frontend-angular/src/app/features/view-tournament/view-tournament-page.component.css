@@ -75,9 +75,21 @@
   color: #9ca3af;
 }
 
+.success-banner {
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  background: rgba(6, 78, 59, 0.35);
+  color: #d1fae5;
+  font-weight: 700;
+}
+
 .status-pill.scheduled { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
 .status-pill.ongoing { background: rgba(220, 36, 126, 0.15); color: #f9a8d4; border: 1px solid rgba(220, 36, 126, 0.3); }
 .status-pill.completed { background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
+.status-pill.waiting { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+.status-pill.tbd { background: rgba(107, 114, 128, 0.2); color: #d1d5db; border: 1px solid rgba(107, 114, 128, 0.35); }
 
 /* BRACKET */
 .bracket-scroll {
@@ -150,6 +162,16 @@
   display: flex;
   gap: 6px;
   margin-top: 4px;
+}
+
+.winner-btn {
+  background: rgba(220, 36, 126, 0.18);
+  border: 1px solid rgba(220, 36, 126, 0.4);
+  color: #fce7f3;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .start-btn {
@@ -366,4 +388,108 @@
   width: 1px;
   height: 60px;
   background: linear-gradient(to bottom, transparent, rgba(229, 231, 235, 0.2), transparent);
+}
+
+/* WINNER DIALOG */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 16px;
+}
+
+.dialog-card {
+  width: min(680px, 100%);
+  background: #111827;
+  border: 1px solid rgba(229, 231, 235, 0.18);
+  border-radius: 14px;
+  padding: 20px;
+  display: grid;
+  gap: 14px;
+}
+
+.dialog-card h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.telemetry-grid-dialog {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.team-input {
+  display: grid;
+  gap: 8px;
+}
+
+.team-input h4 {
+  margin: 0 0 4px;
+  color: #e5e7eb;
+  font-size: 0.95rem;
+}
+
+.team-input input {
+  width: 100%;
+  border: 1px solid rgba(229, 231, 235, 0.2);
+  background: #1f2937;
+  color: #f3f4f6;
+  border-radius: 8px;
+  padding: 10px;
+  font: inherit;
+}
+
+.dialog-error {
+  margin: 0;
+  color: #fca5a5;
+  font-size: 0.9rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dialog-quick-winner p {
+  margin: 0 0 8px;
+  color: #d1d5db;
+  font-size: 0.9rem;
+}
+
+.dialog-winner-picks {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dialog-btn {
+  border: 1px solid rgba(229, 231, 235, 0.24);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dialog-btn.secondary {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.dialog-btn.primary {
+  background: #dc247e;
+  border-color: #dc247e;
+  color: #fff;
+}
+
+.dialog-btn.selected {
+  background: #dc247e;
+  border-color: #dc247e;
+  color: #fff;
 }

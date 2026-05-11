@@ -18,23 +18,24 @@
       </span>
       <span class="meta-chip">{{ tournament().category }} - ID: {{ tournament().id }}</span>
     </div>
+    @if (successMessage()) {
+      <p class="success-banner">{{ successMessage() }}</p>
+    }
   </section>
 
   <section class="panel">
     <div class="panel-header">
       <h2>Bracket</h2>
-      @if (isAdmin()) {
-        <button class="start-btn" type="button" [disabled]="started()" (click)="startTournament()">
-          {{ started() ? 'Tournament Started' : 'Start Tournament' }}
-        </button>
-      }
+      <button class="start-btn" type="button" [disabled]="!canStartTournament()" (click)="startTournament()">
+        {{ started() ? 'Tournament Started' : 'Start Tournament' }}
+      </button>
     </div>
     <div class="bracket-scroll">
       <div class="bracket-grid">
-        @for (round of bracket().rounds; track $index) {
+        @for (round of bracket().rounds; track $index; let roundIndex = $index) {
           <section class="bracket-round">
-            <h3>{{ bracket().names[$index] }}</h3>
-            @for (item of round; track item.id) {
+            <h3>{{ bracket().names[roundIndex] }}</h3>
+            @for (item of round; track item.id; let matchIndex = $index) {
               <article class="match-card">
                 <div class="teams-row">
                   <p [class.team-winner]="isWinner(item, 'left')">{{ item.leftName }}</p>
@@ -43,7 +44,7 @@
                 <span [class]="stateClass(item.state)">{{ formatMatchState(item.state) }}</span>
                 @if (canPickWinner(item)) {
                   <div class="winner-actions">
-                    <button type="button" class="winner-btn" (click)="chooseWinner($index, $index)">Input Results</button>
+                    <button type="button" class="winner-btn" (click)="chooseWinner(roundIndex, matchIndex)">Input Results</button>
                   </div>
                 }
               </article>
@@ -116,7 +117,7 @@
                       <div class="team-telemetry">
                         <p class="team-label">{{ row.match.leftName }}</p>
                         <div class="sectors">
-                          @for (sec of getSectors(row.match.leftTime, row.match.leftTeamId, row.match.id); track $index) {
+                          @for (sec of getSectors(row.match.leftTime); track $index) {
                             <div class="sector">Sector {{ $index + 1 }}: <span [class]="getSectorClass(row.match, row.match.leftTeamId, $index)">{{ sec | number:'1.3-3' }}s</span></div>
                           }
                         </div>
@@ -125,7 +126,7 @@
                       <div class="team-telemetry">
                         <p class="team-label">{{ row.match.rightName }}</p>
                         <div class="sectors">
-                          @for (sec of getSectors(row.match.rightTime, row.match.rightTeamId, row.match.id); track $index) {
+                          @for (sec of getSectors(row.match.rightTime); track $index) {
                             <div class="sector">Sector {{ $index + 1 }}: <span [class]="getSectorClass(row.match, row.match.rightTeamId, $index)">{{ sec | number:'1.3-3' }}s</span></div>
                           }
                         </div>
@@ -150,15 +151,32 @@
       <div class="telemetry-grid-dialog">
         <div class="team-input">
           <h4>{{ dialog.leftName }}</h4>
-          <input type="number" placeholder="S1" [value]="dialog.leftSectors[0]" (input)="updateSectorTime('left', 0, $any($event.target).value)" />
-          <input type="number" placeholder="S2" [value]="dialog.leftSectors[1]" (input)="updateSectorTime('left', 1, $any($event.target).value)" />
-          <input type="number" placeholder="S3" [value]="dialog.leftSectors[2]" (input)="updateSectorTime('left', 2, $any($event.target).value)" />
+          <input type="text" placeholder="MM:SS.mmm" [value]="dialog.leftTime" (input)="updateRaceTime('left', $any($event.target).value)" />
         </div>
         <div class="team-input">
           <h4>{{ dialog.rightName }}</h4>
-          <input type="number" placeholder="S1" [value]="dialog.rightSectors[0]" (input)="updateSectorTime('right', 0, $any($event.target).value)" />
-          <input type="number" placeholder="S2" [value]="dialog.rightSectors[1]" (input)="updateSectorTime('right', 1, $any($event.target).value)" />
-          <input type="number" placeholder="S3" [value]="dialog.rightSectors[2]" (input)="updateSectorTime('right', 2, $any($event.target).value)" />
+          <input type="text" placeholder="MM:SS.mmm" [value]="dialog.rightTime" (input)="updateRaceTime('right', $any($event.target).value)" />
+        </div>
+      </div>
+      <div class="dialog-quick-winner">
+        <p>Or pick winner directly:</p>
+        <div class="dialog-winner-picks">
+          <button
+            type="button"
+            class="dialog-btn secondary"
+            [class.selected]="isSelectedWinner('left')"
+            (click)="selectWinnerSide('left')"
+          >
+            {{ dialog.leftName }}
+          </button>
+          <button
+            type="button"
+            class="dialog-btn secondary"
+            [class.selected]="isSelectedWinner('right')"
+            (click)="selectWinnerSide('right')"
+          >
+            {{ dialog.rightName }}
+          </button>
         </div>
       </div>
       @if (dialog.errorMessage) { <p class="dialog-error">{{ dialog.errorMessage }}</p> }

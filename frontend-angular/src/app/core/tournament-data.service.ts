@@ -8,7 +8,7 @@ export type TournamentStatus = 'scheduled' | 'current' | 'past';
 export interface Match {
   id: string;
   category: string;
-  status: TournamentStatus;
+  status: string;
   team_a_id: string;
   team_a_name: string;
   team_b_id: string;
@@ -38,6 +38,7 @@ export interface Tournament {
   id: string;
   name: string;
   creator_id?: string;
+  started?: boolean;
   category: string;
   start_date: string;
   end_date: string;
@@ -82,6 +83,7 @@ interface ApiTournament {
   id?: string;
   name?: string;
   creator_id?: string;
+  started?: boolean;
   category?: string;
   start_date?: string;
   end_date?: string;
@@ -229,6 +231,48 @@ export class TournamentDataService {
     );
   }
 
+  startTournament(tournamentId: string): Observable<Tournament> {
+    return this.http.post<ApiTournament>(`${this.apiBase}/${encodeURIComponent(tournamentId)}/start`, {}).pipe(
+      map((updated) => this.normalizeTournament(updated)),
+      tap((updatedTournament) => {
+        const current = this.tournaments();
+        const idx = current.findIndex((item) => item.id === updatedTournament.id);
+        if (idx === -1) {
+          this.tournaments.set([...current, updatedTournament]);
+          return;
+        }
+        const next = [...current];
+        next[idx] = updatedTournament;
+        this.tournaments.set(next);
+      }),
+    );
+  }
+
+  setMatchResult(payload: {
+    tournamentId: string;
+    matchId: string;
+    winnerId: string;
+    teamATime: number;
+    teamBTime: number;
+  }): Observable<Tournament> {
+    const body = {
+      winner_id: payload.winnerId,
+      team_a_time: payload.teamATime,
+      team_b_time: payload.teamBTime,
+    };
+    return this.http.post<ApiTournament>(
+      `${this.apiBase}/${encodeURIComponent(payload.tournamentId)}/matches/${encodeURIComponent(payload.matchId)}/result`,
+      body,
+    ).pipe(
+      map((updated) => this.normalizeTournament(updated)),
+      tap((updatedTournament) => {
+        this.tournaments.set(
+          this.tournaments().map((item) => (item.id === updatedTournament.id ? updatedTournament : item)),
+        );
+      }),
+    );
+  }
+
   deleteTournament(tournamentId: string): Observable<void> {
     return this.http.delete<void>(`${this.apiBase}/${encodeURIComponent(tournamentId)}`).pipe(
       tap(() => {
@@ -332,6 +376,7 @@ export class TournamentDataService {
       id: item.id || '',
       name: item.name || 'Unnamed tournament',
       creator_id: item.creator_id || '',
+      started: !!item.started,
       category: item.category || 'N/A',
       start_date: item.start_date || '',
       end_date: item.end_date || '',

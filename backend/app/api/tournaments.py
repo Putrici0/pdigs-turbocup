@@ -60,8 +60,66 @@ def _serialize_tournament(doc):
     data.setdefault('participants', [])
     data.setdefault('registered_team_ids', [])
     data.setdefault('creator_id', '')
+    data.setdefault('started', False)
     data['status'] = _compute_status(data.get('start_date'), data.get('end_date'))
     return data
+
+def _build_knockout_matches(tournament_id, category, teams):
+    """Builds a full 8/16-team bracket with placeholders for future rounds."""
+    bracket_size = 8 if len(teams) <= 8 else 16
+    if len(teams) not in (8, 16):
+        raise ValueError("Tournament must have exactly 8 or 16 registered teams to start.")
+
+    rounds = []
+    matches_this_round = bracket_size // 2
+    round_num = 1
+    while matches_this_round >= 1:
+        rounds.append((round_num, matches_this_round))
+        matches_this_round //= 2
+        round_num += 1
+
+    created_at = datetime.now(timezone.utc).isoformat()
+    payloads = []
+
+    # Round 1 with real teams
+    random.shuffle(teams)
+    for slot in range(1, rounds[0][1] + 1):
+        a = teams[(slot - 1) * 2]
+        b = teams[(slot - 1) * 2 + 1]
+        payloads.append({
+            "tournament_id": tournament_id,
+            "category": category,
+            "status": "scheduled",
+            "team_a_id": a["id"],
+            "team_a_name": a.get("name", "TBD"),
+            "team_b_id": b["id"],
+            "team_b_name": b.get("name", "TBD"),
+            "winner_id": None,
+            "winner_name": "TBD",
+            "round": 1,
+            "slot": slot,
+            "created_at": created_at,
+        })
+
+    # Later rounds as placeholders
+    for round_num, match_count in rounds[1:]:
+        for slot in range(1, match_count + 1):
+            payloads.append({
+                "tournament_id": tournament_id,
+                "category": category,
+                "status": "tbd",
+                "team_a_id": "",
+                "team_a_name": "TBD",
+                "team_b_id": "",
+                "team_b_name": "TBD",
+                "winner_id": None,
+                "winner_name": "TBD",
+                "round": round_num,
+                "slot": slot,
+                "created_at": created_at,
+            })
+
+    return payloads
 
 def _regenerate_round_one_matches(tournament_id, category, team_ids, match_status):
     """
@@ -142,6 +200,7 @@ def get_tournament_detailed(tournament_id):
         m_dict = m.to_dict()
         m_dict["id"] = m.id
         detailed_data["matches"].append(m_dict)
+    detailed_data["matches"].sort(key=lambda x: (int(x.get("round", 1)), int(x.get("slot", 1))))
     return jsonify(detailed_data), 200
 
 # --- ACCIONES ---
@@ -176,6 +235,7 @@ def create_tournament():
         "category": category,
         "start_date": start_date,
         "end_date": end_date,
+        "started": False,
         "registered_team_ids": [],
         "participants": [],
         "creator_id": str(data.get("creator_id", "")).strip(),
@@ -304,6 +364,142 @@ def generate_tournament_matches(tournament_id):
 
     return jsonify({"message": f"Successfully generated {total_generated} matches.", "rounds": round_num - 1 if simulate else 1}), 201
 
+@tournaments_bp.route('/<tournament_id>/start', methods=['POST'])
+def start_tournament(tournament_id):
+    tourn_ref = db.collection('tournaments').document(tournament_id)
+    tourn_doc = tourn_ref.get()
+    if not tourn_doc.exists:
+        return jsonify({"message": "Tournament not found"}), 404
+
+    tourn_data = tourn_doc.to_dict() or {}
+    if bool(tourn_data.get("started")):
+        return jsonify({"message": "Tournament already started."}), 409
+
+    team_ids = list(tourn_data.get('registered_team_ids', []))
+    if len(team_ids) not in (8, 16):
+        return jsonify({"message": "Tournament can only start with exactly 8 or 16 registered teams."}), 409
+
+    team_refs = [db.collection("teams").document(tid) for tid in team_ids]
+    teams = [{**doc.to_dict(), "id": doc.id} for doc in db.get_all(team_refs) if doc.exists]
+    if len(teams) != len(team_ids):
+        return jsonify({"message": "Some registered teams no longer exist."}), 409
+
+    existing_matches = db.collection("matches").where(
+        filter=FieldFilter("tournament_id", "==", tournament_id)
+    ).stream()
+    for match_doc in existing_matches:
+        match_doc.reference.delete()
+
+    match_payloads = _build_knockout_matches(
+        tournament_id=tournament_id,
+        category=tourn_data.get("category", ""),
+        teams=teams,
+    )
+    batch = db.batch()
+    for payload in match_payloads:
+        m_ref = db.collection("matches").document()
+        batch.set(m_ref, payload)
+    batch.commit()
+    tourn_ref.update({"started": True})
+
+    refreshed = tourn_ref.get()
+    data = _serialize_tournament(refreshed)
+    data["matches"] = []
+    matches_query = db.collection("matches").where(
+        filter=FieldFilter("tournament_id", "==", tournament_id)
+    ).stream()
+    for m in matches_query:
+        m_data = m.to_dict() or {}
+        m_data["id"] = m.id
+        data["matches"].append(m_data)
+    data["matches"].sort(key=lambda x: (int(x.get("round", 1)), int(x.get("slot", 1))))
+    return jsonify(data), 200
+
+@tournaments_bp.route('/<tournament_id>/matches/<match_id>/result', methods=['POST'])
+def set_match_result(tournament_id, match_id):
+    data = request.get_json(silent=True) or {}
+    winner_id = str(data.get("winner_id", "")).strip()
+    left_time = data.get("team_a_time")
+    right_time = data.get("team_b_time")
+
+    if not winner_id:
+        return jsonify({"message": "Missing winner_id"}), 400
+
+    match_ref = db.collection("matches").document(match_id)
+    match_doc = match_ref.get()
+    if not match_doc.exists:
+        return jsonify({"message": "Match not found"}), 404
+
+    match_data = match_doc.to_dict() or {}
+    if match_data.get("tournament_id") != tournament_id:
+        return jsonify({"message": "Match does not belong to this tournament."}), 409
+
+    a_id = str(match_data.get("team_a_id") or "")
+    b_id = str(match_data.get("team_b_id") or "")
+    if winner_id not in (a_id, b_id):
+        return jsonify({"message": "winner_id must be one of the teams in the match."}), 400
+
+    winner_name = match_data.get("team_a_name", "TBD") if winner_id == a_id else match_data.get("team_b_name", "TBD")
+    updates = {
+        "winner_id": winner_id,
+        "winner_name": winner_name,
+        "status": "past",
+    }
+    if isinstance(left_time, (int, float)):
+        updates["team_a_time"] = float(left_time)
+    if isinstance(right_time, (int, float)):
+        updates["team_b_time"] = float(right_time)
+    match_ref.update(updates)
+    _resolve_pending_predictions(match_id, winner_id)
+
+    round_num = int(match_data.get("round", 1))
+    slot = int(match_data.get("slot", 1))
+    next_round = round_num + 1
+    next_slot = (slot + 1) // 2
+
+    next_match_docs = list(
+        db.collection("matches")
+        .where(filter=FieldFilter("tournament_id", "==", tournament_id))
+        .where(filter=FieldFilter("round", "==", next_round))
+        .where(filter=FieldFilter("slot", "==", next_slot))
+        .limit(1)
+        .stream()
+    )
+    if next_match_docs:
+        next_doc = next_match_docs[0]
+        next_data = next_doc.to_dict() or {}
+        side_is_a = (slot % 2 == 1)
+        next_updates = {}
+        if side_is_a:
+            next_updates["team_a_id"] = winner_id
+            next_updates["team_a_name"] = winner_name
+        else:
+            next_updates["team_b_id"] = winner_id
+            next_updates["team_b_name"] = winner_name
+
+        merged_a = next_updates.get("team_a_id", next_data.get("team_a_id", ""))
+        merged_b = next_updates.get("team_b_id", next_data.get("team_b_id", ""))
+        if merged_a and merged_b:
+            next_updates["status"] = "scheduled"
+        elif merged_a or merged_b:
+            next_updates["status"] = "waiting"
+        else:
+            next_updates["status"] = "tbd"
+        next_doc.reference.update(next_updates)
+
+    # Return refreshed details
+    tourn_ref = db.collection('tournaments').document(tournament_id)
+    tourn_doc = tourn_ref.get()
+    detailed_data = _serialize_tournament(tourn_doc)
+    detailed_data["matches"] = []
+    matches_query = db.collection("matches").where(filter=FieldFilter("tournament_id", "==", tournament_id)).stream()
+    for m in matches_query:
+        m_dict = m.to_dict() or {}
+        m_dict["id"] = m.id
+        detailed_data["matches"].append(m_dict)
+    detailed_data["matches"].sort(key=lambda x: (int(x.get("round", 1)), int(x.get("slot", 1))))
+    return jsonify(detailed_data), 200
+
 @tournaments_bp.route('/<tournament_id>/join', methods=['POST'])
 def join_tournament(tournament_id):
     data = request.get_json()
@@ -327,7 +523,7 @@ def join_tournament(tournament_id):
 
     updated_team_ids = list(tourn_data.get('registered_team_ids', [])) + [team_id]
     tournament_status = _compute_status(tourn_data.get('start_date'), tourn_data.get('end_date'))
-    if tournament_status != 'past':
+    if not bool(tourn_data.get("started")) and tournament_status != 'past':
         round_status = 'current' if tournament_status == 'current' else 'scheduled'
         _regenerate_round_one_matches(
             tournament_id=tournament_id,
@@ -370,12 +566,13 @@ def leave_tournament(tournament_id):
         "participants": updated_participants
     })
 
-    _regenerate_round_one_matches(
-        tournament_id=tournament_id,
-        category=tourn_data.get('category'),
-        team_ids=updated_team_ids,
-        match_status='scheduled'
-    )
+    if not bool(tourn_data.get("started")):
+        _regenerate_round_one_matches(
+            tournament_id=tournament_id,
+            category=tourn_data.get('category'),
+            team_ids=updated_team_ids,
+            match_status='scheduled'
+        )
 
     return jsonify({"message": "Left tournament successfully"}), 200
 
