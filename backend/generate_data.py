@@ -11,14 +11,12 @@ MIN_TEAMS_PER_TOURNAMENT = 12
 MAX_TEAMS_PER_TOURNAMENT = 16
 
 def clear_collection(collection_name):
-    """Helper to delete all documents in a collection (use with caution)."""
     docs = db.collection(collection_name).stream()
     for doc in docs:
         doc.reference.delete()
     print(f"Cleared collection: {collection_name}")
 
 def generate_users_and_participants(count=20):
-    """Iteration 1: Create Users and their corresponding Participant profiles."""
     user_ids = []
     print(f"Generating {count} users and participants...")
     
@@ -57,7 +55,6 @@ def generate_users_and_participants(count=20):
     return user_ids
 
 def generate_teams(user_ids):
-    """Iteration 2a: Create teams by pairing users."""
     team_ids = []
     random.shuffle(user_ids)
     
@@ -82,7 +79,6 @@ def generate_teams(user_ids):
     return team_ids
 
 def generate_tournaments(team_info, user_ids, count=5):
-    """Iteration 2b: Create tournaments and enroll teams of the same category."""
     tournament_ids = []
     states = ["past", "current", "scheduled"]
     teams_by_category = {
@@ -146,7 +142,6 @@ def generate_tournaments(team_info, user_ids, count=5):
     return tournament_ids
 
 def generate_matches_and_stats(tournament_ids):
-    """Iteration 3: Create matches for tournaments and performance telemetry."""
     print("Generating matches and telemetry...")
     
     for t_id in tournament_ids:
@@ -213,7 +208,7 @@ def generate_matches_and_stats(tournament_ids):
     print("Generation complete!")
 
 if __name__ == "__main__":
-    # Change to True if you want to clear collections first
+    # Change to True for the collections to be cleaned first
     if True:
         clear_collection("users")
         clear_collection("participants")
@@ -221,8 +216,9 @@ if __name__ == "__main__":
         clear_collection("tournaments")
         clear_collection("matches")
         clear_collection("match_stats")
+
     """
-    # Keep enough teams per category so tournaments can reach ~12-16 teams.
+    Keep enough teams per category so tournaments can reach ~12-16 teams.
     uids = generate_users_and_participants(180)
     teams = generate_teams(uids)
     tournament_ids = generate_tournaments(teams, uids, 8)

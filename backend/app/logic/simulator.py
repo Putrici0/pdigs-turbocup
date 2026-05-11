@@ -2,11 +2,7 @@ import random
 from google.cloud import firestore
 
 def resolve_match_mechanics(team_a_data, team_b_data):
-    """
-    Centralized logic to simulate a match between two teams.
-    Returns winner_id, winner_name, and telemetry for both.
-    """
-    # 1. Generate realistic sector times
+
     stats_a = {
         "sector_1": round(random.uniform(28.0, 32.0), 3),
         "sector_2": round(random.uniform(42.0, 48.0), 3),
@@ -47,9 +43,6 @@ def resolve_match_mechanics(team_a_data, team_b_data):
     }
 
 def update_participant_stats(batch, db, team_data, winner_id):
-    """
-    Standardized participant stats update for batches.
-    """
     for role in ["pilot_id", "copilot_id"]:
         uid = team_data.get(role)
         if uid:
