@@ -52,7 +52,7 @@ def _compute_status(start_date_str, end_date_str):
     now = datetime.now(timezone.utc)
 
     if start_date and start_date > now: return 'scheduled'
-    if end_date and end_date < now: return 'past'
+    if end_date and end_date <= now: return 'past'
     return 'current' if start_date else 'scheduled'
 
 def _serialize_tournament(doc):
@@ -63,6 +63,37 @@ def _serialize_tournament(doc):
     data.setdefault('started', False)
     data['status'] = _compute_status(data.get('start_date'), data.get('end_date'))
     return data
+
+def _get_detailed_tournament_data(tournament_id):
+    tourn_ref = db.collection("tournaments").document(tournament_id)
+    tourn_doc = tourn_ref.get()
+    if not tourn_doc.exists:
+        return None
+    
+    detailed_data = _serialize_tournament(tourn_doc)
+    detailed_data["matches"] = []
+    matches_query = db.collection("matches").where(filter=FieldFilter("tournament_id", "==", tournament_id)).stream()
+    for m in matches_query:
+        m_dict = m.to_dict() or {}
+        m_dict["id"] = m.id
+        detailed_data["matches"].append(m_dict)
+    detailed_data["matches"].sort(key=lambda x: (int(x.get("round", 1)), int(x.get("slot", 1))))
+    return detailed_data
+
+@tournaments_bp.route('/<tournament_id>/finish', methods=['POST'])
+def finish_tournament(tournament_id):
+    tourn_ref = db.collection('tournaments').document(tournament_id)
+    tourn_doc = tourn_ref.get()
+    if not tourn_doc.exists:
+        return jsonify({"message": "Tournament not found"}), 404
+    
+    tourn_ref.update({
+        "end_date": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Return refreshed details
+    detailed_data = _get_detailed_tournament_data(tournament_id)
+    return jsonify(detailed_data), 200
 
 def _build_knockout_matches(tournament_id, category, teams):
     """Builds a full 8/16-team bracket with placeholders for future rounds."""
@@ -449,8 +480,30 @@ def set_match_result(tournament_id, match_id):
         updates["team_a_time"] = float(left_time)
     if isinstance(right_time, (int, float)):
         updates["team_b_time"] = float(right_time)
+    section_a = data.get("section_times_a")
+    section_b = data.get("section_times_b")
+    if section_a:
+        s_a = [section_a.get("sector_1", 0), section_a.get("sector_2", 0), section_a.get("sector_3", 0)]
+        updates["team_a_sectors"] = s_a
+    if section_b:
+        s_b = [section_b.get("sector_1", 0), section_b.get("sector_2", 0), section_b.get("sector_3", 0)]
+        updates["team_b_sectors"] = s_b
     match_ref.update(updates)
     _resolve_pending_predictions(match_id, winner_id)
+
+    if section_a or section_b:
+        batch = db.batch()
+        if section_a and a_id:
+            batch.set(db.collection("match_stats").document(), {
+                "match_id": match_id, "team_id": a_id,
+                "section_times": section_a, "total_time": left_time,
+            })
+        if section_b and b_id:
+            batch.set(db.collection("match_stats").document(), {
+                "match_id": match_id, "team_id": b_id,
+                "section_times": section_b, "total_time": right_time,
+            })
+        batch.commit()
 
     round_num = int(match_data.get("round", 1))
     slot = int(match_data.get("slot", 1))
@@ -486,18 +539,16 @@ def set_match_result(tournament_id, match_id):
         else:
             next_updates["status"] = "tbd"
         next_doc.reference.update(next_updates)
+    else:
+        # Final match — mark tournament as completed
+        db.collection('tournaments').document(tournament_id).update({
+            "end_date": datetime.now(timezone.utc).isoformat()
+        })
 
     # Return refreshed details
-    tourn_ref = db.collection('tournaments').document(tournament_id)
-    tourn_doc = tourn_ref.get()
-    detailed_data = _serialize_tournament(tourn_doc)
-    detailed_data["matches"] = []
-    matches_query = db.collection("matches").where(filter=FieldFilter("tournament_id", "==", tournament_id)).stream()
-    for m in matches_query:
-        m_dict = m.to_dict() or {}
-        m_dict["id"] = m.id
-        detailed_data["matches"].append(m_dict)
-    detailed_data["matches"].sort(key=lambda x: (int(x.get("round", 1)), int(x.get("slot", 1))))
+    detailed_data = _get_detailed_tournament_data(tournament_id)
+    if not detailed_data:
+        return jsonify({"message": "Tournament not found"}), 404
     return jsonify(detailed_data), 200
 
 @tournaments_bp.route('/<tournament_id>/join', methods=['POST'])

@@ -100,11 +100,19 @@ def get_user_stats(user_id):
 @stats_bp.route('/ranking/teams', methods=['GET'])
 def get_team_ranking():
     """
-    Returns the top 10 teams based on the performance of their pilots.
-    Optimized with batch reads (db.get_all) to be extremely fast.
+    Returns the top teams based on the performance of their members.
+    Supports optional 'category' and 'limit' query parameters.
     """
     try:
-        teams_list = list(db.collection("teams").limit(40).stream())
+        from flask import request
+        category = request.args.get('category')
+        limit_val = request.args.get('limit', default=50, type=int)
+
+        query = db.collection("teams")
+        if category and category != 'all':
+            query = query.where(filter=FieldFilter("category", "==", category))
+        
+        teams_list = list(query.limit(limit_val * 2).stream()) # Fetch more to allow sorting after computing points
         if not teams_list:
             return jsonify([]), 200
 
@@ -128,13 +136,14 @@ def get_team_ranking():
             score = 0
             matches = 0
             
-            for role in ["pilot_id", "copilot_id"]:
-                uid = t.get(role)
-                p_data = participants_map.get(uid)
-                if p_data:
-                    p_stats = p_data.get("stats", {})
-                    score += p_stats.get("win", 0) * 3
-                    matches += p_stats.get("matchesPlayed", 0)
+            # Fix: We only use the Pilot's stats to represent the Team performance.
+            # Summing pilot + copilot doubles the points since they win/play together.
+            pilot_id = t.get("pilot_id")
+            p_data = participants_map.get(pilot_id)
+            if p_data:
+                p_stats = p_data.get("stats", {})
+                score = p_stats.get("win", 0) * 3
+                matches = p_stats.get("matchesPlayed", 0)
             
             ranking.append({
                 "id": team_doc.id,
@@ -146,7 +155,98 @@ def get_team_ranking():
             })
             
         ranking.sort(key=lambda x: x["points"], reverse=True)
-        return jsonify(ranking[:10]), 200
+        return jsonify(ranking[:limit_val]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@stats_bp.route('/records', methods=['GET'])
+def get_records():
+    """Fetches special hall-of-fame style records based on real data."""
+    try:
+        # 1. Most Active & Top Scorer (from teams)
+        teams_list = list(db.collection("teams").limit(100).stream())
+        uids = set()
+        for doc in teams_list:
+            t = doc.to_dict()
+            if t.get("pilot_id"): uids.add(t["pilot_id"])
+        
+        participants_map = {}
+        if uids:
+            p_refs = [db.collection("participants").document(uid) for uid in uids]
+            p_docs = db.get_all(p_refs)
+            participants_map = {doc.id: doc.to_dict() for doc in p_docs if doc.exists}
+
+        most_active = {"name": "N/A", "value": 0}
+        top_scorer = {"name": "N/A", "value": 0}
+        best_win_rate = {"name": "N/A", "value": 0}
+        
+        for team_doc in teams_list:
+            t = team_doc.to_dict()
+            pilot_id = t.get("pilot_id")
+            p_data = participants_map.get(pilot_id)
+            if p_data:
+                stats = p_data.get("stats", {})
+                matches = stats.get("matchesPlayed", 0)
+                wins = stats.get("win", 0)
+                points = wins * 3
+                win_rate = round((wins / matches * 100), 1) if matches > 0 else 0
+                
+                if matches > most_active["value"]:
+                    most_active = {"name": t.get("name"), "value": matches}
+                if points > top_scorer["value"]:
+                    top_scorer = {"name": t.get("name"), "value": points}
+                if win_rate > best_win_rate["value"] and matches >= 3: # Minimum 3 matches for win rate record
+                    best_win_rate = {"name": t.get("name"), "value": win_rate}
+
+        # 2. Fastest Lap (from match_stats)
+        # We look for the minimum total_time in match_stats
+        fastest_query = db.collection("match_stats").order_by("total_time").limit(1).stream()
+        fastest_lap = {"name": "N/A", "value": "0.000"}
+        
+        for stat_doc in fastest_query:
+            s_data = stat_doc.to_dict()
+            t_id = s_data.get("team_id")
+            time_val = s_data.get("total_time", 0)
+            if t_id:
+                t_doc = db.collection("teams").document(t_id).get()
+                t_name = t_doc.to_dict().get("name", "Unknown") if t_doc.exists else "Unknown"
+                fastest_lap = {"name": t_name, "value": f"{time_val:.3f}s"}
+
+        return jsonify({
+            "most_active": most_active,
+            "top_scorer": top_scorer,
+            "best_win_rate": best_win_rate,
+            "fastest_lap": fastest_lap
+        }), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@stats_bp.route('/matchup/<team_a_id>/<team_b_id>', methods=['GET'])
+def get_direct_matchup(team_a_id, team_b_id):
+    """Calculates direct head-to-head stats between two teams."""
+    try:
+        # We need to check both A vs B and B vs A
+        q1 = db.collection("matches").where(filter=FieldFilter("team_a_id", "==", team_a_id)).where(filter=FieldFilter("team_b_id", "==", team_b_id)).stream()
+        q2 = db.collection("matches").where(filter=FieldFilter("team_a_id", "==", team_b_id)).where(filter=FieldFilter("team_b_id", "==", team_a_id)).stream()
+        
+        matches = list(q1) + list(q2)
+        total = len(matches)
+        
+        a_wins = 0
+        b_wins = 0
+        for m in matches:
+            m_data = m.to_dict()
+            winner = m_data.get("winner_id")
+            if winner == team_a_id: a_wins += 1
+            elif winner == team_b_id: b_wins += 1
+            
+        return jsonify({
+            "total_matches": total,
+            "team_a_wins": a_wins,
+            "team_b_wins": b_wins,
+            "team_a_win_rate": round((a_wins / total * 100), 1) if total > 0 else 0,
+            "team_b_win_rate": round((b_wins / total * 100), 1) if total > 0 else 0
+        }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

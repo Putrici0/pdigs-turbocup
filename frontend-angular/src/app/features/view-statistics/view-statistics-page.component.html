@@ -1,97 +1,222 @@
 <main class="page-shell">
-  <section class="hero panel">
-    <p class="eyebrow">Global Statistics</p>
-    <h1>View statistics</h1>
-    <p class="hero-copy">Quick overview of tournaments and team performance.</p>
+  <!-- 1. Global Highlights -->
+  <section class="highlights-grid">
+    @for (item of highlights(); track item.label) {
+      <article class="stat-card">
+        <div class="stat-icon">{{ item.icon }}</div>
+        <div class="stat-content">
+          <p class="stat-label">{{ item.label }}</p>
+          <h2 class="stat-value">{{ item.value }}</h2>
+        </div>
+      </article>
+    }
   </section>
 
-  <section class="panel">
-    <div class="panel-header">
-      <h2>Platform highlights</h2>
-    </div>
-    <div class="cards-grid">
-      @for (item of highlights(); track item[0]) {
-        <article class="stat-card">
-          <p class="stat-label">{{ item[0] }}</p>
-          <p class="stat-value">{{ item[1] }}</p>
-        </article>
+  <div class="dashboard-grid">
+    <!-- 2. Records (Hall of Fame) -->
+    <section class="records-panel panel">
+      <div class="panel-header">
+        <p class="eyebrow">Excellence</p>
+        <h2>Hall of Fame</h2>
+      </div>
+      @if (records(); as r) {
+        <div class="records-list">
+          <article class="record-item">
+            <span class="record-badge">🏁</span>
+            <div class="record-info">
+              <p>Most Active</p>
+              <strong>{{ r.most_active.name }}</strong>
+            </div>
+            <span class="record-value">{{ r.most_active.value }} matches</span>
+          </article>
+          <article class="record-item">
+            <span class="record-badge">🏆</span>
+            <div class="record-info">
+              <p>Points Leader</p>
+              <strong>{{ r.top_scorer.name }}</strong>
+            </div>
+            <span class="record-value">{{ r.top_scorer.value }} pts</span>
+          </article>
+          <article class="record-item">
+            <span class="record-badge">⚡</span>
+            <div class="record-info">
+              <p>Best Win Rate</p>
+              <strong>{{ r.best_win_rate.name }}</strong>
+            </div>
+            <span class="record-value">{{ r.best_win_rate.value }}%</span>
+          </article>
+          <article class="record-item">
+            <span class="record-badge">⏱️</span>
+            <div class="record-info">
+              <p>Fastest Lap</p>
+              <strong>{{ r.fastest_lap.name }}</strong>
+            </div>
+            <span class="record-value">{{ r.fastest_lap.value }}</span>
+          </article>
+        </div>
       }
-    </div>
-  </section>
+    </section>
 
-  <section class="panel">
-    <div class="panel-header">
-      <h2>Global performance ranking</h2>
-      <p class="panel-copy">The fastest and most successful teams in the circuit.</p>
-    </div>
-
-    @if (podium().length > 0) {
-      <div class="podium-container">
-        <!-- 2nd Place -->
-        @if (podium()[1]; as runnerUp) {
-          <div class="podium-spot silver">
-            <div class="spot-content">
-              <span class="rank-badge">2</span>
-              <h3>{{ runnerUp.name }}</h3>
-              <p class="points">{{ runnerUp.points }} pts</p>
-              <a class="view-team-link" [routerLink]="['/view-team', runnerUp.id]">Profile</a>
+    <!-- 3. Category Distribution (SVG Pie Chart + List) -->
+    <section class="charts-panel panel">
+      <div class="panel-header">
+        <p class="eyebrow">Participation</p>
+        <h2>Distribution by Category</h2>
+      </div>
+      <div class="charts-content">
+        <div class="pie-chart-container">
+          <svg viewBox="0 0 100 100" class="pie-chart">
+            <!-- Background Track -->
+            <circle r="35" cx="50" cy="50" class="pie-track" />
+            
+            @for (cat of categoryHighlights(); track cat.name; let i = $index) {
+              <circle
+                r="35" cx="50" cy="50"
+                pathLength="100"
+                class="pie-segment"
+                [class.is-hovered]="hoveredCategory()?.name === cat.name"
+                [style.stroke]="cat.color"
+                [style.stroke-dasharray]="cat.percent + ' 100'"
+                [style.stroke-dashoffset]="-cat.startPercent"
+                (mouseenter)="hoveredCategory.set(cat)"
+                (mouseleave)="hoveredCategory.set(null)"
+              />
+            }
+            <circle r="28" cx="50" cy="50" class="pie-center" />
+            
+            @if (hoveredCategory(); as h) {
+              <text x="50" y="48" class="pie-label-name">{{ h.name }}</text>
+              <text x="50" y="58" class="pie-label-val">{{ h.teams }} teams</text>
+            } @else {
+              <text x="50" y="55" class="pie-label">{{ globalSummary()?.total_teams }} Teams</text>
+            }
+          </svg>
+        </div>
+        <div class="charts-list">
+          @for (cat of categoryHighlights(); track cat.name; let i = $index) {
+            <div class="chart-item" (mouseenter)="hoveredCategory.set(cat)" (mouseleave)="hoveredCategory.set(null)" [class.is-hovered]="hoveredCategory()?.name === cat.name">
+              <div class="chart-info">
+                <span class="legend-dot" [style.background]="cat.color"></span>
+                <span>{{ cat.name }}</span>
+                <span class="chart-percent">{{ cat.percent | number:'1.0-1' }}%</span>
+              </div>
+              <div class="progress-container">
+                <div class="progress-bar" [style.width.%]="cat.percent" [style.background]="cat.color"></div>
+              </div>
             </div>
-            <div class="base"></div>
-          </div>
-        }
+          }
+        </div>
+      </div>
+    </section>
+  </div>
 
-        <!-- 1st Place -->
-        @if (podium()[0]; as champion) {
-          <div class="podium-spot gold">
-            <div class="spot-content">
-              <span class="rank-badge">1</span>
-              <span class="crown">👑</span>
-              <h3>{{ champion.name }}</h3>
-              <p class="points">{{ champion.points }} pts</p>
-              <a class="view-team-link" [routerLink]="['/view-team', champion.id]">Profile</a>
-            </div>
-            <div class="base"></div>
-          </div>
-        }
-
-        <!-- 3rd Place -->
-        @if (podium()[2]; as third) {
-          <div class="podium-spot bronze">
-            <div class="spot-content">
-              <span class="rank-badge">3</span>
-              <h3>{{ third.name }}</h3>
-              <p class="points">{{ third.points }} pts</p>
-              <a class="view-team-link" [routerLink]="['/view-team', third.id]">Profile</a>
-            </div>
-            <div class="base"></div>
-          </div>
+  <!-- 4. Interactive Ranking -->
+  <section class="ranking-section panel">
+    <div class="ranking-controls">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Search teams..." [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)">
+      </div>
+      <div class="filter-tabs">
+        @for (cat of categories(); track cat.key) {
+          <button [class.active]="selectedCategory() === cat.key" (click)="onCategoryChange(cat.key)">
+            {{ cat.label }}
+          </button>
         }
       </div>
-    }
+    </div>
+
+    <!-- Podium Visual -->
+    <div class="podium-view">
+      @if (podium()[1]; as p2) {
+        <div class="podium-step second">
+          <div class="avatar">{{ p2.name.charAt(0) }}</div>
+          <a [routerLink]="['/view-team', p2.id]" class="podium-name">{{ p2.name }}</a>
+          <span class="category-badge podium-badge">{{ p2.category }}</span>
+          <div class="podium-stats">
+            <span>{{ p2.matches }} matches</span> • <span>{{ p2.win_rate }}% WR</span>
+          </div>
+          <strong>{{ p2.points }} pts</strong>
+          <button class="podium-compare-btn" (click)="addToCompare(p2)" [disabled]="compareTeamA()?.id === p2.id || compareTeamB()?.id === p2.id">
+            + Compare
+          </button>
+          <div class="step-box">2</div>
+        </div>
+      }
+      @if (podium()[0]; as p1) {
+        <div class="podium-step first">
+          <div class="avatar">{{ p1.name.charAt(0) }}</div>
+          <a [routerLink]="['/view-team', p1.id]" class="podium-name">{{ p1.name }}</a>
+          <span class="category-badge podium-badge">{{ p1.category }}</span>
+          <div class="podium-stats">
+            <span>{{ p1.matches }} matches</span> • <span>{{ p1.win_rate }}% WR</span>
+          </div>
+          <strong>{{ p1.points }} pts</strong>
+          <button class="podium-compare-btn" (click)="addToCompare(p1)" [disabled]="compareTeamA()?.id === p1.id || compareTeamB()?.id === p1.id">
+            + Compare
+          </button>
+          <div class="step-box">1</div>
+        </div>
+      }
+      @if (podium()[2]; as p3) {
+        <div class="podium-step third">
+          <div class="avatar">{{ p3.name.charAt(0) }}</div>
+          <a [routerLink]="['/view-team', p3.id]" class="podium-name">{{ p3.name }}</a>
+          <span class="category-badge podium-badge">{{ p3.category }}</span>
+          <div class="podium-stats">
+            <span>{{ p3.matches }} matches</span> • <span>{{ p3.win_rate }}% WR</span>
+          </div>
+          <strong>{{ p3.points }} pts</strong>
+          <button class="podium-compare-btn" (click)="addToCompare(p3)" [disabled]="compareTeamA()?.id === p3.id || compareTeamB()?.id === p3.id">
+            + Compare
+          </button>
+          <div class="step-box">3</div>
+        </div>
+      }
+    </div>
 
     <div class="table-wrap">
-      <table>
+      <table class="ranking-table">
         <thead>
-        <tr>
-          <th>Pos</th>
-          <th>Team</th>
-          <th>Points</th>
-          <th>Matches</th>
-          <th>Win Rate</th>
-          <th>Category</th>
-          <th>Action</th>
-        </tr>
+          <tr>
+            <th (click)="toggleSort('name')">Team 
+              <span class="sort-indicator">{{ sortKey() === 'name' ? (sortOrder() === 'asc' ? '↑' : '↓') : '' }}</span>
+            </th>
+            <th (click)="toggleSort('category')">Category
+              <span class="sort-indicator">{{ sortKey() === 'category' ? (sortOrder() === 'asc' ? '↑' : '↓') : '' }}</span>
+            </th>
+            <th (click)="toggleSort('matches')">Matches
+              <span class="sort-indicator">{{ sortKey() === 'matches' ? (sortOrder() === 'asc' ? '↑' : '↓') : '' }}</span>
+            </th>
+            <th (click)="toggleSort('win_rate')">Win Rate
+              <span class="sort-indicator">{{ sortKey() === 'win_rate' ? (sortOrder() === 'asc' ? '↑' : '↓') : '' }}</span>
+            </th>
+            <th (click)="toggleSort('points')">Points
+              <span class="sort-indicator">{{ sortKey() === 'points' ? (sortOrder() === 'asc' ? '↑' : '↓') : '' }}</span>
+            </th>
+            <th>Compare</th>
+          </tr>
         </thead>
         <tbody>
-          @for (team of teamRanking(); track team.id) {
-            <tr [class.in-podium]="$index < 3">
-              <td><strong>#{{ $index + 1 }}</strong></td>
-              <td>{{ team.name }}</td>
-              <td>{{ team.points }}</td>
+          @for (team of (searchQuery() ? filteredRanking() : remainingRanking()); track team.id) {
+            <tr>
+              <td>
+                <a [routerLink]="['/view-team', team.id]" class="team-link">{{ team.name }}</a>
+              </td>
+              <td><span class="category-badge">{{ team.category }}</span></td>
               <td>{{ team.matches }}</td>
-              <td>{{ team.win_rate }}%</td>
-              <td>{{ team.category }}</td>
-              <td><a class="link-button" [routerLink]="['/view-team', team.id]">Team page</a></td>
+              <td>
+                <div class="win-rate-cell">
+                  {{ team.win_rate }}%
+                  <div class="mini-bar-bg"><div class="mini-bar-fill" [style.width.%]="team.win_rate"></div></div>
+                </div>
+              </td>
+              <td class="points-cell">{{ team.points }}</td>
+              <td>
+                <button class="compare-btn" (click)="addToCompare(team)" [disabled]="compareTeamA()?.id === team.id || compareTeamB()?.id === team.id">
+                  Add
+                </button>
+              </td>
             </tr>
           }
         </tbody>
@@ -99,19 +224,84 @@
     </div>
   </section>
 
-
-  <section class="panel">
-    <div class="panel-header">
-      <h2>Tournament quick access</h2>
-    </div>
-    <div class="list-grid">
-      @for (tournament of tournaments(); track tournament.id) {
-        <article class="list-card">
-          <h3>{{ tournament.name }}</h3>
-          <p>{{ tournament.category }} - {{ tournament.status }}</p>
-          <a class="link-button" [routerLink]="['/view-tournament-statistic', tournament.id]">View details</a>
-        </article>
+  <!-- Comparison Overlay -->
+  @if (compareTeamA() || compareTeamB()) {
+    <div class="comparison-overlay">
+      @if (comparisonError(); as err) {
+        <div class="comparison-error-toast">{{ err }}</div>
       }
+      <div class="compare-slots">
+        <div class="compare-slot clickable" [class.filled]="!!compareTeamA()" (click)="removeTeamA()">
+          {{ compareTeamA()?.name || 'Select team A' }}
+          @if (compareTeamA()) { <span class="remove-icon">×</span> }
+        </div>
+        <div class="vs-circle">VS</div>
+        <div class="compare-slot clickable" [class.filled]="!!compareTeamB()" (click)="removeTeamB()">
+          {{ compareTeamB()?.name || 'Select team B' }}
+          @if (compareTeamB()) { <span class="remove-icon">×</span> }
+        </div>
+      </div>
+      <div class="compare-actions">
+        <button class="launch-compare-btn" [disabled]="!compareTeamA() || !compareTeamB()" (click)="launchComparison()">
+          Analyze Duel
+        </button>
+      </div>
     </div>
-  </section>
+  }
+
+  <!-- Comparison Modal -->
+  @if (showComparisonModal()) {
+    <div class="dialog-backdrop" (click)="showComparisonModal.set(false)">
+      <section class="dialog-card comparison-modal" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <h2>Head-to-Head Analysis</h2>
+          <button class="close-btn" (click)="showComparisonModal.set(false)">×</button>
+        </header>
+
+        <div class="comparison-grid">
+          <div class="comp-team-card">
+            <div class="comp-avatar">{{ compareTeamA()?.name?.charAt(0) }}</div>
+            <h3>{{ compareTeamA()?.name }}</h3>
+            <span class="category-badge">{{ compareTeamA()?.category }}</span>
+          </div>
+          
+          <div class="comp-stats-list">
+            <div class="direct-matchup-header">
+              <p>Direct Encounters</p>
+              <h1 class="total-clashes">{{ directMatchup()?.total_matches || 0 }}</h1>
+              <span>Total Matches</span>
+            </div>
+
+            <div class="comp-row">
+              <span class="comp-val highlight-a">{{ directMatchup()?.team_a_wins || 0 }}</span>
+              <span class="comp-label">Wins vs Other</span>
+              <span class="comp-val highlight-b">{{ directMatchup()?.team_b_wins || 0 }}</span>
+            </div>
+
+            <div class="comp-row">
+              <span class="comp-val">{{ compareTeamA()?.win_rate }}%</span>
+              <span class="comp-label">Global Win Rate</span>
+              <span class="comp-val">{{ compareTeamB()?.win_rate }}%</span>
+            </div>
+
+            <div class="comp-row">
+              <span class="comp-val">{{ compareTeamA()?.points }}</span>
+              <span class="comp-label">Platform Points</span>
+              <span class="comp-val">{{ compareTeamB()?.points }}</span>
+            </div>
+          </div>
+
+          <div class="comp-team-card">
+            <div class="comp-avatar">{{ compareTeamB()?.name?.charAt(0) }}</div>
+            <h3>{{ compareTeamB()?.name }}</h3>
+            <span class="category-badge">{{ compareTeamB()?.category }}</span>
+          </div>
+        </div>
+
+        @if (!directMatchup()) {
+          <div class="loading-matchup">Analyzing historical data...</div>
+        }
+      </section>
+    </div>
+  }
 </main>

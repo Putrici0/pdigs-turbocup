@@ -15,6 +15,8 @@ export interface Match {
   team_b_name: string;
   team_a_time: number | null;
   team_b_time: number | null;
+  team_a_sectors?: number[];
+  team_b_sectors?: number[];
   winner_id: string | null;
   round?: number;
 }
@@ -60,6 +62,8 @@ interface ApiMatch {
   team_b_name?: string;
   team_a_time?: number | null;
   team_b_time?: number | null;
+  team_a_sectors?: number[];
+  team_b_sectors?: number[];
   winner_id?: string | null;
   round?: number;
 }
@@ -122,6 +126,20 @@ export class TournamentDataService {
     return this.http.post<Prediction>(`${API_BASE_URL}/predictions/matches/${matchId}/predict`, {});
   }
 
+  generateMatches(tournamentId: string, simulate = false): Observable<any> {
+    return this.http.post(`${this.apiBase}/${encodeURIComponent(tournamentId)}/generate-matches?simulate=${simulate}`, {});
+  }
+
+  submitMatchResult(matchId: string, data: {
+    winner_id: string;
+    winner_name: string;
+    team_a_time: number;
+    team_b_time: number;
+    section_times_a: Record<string, number>;
+    section_times_b: Record<string, number>;
+  }): Observable<any> {
+    return this.http.put(`${API_BASE_URL}/matches/${matchId}/result`, data);
+  }
 
   getTournamentById(id: string): Tournament | undefined {
     return this.tournaments().find((item) => item.id === id);
@@ -248,18 +266,39 @@ export class TournamentDataService {
     );
   }
 
+  finishTournament(tournamentId: string): Observable<Tournament> {
+    return this.http.post<ApiTournament>(`${this.apiBase}/${encodeURIComponent(tournamentId)}/finish`, {}).pipe(
+      map((updated) => this.normalizeTournament(updated)),
+      tap((updatedTournament) => {
+        const current = this.tournaments();
+        const idx = current.findIndex((item) => item.id === updatedTournament.id);
+        if (idx === -1) {
+          this.tournaments.set([...current, updatedTournament]);
+          return;
+        }
+        const next = [...current];
+        next[idx] = updatedTournament;
+        this.tournaments.set(next);
+      }),
+    );
+  }
+
   setMatchResult(payload: {
     tournamentId: string;
     matchId: string;
     winnerId: string;
     teamATime: number;
     teamBTime: number;
+    sectionTimesA?: Record<string, number>;
+    sectionTimesB?: Record<string, number>;
   }): Observable<Tournament> {
-    const body = {
+    const body: Record<string, any> = {
       winner_id: payload.winnerId,
       team_a_time: payload.teamATime,
       team_b_time: payload.teamBTime,
     };
+    if (payload.sectionTimesA) body['section_times_a'] = payload.sectionTimesA;
+    if (payload.sectionTimesB) body['section_times_b'] = payload.sectionTimesB;
     return this.http.post<ApiTournament>(
       `${this.apiBase}/${encodeURIComponent(payload.tournamentId)}/matches/${encodeURIComponent(payload.matchId)}/result`,
       body,
@@ -368,6 +407,8 @@ export class TournamentDataService {
       team_b_name: match.team_b_name || teamsInvolved[match.team_b_id || ''] || 'TBD',
       team_a_time: match.team_a_time ?? null,
       team_b_time: match.team_b_time ?? null,
+      team_a_sectors: match.team_a_sectors || undefined,
+      team_b_sectors: match.team_b_sectors || undefined,
       winner_id: match.winner_id ?? null,
       round: match.round ?? 1,
     }));
@@ -410,7 +451,7 @@ export class TournamentDataService {
       return 'scheduled';
     }
 
-    if (end && !Number.isNaN(end.getTime()) && now > end) {
+    if (end && !Number.isNaN(end.getTime()) && now >= end) {
       return 'past';
     }
 

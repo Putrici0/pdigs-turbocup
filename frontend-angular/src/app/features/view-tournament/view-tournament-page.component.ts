@@ -15,6 +15,8 @@ interface BracketItem {
   winnerId: string;
   leftTime: number | null;
   rightTime: number | null;
+  leftSectors?: number[];
+  rightSectors?: number[];
   state: BracketState;
 }
 
@@ -26,6 +28,8 @@ interface FlatMatchRow {
   match: BracketItem;
   isExpanded: boolean;
   prediction?: Prediction;
+  sectorLeft?: number[];
+  sectorRight?: number[];
 }
 
 interface WinnerDialogState {
@@ -36,9 +40,12 @@ interface WinnerDialogState {
   leftTeamId: string;
   rightTeamId: string;
   matchId: string;
-  leftTime: string;
-  rightTime: string;
-  selectedWinner: 'left' | 'right' | '';
+  l1s: string; l1ms: string;
+  l2s: string; l2ms: string;
+  l3s: string; l3ms: string;
+  r1s: string; r1ms: string;
+  r2s: string; r2ms: string;
+  r3s: string; r3ms: string;
   errorMessage: string;
 }
 
@@ -55,7 +62,10 @@ export class ViewTournamentPageComponent implements OnInit {
   readonly tournament = signal<Tournament>(this.emptyTournament());
   readonly started = signal(false);
   readonly winnerDialog = signal<WinnerDialogState | null>(null);
+  readonly confirmDialog = signal<{ title: string; message: string; confirmLabel: string; type: 'primary' | 'success'; action: () => void } | null>(null);
+
   readonly isAdmin = computed(() => this.authService.session()?.role === 'tournament_admin');
+
   readonly isCreator = computed(() => {
     const uid = this.authService.session()?.uid || '';
     const creatorId = this.tournament().creator_id || '';
@@ -67,10 +77,7 @@ export class ViewTournamentPageComponent implements OnInit {
   readonly registeredTeams = computed(() => {
     const current = this.tournament();
     if (current.registered_teams?.length) return current.registered_teams;
-    return (current.participants || []).map((participant) => ({
-      id: participant.id,
-      name: participant.name,
-    } as TournamentTeam));
+    return (current.participants || []).map((p) => ({ id: p.id, name: p.name } as TournamentTeam));
   });
 
   readonly bracket = computed(() => {
@@ -80,11 +87,10 @@ export class ViewTournamentPageComponent implements OnInit {
       const maxRound = Math.max(...(t.matches || []).map((m) => m.round ?? 1));
       const rounds: BracketItem[][] = [];
       for (let r = 1; r <= maxRound; r++) {
-        rounds.push(loadedMatches.filter((m, idx) => ((t.matches[idx].round ?? 1) === r)));
+        rounds.push(loadedMatches.filter((_, idx) => ((t.matches[idx].round ?? 1) === r)));
       }
       return { rounds, names: this.roundNames(rounds.length) };
     }
-
     const size = this.expectedBracketSize();
     const rounds: BracketItem[][] = [];
     let matchesInRound = size / 2;
@@ -93,16 +99,13 @@ export class ViewTournamentPageComponent implements OnInit {
       const items: BracketItem[] = [];
       for (let slot = 1; slot <= matchesInRound; slot++) {
         if (roundNum === 1) {
-          const left = this.registeredTeams()[((slot - 1) * 2)]?.name || 'N/A';
-          const right = this.registeredTeams()[((slot - 1) * 2) + 1]?.name || 'N/A';
-          const leftId = this.registeredTeams()[((slot - 1) * 2)]?.id || '';
-          const rightId = this.registeredTeams()[((slot - 1) * 2) + 1]?.id || '';
+          const idx = (slot - 1) * 2;
           items.push({
             id: `placeholder-r${roundNum}-s${slot}`,
-            leftName: left,
-            rightName: right,
-            leftTeamId: leftId,
-            rightTeamId: rightId,
+            leftName: this.registeredTeams()[idx]?.name || 'N/A',
+            rightName: this.registeredTeams()[idx + 1]?.name || 'N/A',
+            leftTeamId: this.registeredTeams()[idx]?.id || '',
+            rightTeamId: this.registeredTeams()[idx + 1]?.id || '',
             winnerId: '',
             leftTime: null,
             rightTime: null,
@@ -122,18 +125,25 @@ export class ViewTournamentPageComponent implements OnInit {
   readonly expandedMatches = signal<Set<string>>(new Set());
   readonly matchPredictions = signal<Map<string, Prediction>>(new Map());
   readonly predictingMatchId = signal<string>('');
+  readonly matchSectorData = signal<Map<string, { left: number[]; right: number[] }>>(new Map());
 
   readonly flatMatches = computed(() => {
+    const sectorMap = this.matchSectorData();
     return this.bracket().rounds.flatMap((round, roundIndex) =>
-      round.map((match, order) => ({
-        id: match.id,
-        roundIndex,
-        roundName: this.bracket().names[roundIndex] || 'Match',
-        order: order + 1,
-        match,
-        isExpanded: this.expandedMatches().has(match.id),
-        prediction: this.matchPredictions().get(match.id),
-      } as FlatMatchRow)),
+      round.map((match, order) => {
+        const stored = sectorMap.get(match.id);
+        return {
+          id: match.id,
+          roundIndex,
+          roundName: this.bracket().names[roundIndex] || 'Match',
+          order: order + 1,
+          match,
+          isExpanded: this.expandedMatches().has(match.id),
+          prediction: this.matchPredictions().get(match.id),
+          sectorLeft: stored?.left,
+          sectorRight: stored?.right,
+        } as FlatMatchRow;
+      }),
     );
   });
 
@@ -155,16 +165,26 @@ export class ViewTournamentPageComponent implements OnInit {
 
   startTournament(): void {
     if (!this.canStartTournament()) return;
-    this.successMessage.set('');
-    this.tournamentDataService.startTournament(this.tournamentId).subscribe({
-      next: (updated) => {
-        this.tournament.set(updated);
-        this.started.set(true);
-        this.successMessage.set('Tournament started successfully.');
-      },
-      error: (err) => {
-        this.errorMessage.set(err?.error?.message || 'Could not start tournament.');
-      },
+
+    this.confirmDialog.set({
+      title: 'Start Tournament',
+      message: 'Are you sure you want to start the tournament? This will generate the final bracket and teams won\'t be able to leave.',
+      confirmLabel: 'Start Now',
+      type: 'primary',
+      action: () => {
+        this.confirmDialog.set(null);
+        this.successMessage.set('');
+        this.tournamentDataService.startTournament(this.tournamentId).subscribe({
+          next: (updated) => {
+            this.tournament.set(updated);
+            this.started.set(true);
+            this.successMessage.set('Tournament started successfully.');
+          },
+          error: (err) => {
+            this.errorMessage.set(err?.error?.message || 'Could not start tournament.');
+          },
+        });
+      }
     });
   }
 
@@ -172,71 +192,63 @@ export class ViewTournamentPageComponent implements OnInit {
     const target = this.bracket().rounds[roundIndex]?.[matchIndex];
     if (!this.canPickWinner(target)) return;
     this.winnerDialog.set({
-      roundIndex,
-      matchIndex,
-      leftName: target.leftName,
-      rightName: target.rightName,
-      leftTeamId: target.leftTeamId,
-      rightTeamId: target.rightTeamId,
+      roundIndex, matchIndex,
+      leftName: target.leftName, rightName: target.rightName,
+      leftTeamId: target.leftTeamId, rightTeamId: target.rightTeamId,
       matchId: target.id,
-      leftTime: '',
-      rightTime: '',
-      selectedWinner: '',
+      l1s: '', l1ms: '', l2s: '', l2ms: '', l3s: '', l3ms: '',
+      r1s: '', r1ms: '', r2s: '', r2ms: '', r3s: '', r3ms: '',
       errorMessage: '',
     });
   }
 
-  updateRaceTime(side: 'left' | 'right', value: string): void {
+  updateField(field: string, value: string): void {
     const dialog = this.winnerDialog();
     if (!dialog) return;
-    this.winnerDialog.set(side === 'left' ? { ...dialog, leftTime: value } : { ...dialog, rightTime: value });
-  }
-
-  selectWinnerSide(side: 'left' | 'right'): void {
-    const dialog = this.winnerDialog();
-    if (!dialog) return;
-    this.winnerDialog.set({ ...dialog, selectedWinner: side, errorMessage: '' });
-  }
-
-  isSelectedWinner(side: 'left' | 'right'): boolean {
-    return this.winnerDialog()?.selectedWinner === side;
+    this.winnerDialog.set({ ...dialog, [field]: value, errorMessage: '' });
   }
 
   confirmWinnerDialog(): void {
     const dialog = this.winnerDialog();
     if (!dialog) return;
-    this.successMessage.set('');
-    const leftTotal = this.parseRaceTime(dialog.leftTime);
-    const rightTotal = this.parseRaceTime(dialog.rightTime);
-    let winnerId = '';
-    let finalLeft = leftTotal;
-    let finalRight = rightTotal;
 
-    if (leftTotal !== null && rightTotal !== null) {
-      winnerId = leftTotal <= rightTotal ? dialog.leftTeamId : dialog.rightTeamId;
-    } else if (!dialog.leftTime.trim() && !dialog.rightTime.trim()) {
-      if (dialog.selectedWinner === 'left') winnerId = dialog.leftTeamId;
-      if (dialog.selectedWinner === 'right') winnerId = dialog.rightTeamId;
-      if (!winnerId) {
-        this.winnerDialog.set({ ...dialog, errorMessage: 'Select the winner if you skip timings.' });
-        return;
-      }
-      finalLeft = null;
-      finalRight = null;
-    } else {
-      this.winnerDialog.set({ ...dialog, errorMessage: 'Use MM:SS.mmm on both fields, or leave both empty and pick winner.' });
+    const leftSecs = this.sectorTotal(dialog.l1s, dialog.l1ms, dialog.l2s, dialog.l2ms, dialog.l3s, dialog.l3ms);
+    const rightSecs = this.sectorTotal(dialog.r1s, dialog.r1ms, dialog.r2s, dialog.r2ms, dialog.r3s, dialog.r3ms);
+
+    if (leftSecs === null || rightSecs === null) {
+      this.winnerDialog.set({ ...dialog, errorMessage: 'Fill all sector times with valid numbers.' });
       return;
     }
+
+    const isLeftWinner = leftSecs.total <= rightSecs.total;
+    const winnerId = isLeftWinner ? dialog.leftTeamId : dialog.rightTeamId;
+
+    this.winnerDialog.set(null);
+    this.successMessage.set('');
+
+    const s = leftSecs.sectors;
+    const sectorsA = [s['sector_1'], s['sector_2'], s['sector_3']];
+    const s2 = rightSecs.sectors;
+    const sectorsB = [s2['sector_1'], s2['sector_2'], s2['sector_3']];
+
+    this.matchSectorData.update(map => {
+      const next = new Map(map);
+      next.set(dialog.matchId, { left: sectorsA, right: sectorsB });
+      return next;
+    });
+
     this.tournamentDataService.setMatchResult({
       tournamentId: this.tournamentId,
       matchId: dialog.matchId,
       winnerId,
-      teamATime: finalLeft ?? 0,
-      teamBTime: finalRight ?? 0,
+      teamATime: leftSecs.total,
+      teamBTime: rightSecs.total,
+      sectionTimesA: leftSecs.sectors,
+      sectionTimesB: rightSecs.sectors,
     }).subscribe({
       next: (updated) => {
         this.tournament.set(updated);
-        this.winnerDialog.set(null);
+        this.started.set(true);
         this.successMessage.set('Result saved successfully.');
       },
       error: (err) => {
@@ -258,9 +270,44 @@ export class ViewTournamentPageComponent implements OnInit {
   }
 
   canStartTournament(): boolean {
-    const teamCount = this.registeredTeams().length;
-    return !this.started()
-      && (teamCount === 8 || teamCount === 16);
+    const count = this.registeredTeams().length;
+    return !this.started() && (count === 8 || count === 16);
+  }
+
+  canFinishTournament(): boolean {
+    if (!this.isAdmin() && !this.isCreator()) return false;
+    if (this.effectiveTournamentStatus() === 'past') return false;
+    
+    // Check if there's a winner in the final match
+    const rounds = this.bracket().rounds;
+    if (rounds.length === 0) return false;
+    const finalRound = rounds[rounds.length - 1];
+    if (finalRound.length === 0) return false;
+    return !!finalRound[0].winnerId;
+  }
+
+  finishTournament(): void {
+    if (!this.canFinishTournament()) return;
+
+    this.confirmDialog.set({
+      title: 'Finish Tournament',
+      message: 'Do you want to finalize this tournament? This will mark it as completed and set the final date.',
+      confirmLabel: 'Finish Tournament',
+      type: 'success',
+      action: () => {
+        this.confirmDialog.set(null);
+        this.successMessage.set('');
+        this.tournamentDataService.finishTournament(this.tournamentId).subscribe({
+          next: (updated) => {
+            this.tournament.set(updated);
+            this.successMessage.set('Tournament finished successfully.');
+          },
+          error: (err) => {
+            this.errorMessage.set(err?.error?.message || 'Could not finish tournament.');
+          },
+        });
+      }
+    });
   }
 
   toggleMatchDetails(matchId: string): void {
@@ -269,30 +316,6 @@ export class ViewTournamentPageComponent implements OnInit {
       next.has(matchId) ? next.delete(matchId) : next.add(matchId);
       return next;
     });
-  }
-
-  getSectors(totalTime: number | null): number[] {
-    if (!totalTime) return [0, 0, 0];
-    return [totalTime * 0.3, totalTime * 0.4, totalTime * 0.3];
-  }
-
-  getSectorClass(match: BracketItem, teamId: string, idx: number): string {
-    if (!match.leftTime || !match.rightTime) return 'sector-standard';
-    const leftSectors = this.getSectors(match.leftTime);
-    const rightSectors = this.getSectors(match.rightTime);
-    const teamVal = teamId === match.leftTeamId ? leftSectors[idx] : rightSectors[idx];
-    const oppVal = teamId === match.leftTeamId ? rightSectors[idx] : leftSectors[idx];
-    return teamVal < oppVal ? 'sector-purple' : 'sector-standard';
-  }
-
-  isTournamentRecord(match: BracketItem): boolean {
-    const completedTimes = this.flatMatches()
-      .map((m) => (m.match.winnerId === m.match.leftTeamId ? m.match.leftTime : m.match.rightTime))
-      .filter((t): t is number => t !== null && t > 0);
-    const record = completedTimes.length ? Math.min(...completedTimes) : null;
-    if (record === null || !match.winnerId) return false;
-    const winnerTime = match.winnerId === match.leftTeamId ? match.leftTime : match.rightTime;
-    return winnerTime === record;
   }
 
   requestPrediction(matchId: string): void {
@@ -309,6 +332,8 @@ export class ViewTournamentPageComponent implements OnInit {
       error: () => this.predictingMatchId.set(''),
     });
   }
+
+  // --- DISPLAY HELPERS ---
 
   formatMatchState(state: string): string {
     if (state === 'tbd') return 'TBD';
@@ -327,8 +352,9 @@ export class ViewTournamentPageComponent implements OnInit {
   }
 
   bestTime(m: BracketItem): string {
-    const winTime = m.winnerId === m.leftTeamId ? m.leftTime : m.rightTime;
-    return this.formatRaceTime(winTime);
+    if (!m.winnerId) return 'N/A';
+    const time = m.winnerId === m.leftTeamId ? m.leftTime : m.rightTime;
+    return time != null ? this.formatRaceTime(time) : 'N/A';
   }
 
   winnerName(m: BracketItem): string {
@@ -342,6 +368,37 @@ export class ViewTournamentPageComponent implements OnInit {
     return side === 'left' ? match.winnerId === match.leftTeamId : match.winnerId === match.rightTeamId;
   }
 
+  getSectors(match: BracketItem, teamId: string): number[] {
+    const stored = this.matchSectorData().get(match.id);
+    if (stored) {
+      return teamId === match.leftTeamId ? stored.left : stored.right;
+    }
+    const sectors = teamId === match.leftTeamId ? match.leftSectors : match.rightSectors;
+    if (sectors && sectors.length === 3) return sectors;
+    const time = teamId === match.leftTeamId ? match.leftTime : match.rightTime;
+    if (!time) return [0, 0, 0];
+    return [time * 0.3, time * 0.4, time * 0.3];
+  }
+
+  getSectorClass(match: BracketItem, teamId: string, idx: number): string {
+    const teamSectors = this.getSectors(match, teamId);
+    const oppId = teamId === match.leftTeamId ? match.rightTeamId : match.leftTeamId;
+    const oppSectors = this.getSectors(match, oppId);
+    const teamVal = teamSectors[idx];
+    const oppVal = oppSectors[idx];
+    return teamVal < oppVal ? 'sector-purple' : 'sector-standard';
+  }
+
+  isTournamentRecord(match: BracketItem): boolean {
+    const completedTimes = this.flatMatches()
+      .map((m) => (m.match.winnerId === m.match.leftTeamId ? m.match.leftTime : m.match.rightTime))
+      .filter((t): t is number => t !== null && t > 0);
+    const record = completedTimes.length ? Math.min(...completedTimes) : null;
+    if (record === null || !match.winnerId) return false;
+    const winnerTime = match.winnerId === match.leftTeamId ? match.leftTime : match.rightTime;
+    return winnerTime === record;
+  }
+
   formatDateTime(d: string): string { return d ? new Date(d).toLocaleString() : 'N/A'; }
   formatTournamentStatus(s: string): string {
     if (s === 'past') return 'Completed';
@@ -351,7 +408,10 @@ export class ViewTournamentPageComponent implements OnInit {
   effectiveTournamentStatus(): TournamentStatus { return this.tournament().status || 'scheduled'; }
   teamRouteId(t: TournamentTeam): string { return t.id; }
 
+  // --- PRIVATE ---
+
   private reloadTournament(): void {
+    this.isLoading.set(true);
     this.tournamentDataService.getTournamentDetails(this.tournamentId).subscribe({
       next: (data) => {
         this.tournament.set(data);
@@ -369,7 +429,6 @@ export class ViewTournamentPageComponent implements OnInit {
     const leftTeamId = match.team_a_id || '';
     const rightTeamId = match.team_b_id || '';
     const winnerId = match.winner_id || '';
-    const state = this.deriveBracketState(leftTeamId, rightTeamId, winnerId);
     return {
       id: match.id || id,
       leftName: match.team_a_name || 'TBD',
@@ -379,7 +438,9 @@ export class ViewTournamentPageComponent implements OnInit {
       winnerId,
       leftTime: match.team_a_time ?? null,
       rightTime: match.team_b_time ?? null,
-      state,
+      leftSectors: match.team_a_sectors,
+      rightSectors: match.team_b_sectors,
+      state: this.deriveBracketState(leftTeamId, rightTeamId, winnerId),
     };
   }
 
@@ -396,46 +457,36 @@ export class ViewTournamentPageComponent implements OnInit {
 
   private expectedBracketSize(): 8 | 16 {
     const count = this.registeredTeams().length;
-    if (count >= 16) return 16;
-    return 8;
+    return count >= 16 ? 16 : 8;
   }
 
   private roundNames(roundCount: number): string[] {
-    const allNames = ['Round of 16', 'Quarterfinals', 'Semifinals', 'Final'];
-    return allNames.slice(4 - roundCount);
+    return ['Round of 16', 'Quarterfinals', 'Semifinals', 'Final'].slice(4 - roundCount);
   }
 
   private formatRaceTime(totalSeconds: number | null): string {
     if (totalSeconds === null || Number.isNaN(totalSeconds) || totalSeconds < 0) return 'N/A';
     const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds - (minutes * 60);
+    const seconds = totalSeconds - minutes * 60;
     return `${minutes}:${seconds.toFixed(3).padStart(6, '0')}`;
   }
 
-  private parseRaceTime(value: string): number | null {
-    const txt = String(value || '').trim();
-    const m = txt.match(/^(\d{1,2}):([0-5]\d)\.(\d{3})$/);
-    if (!m) return null;
-    const minutes = Number(m[1]);
-    const seconds = Number(m[2]);
-    const millis = Number(m[3]);
-    return (minutes * 60) + seconds + (millis / 1000);
+  private sectorTotal(s1: string, ms1: string, s2: string, ms2: string, s3: string, ms3: string): { total: number; sectors: Record<string, number> } | null {
+    const sec1 = parseInt(s1) || 0; const m1 = parseInt(ms1) || 0;
+    const sec2 = parseInt(s2) || 0; const m2 = parseInt(ms2) || 0;
+    const sec3 = parseInt(s3) || 0; const m3 = parseInt(ms3) || 0;
+    const v1 = sec1 + m1 / 1000;
+    const v2 = sec2 + m2 / 1000;
+    const v3 = sec3 + m3 / 1000;
+    if (!s1.trim() && !ms1.trim() && !s2.trim() && !ms2.trim() && !s3.trim() && !ms3.trim()) return null;
+    return { total: v1 + v2 + v3, sectors: { sector_1: v1, sector_2: v2, sector_3: v3 } };
   }
 
   private emptyTournament(): Tournament {
     return {
-      id: '',
-      name: '',
-      category: '',
-      start_date: '',
-      end_date: '',
-      status: 'scheduled',
-      teams_involved: {},
-      participants: [],
-      registered_team_ids: [],
-      registered_teams: [],
-      matches: [],
-      started: false,
+      id: '', name: '', category: '', start_date: '', end_date: '',
+      status: 'scheduled', teams_involved: {}, participants: [],
+      registered_team_ids: [], registered_teams: [], matches: [], started: false,
     };
   }
 }

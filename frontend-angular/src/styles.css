@@ -7,6 +7,38 @@
 :root {
   --bg: #444547;
   --bg-image: url('/bg/racecar-bg-custom-2.png');
+
+  /* Core Colors */
+  --primary: #dc247e;
+  --primary-hover: #be1d6c;
+  --secondary: #374151;
+  --secondary-hover: #4b5563;
+  --accent: #fbbf24;
+  --success: #22c55e;
+  --success-hover: #16a34a;
+  --info: #3b82f6;
+  --ai: #a855f7;
+  --warning: #f59e0b;
+  --error: #ef4444;
+
+  /* Surfaces */
+  --panel-bg: #1f2937;
+  --panel-border: rgba(255, 255, 255, 0.08);
+  --card-bg: #374151;
+  --card-border: rgba(255, 255, 255, 0.05);
+  --input-bg: #1f2937;
+  
+  /* Text */
+  --text-main: #f3f4f6;
+  --text-muted: #9ca3af;
+  --text-dim: #6b7280;
+
+  /* Shapes & Shadows */
+  --radius-lg: 24px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+  --shadow-panel: 0 20px 40px rgba(0, 0, 0, 0.3);
+  --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html,
