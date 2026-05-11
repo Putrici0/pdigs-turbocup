@@ -4,13 +4,9 @@ from backend.app.db import db
 from backend.app.models.racing_category import racing_category
 from backend.app.logic.simulator import resolve_match_mechanics, update_participant_stats
 
-# This script ADDS data to your existing database instead of clearing it.
-# It reuses existing teams to save Firestore quota.
-
 CATEGORIES = [cat.value for cat in racing_category]
 
 def get_existing_teams():
-    """Fetches already created teams from Firestore."""
     teams = []
     docs = db.collection("teams").stream()
     for doc in docs:
@@ -20,18 +16,14 @@ def get_existing_teams():
     return teams
 
 def get_admin_user():
-    """Finds or creates a default admin ID."""
     users = list(db.collection("users").limit(1).stream())
     if users:
         return users[0].id
     return "admin_default"
 
 def add_single_tournament(name, category, status, all_teams, creator_id):
-    """Creates one tournament with its full bracket using existing teams."""
-    # Filter teams by category
     eligible = [t for t in all_teams if t.get("category") == category]
-    
-    # Select bracket size (8 or 16)
+
     if len(eligible) >= 16: size = 16
     elif len(eligible) >= 8: size = 8
     elif len(eligible) >= 4: size = 4
@@ -44,7 +36,6 @@ def add_single_tournament(name, category, status, all_teams, creator_id):
     if status == "past": base_date -= timedelta(days=30)
     elif status == "scheduled": base_date += timedelta(days=5)
 
-    # 1. Create Tournament
     t_ref = db.collection("tournaments").document()
     t_ref.set({
         "name": name,
@@ -59,7 +50,6 @@ def add_single_tournament(name, category, status, all_teams, creator_id):
     
     print(f"Added Tournament: {name} ({size} teams)")
 
-    # 2. Build Bracket
     round_num = 1
     match_date = base_date
     while len(current_round_teams) >= 2:
@@ -111,15 +101,14 @@ def add_single_tournament(name, category, status, all_teams, creator_id):
         match_date += timedelta(hours=6)
 
 def smart_populate():
-    print("--- Starting Incremental Populate (Quota Friendly) ---")
+    print("--- Starting Incremental Populate ---")
     teams = get_existing_teams()
     if not teams:
         print("No existing teams found. Please run mass_populate.py at least once first.")
         return
         
     admin_id = get_admin_user()
-    
-    # Variant: Create only 2 high-quality tournaments
+
     cat1 = random.choice(CATEGORIES)
     cat2 = random.choice(CATEGORIES)
     

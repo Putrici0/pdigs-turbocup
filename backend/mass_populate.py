@@ -9,8 +9,7 @@ fake = Faker()
 CATEGORIES = [cat.value for cat in racing_category]
 
 def clear_all_data():
-    """Wipes the database for a truly fresh start."""
-    print("!!! Wiping existing data !!!")
+    print("Wiping existing data")
     for col in ["users", "participants", "teams", "tournaments", "matches", "match_stats", "notifications", "predictions"]:
         docs = db.collection(col).stream()
         for doc in docs:
@@ -18,7 +17,6 @@ def clear_all_data():
     print("Database cleared.")
 
 def run_setup(user_count=120):
-    """Creates the foundation: Users, Participants, and Teams."""
     print(f"--- Creating {user_count} Users and corresponding Teams ---")
     batch = db.batch()
     user_ids = []
@@ -60,10 +58,6 @@ def run_setup(user_count=120):
     return teams_dict, user_ids
 
 def create_tournament_bracket(tournament_name, category, status, teams_pool, creator_id, base_date):
-    """
-    Refactored Core engine: Ensures winners advance and matches are created for all rounds.
-    """
-    # Use 16, 8, 4 or 2 teams
     available = len(teams_pool)
     if available >= 16: size = 16
     elif available >= 8: size = 8
@@ -89,16 +83,13 @@ def create_tournament_bracket(tournament_name, category, status, teams_pool, cre
     
     while len(current_round_teams) >= 2:
         winners = []
-        # Simulate matches for this round
-        # Past: all rounds. Current: Round 1 and 2. Scheduled: None.
         should_simulate = (status == "past") or (status == "current" and round_num <= 2)
         
         print(f"    - Round {round_num}: {len(current_round_teams)} teams -> {len(current_round_teams)//2} matches")
         
         for j in range(0, len(current_round_teams) - 1, 2):
             t_a, t_b = current_round_teams[j], current_round_teams[j+1]
-            
-            # If t_a or t_b are "TBD" (empty id), we can't simulate
+
             if not t_a.get("id") or not t_b.get("id"):
                 match_status = "scheduled"
                 sim_this_match = False
@@ -149,8 +140,7 @@ def populate_realistic_world():
     teams_dict, user_ids = run_setup(120)
     all_teams = list(teams_dict.values())
     now = datetime.now(timezone.utc)
-    
-    # 1. Past Tournaments (2024 - 2025)
+
     print("--- Simulating History ---")
     for year in [2024, 2025]:
         for i in range(4):
@@ -160,14 +150,12 @@ def populate_realistic_world():
             if base_date > now: base_date = now - timedelta(days=60)
             create_tournament_bracket(f"{year} {cat.upper()} Cup {fake.city()}", cat, "past", pool, random.choice(user_ids), base_date)
 
-    # 2. Current Tournaments
     print("--- Simulating Live Events ---")
     for cat in CATEGORIES:
         pool = [t for t in all_teams if t["category"] == cat]
         base_date = now - timedelta(days=1)
         create_tournament_bracket(f"Live {cat.upper()} Pro Series", cat, "current", pool, random.choice(user_ids), base_date)
-        
-    # 3. Scheduled Tournaments
+
     print("--- Simulating Upcoming Events ---")
     for _ in range(3):
         cat = random.choice(CATEGORIES)
@@ -185,4 +173,4 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Warning: Could not train AI model automatically: {e}")
         
-    print("\n!!! ALL DATA GENERATED AND AI TRAINED SUCCESSFULLY !!!")
+    print("\nAll data generated and AI trained successfully!")
