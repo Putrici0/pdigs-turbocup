@@ -1,4 +1,5 @@
 /.venv/
+/venv/
 /.idea/
 /backend/.env
 /backend/firebase-credentials.json
