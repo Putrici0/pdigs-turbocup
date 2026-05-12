@@ -14,6 +14,7 @@ import { AuthService } from '../../core/auth.service';
   styleUrl: './create-team-page.component.css',
 })
 export class CreateTeamPageComponent {
+  private static readonly DEMO_CREATED_TEAM_IDS_KEY = 'demo_created_team_ids';
   readonly name = signal('');
   readonly category = signal('');
   readonly isSubmitting = signal(false);
@@ -81,7 +82,8 @@ export class CreateTeamPageComponent {
       pilot_id: currentUser.role === 'participant_pilot' ? currentUser.uid : '',
       copilot_id: currentUser.role === 'participant_copilot' ? currentUser.uid : '',
     }).subscribe({
-      next: () => {
+      next: (createdTeam) => {
+        this.rememberDemoCreatedTeam(createdTeam.id);
         this.successMessage.set('Team created successfully.');
         this.isSubmitting.set(false);
         this.showSuccessDialog.set(true);
@@ -98,5 +100,18 @@ export class CreateTeamPageComponent {
     this.showSuccessDialog.set(false);
     this.successMessage.set('');
     await this.router.navigate(['/teams']);
+  }
+
+  private rememberDemoCreatedTeam(teamId: string): void {
+    if (!teamId) return;
+    try {
+      const raw = localStorage.getItem(CreateTeamPageComponent.DEMO_CREATED_TEAM_IDS_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      const ids = Array.isArray(parsed) ? parsed.filter((v) => typeof v === 'string') : [];
+      if (!ids.includes(teamId)) ids.push(teamId);
+      localStorage.setItem(CreateTeamPageComponent.DEMO_CREATED_TEAM_IDS_KEY, JSON.stringify(ids));
+    } catch {
+      // Keep flow working even if storage is unavailable.
+    }
   }
 }

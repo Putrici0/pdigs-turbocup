@@ -64,9 +64,11 @@
       <section class="team-showcase">
         <h2>Performance Snapshot</h2>
         <div class="showcase-grid">
+          <article class="showcase-card"><p class="stat-label">Tournaments</p><p class="stat-value">{{ profile.stats.tournaments }}</p></article>
           <article class="showcase-card"><p class="stat-label">Races</p><p class="stat-value">{{ profile.stats.races }}</p></article>
           <article class="showcase-card"><p class="stat-label">Wins</p><p class="stat-value">{{ profile.stats.wins }}</p></article>
-          <article class="showcase-card"><p class="stat-label">Podiums</p><p class="stat-value">{{ profile.stats.podiums }}</p></article>
+          <article class="showcase-card"><p class="stat-label">Avg Position</p><p class="stat-value">{{ profile.stats.avgPosition }}</p></article>
+          <article class="showcase-card"><p class="stat-label">Win Rate</p><p class="stat-value">{{ profile.stats.winRate }}</p></article>
           <article class="showcase-card"><p class="stat-label">Avg lap</p><p class="stat-value">{{ profile.stats.avgLap }}</p></article>
           <article class="showcase-card"><p class="stat-label">Best lap</p><p class="stat-value">{{ profile.stats.bestLap }}</p></article>
         </div>
@@ -77,19 +79,19 @@
             <table>
               <thead>
               <tr>
-                <th>Event</th>
-                <th>Track</th>
-                <th>Finish</th>
+                <th>Tournament</th>
+                <th>Category</th>
+                <th>Position</th>
                 <th>Best lap</th>
               </tr>
               </thead>
               <tbody>
-                @for (result of profile.recentResults; track result.event + result.track) {
+                @for (result of profile.recentResults; track result.tournament + result.category) {
                   <tr>
-                    <td>{{ result.event }}</td>
-                    <td>{{ result.track }}</td>
-                    <td>{{ result.finish }}</td>
-                    <td>{{ result.lap }}</td>
+                    <td>{{ result.tournament }}</td>
+                    <td>{{ result.category }}</td>
+                    <td>{{ result.position }}</td>
+                    <td>{{ result.bestLap }}</td>
                   </tr>
                 }
               </tbody>

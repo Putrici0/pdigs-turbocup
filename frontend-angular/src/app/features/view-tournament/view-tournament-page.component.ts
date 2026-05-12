@@ -46,6 +46,7 @@ interface WinnerDialogState {
   r1s: string; r1ms: string;
   r2s: string; r2ms: string;
   r3s: string; r3ms: string;
+  selectedWinner: 'left' | 'right' | '';
   errorMessage: string;
 }
 
@@ -198,6 +199,7 @@ export class ViewTournamentPageComponent implements OnInit {
       matchId: target.id,
       l1s: '', l1ms: '', l2s: '', l2ms: '', l3s: '', l3ms: '',
       r1s: '', r1ms: '', r2s: '', r2ms: '', r3s: '', r3ms: '',
+      selectedWinner: '',
       errorMessage: '',
     });
   }
@@ -215,36 +217,55 @@ export class ViewTournamentPageComponent implements OnInit {
     const leftSecs = this.sectorTotal(dialog.l1s, dialog.l1ms, dialog.l2s, dialog.l2ms, dialog.l3s, dialog.l3ms);
     const rightSecs = this.sectorTotal(dialog.r1s, dialog.r1ms, dialog.r2s, dialog.r2ms, dialog.r3s, dialog.r3ms);
 
-    if (leftSecs === null || rightSecs === null) {
-      this.winnerDialog.set({ ...dialog, errorMessage: 'Fill all sector times with valid numbers.' });
+    const hasSectorTimes = leftSecs !== null && rightSecs !== null;
+    const hasManualWinner = dialog.selectedWinner === 'left' || dialog.selectedWinner === 'right';
+    if (!hasSectorTimes && !hasManualWinner) {
+      this.winnerDialog.set({ ...dialog, errorMessage: 'Fill sector times or select a winner.' });
       return;
     }
 
-    const isLeftWinner = leftSecs.total <= rightSecs.total;
+    const isLeftWinner = hasSectorTimes
+      ? (leftSecs!.total <= rightSecs!.total)
+      : dialog.selectedWinner === 'left';
     const winnerId = isLeftWinner ? dialog.leftTeamId : dialog.rightTeamId;
 
     this.winnerDialog.set(null);
     this.successMessage.set('');
 
-    const s = leftSecs.sectors;
-    const sectorsA = [s['sector_1'], s['sector_2'], s['sector_3']];
-    const s2 = rightSecs.sectors;
-    const sectorsB = [s2['sector_1'], s2['sector_2'], s2['sector_3']];
+    let teamATime = 90;
+    let teamBTime = 91;
+    let sectionTimesA: Record<string, number> | undefined;
+    let sectionTimesB: Record<string, number> | undefined;
 
-    this.matchSectorData.update(map => {
-      const next = new Map(map);
-      next.set(dialog.matchId, { left: sectorsA, right: sectorsB });
-      return next;
-    });
+    if (hasSectorTimes) {
+      const s = leftSecs!.sectors;
+      const sectorsA = [s['sector_1'], s['sector_2'], s['sector_3']];
+      const s2 = rightSecs!.sectors;
+      const sectorsB = [s2['sector_1'], s2['sector_2'], s2['sector_3']];
+
+      this.matchSectorData.update(map => {
+        const next = new Map(map);
+        next.set(dialog.matchId, { left: sectorsA, right: sectorsB });
+        return next;
+      });
+
+      teamATime = leftSecs!.total;
+      teamBTime = rightSecs!.total;
+      sectionTimesA = leftSecs!.sectors;
+      sectionTimesB = rightSecs!.sectors;
+    } else if (!isLeftWinner) {
+      teamATime = 91;
+      teamBTime = 90;
+    }
 
     this.tournamentDataService.setMatchResult({
       tournamentId: this.tournamentId,
       matchId: dialog.matchId,
       winnerId,
-      teamATime: leftSecs.total,
-      teamBTime: rightSecs.total,
-      sectionTimesA: leftSecs.sectors,
-      sectionTimesB: rightSecs.sectors,
+      teamATime,
+      teamBTime,
+      sectionTimesA,
+      sectionTimesB,
     }).subscribe({
       next: (updated) => {
         this.tournament.set(updated);
@@ -258,6 +279,12 @@ export class ViewTournamentPageComponent implements OnInit {
   }
 
   cancelWinnerDialog(): void { this.winnerDialog.set(null); }
+
+  selectWinnerQuick(side: 'left' | 'right'): void {
+    const dialog = this.winnerDialog();
+    if (!dialog) return;
+    this.winnerDialog.set({ ...dialog, selectedWinner: side, errorMessage: '' });
+  }
 
   canPickWinner(match: BracketItem | undefined): boolean {
     if (!match) return false;
@@ -331,6 +358,10 @@ export class ViewTournamentPageComponent implements OnInit {
       },
       error: () => this.predictingMatchId.set(''),
     });
+  }
+
+  predictionTooltip(leftName: string, rightName: string): string {
+    return `Blue: ${leftName} | Orange: ${rightName}`;
   }
 
   // --- DISPLAY HELPERS ---

@@ -52,7 +52,7 @@
                 
                 @if (matchPredictions().get(item.id); as pred) {
                   <div class="prediction-bar-container bracket-mode" [class.is-loading]="predictingMatchId() === item.id">
-                    <div class="prediction-bar">
+                    <div class="prediction-bar" [attr.title]="predictionTooltip(item.leftName, item.rightName)">
                       <div class="prob-a" [style.width.%]="pred.team_a_win_prob * 100"></div>
                       <div class="prob-b" [style.width.%]="pred.team_b_win_prob * 100"></div>
                     </div>
@@ -60,6 +60,10 @@
                       <span>{{ pred.team_a_win_prob * 100 | number:'1.0-0' }}%</span>
                       <span class="ai-label">AI PREDICTION</span>
                       <span>{{ pred.team_b_win_prob * 100 | number:'1.0-0' }}%</span>
+                    </div>
+                    <div class="prediction-legend">
+                      <span class="legend-item"><span class="legend-dot dot-a"></span>{{ item.leftName }}</span>
+                      <span class="legend-item"><span class="legend-dot dot-b"></span>{{ item.rightName }}</span>
                     </div>
                   </div>
                 }
@@ -131,7 +135,7 @@
                 {{ row.match.leftName }} vs {{ row.match.rightName }}
                 @if (row.prediction; as pred) {
                   <div class="prediction-bar-container table-mode" [class.is-loading]="predictingMatchId() === row.id">
-                    <div class="prediction-bar">
+                    <div class="prediction-bar" [attr.title]="predictionTooltip(row.match.leftName, row.match.rightName)">
                       <div class="prob-a" [style.width.%]="pred.team_a_win_prob * 100"></div>
                       <div class="prob-b" [style.width.%]="pred.team_b_win_prob * 100"></div>
                     </div>
@@ -139,6 +143,10 @@
                       <span>{{ pred.team_a_win_prob * 100 | number:'1.0-0' }}%</span>
                       <span class="ai-label">AI PREDICTION</span>
                       <span>{{ pred.team_b_win_prob * 100 | number:'1.0-0' }}%</span>
+                    </div>
+                    <div class="prediction-legend">
+                      <span class="legend-item"><span class="legend-dot dot-a"></span>{{ row.match.leftName }}</span>
+                      <span class="legend-item"><span class="legend-dot dot-b"></span>{{ row.match.rightName }}</span>
                     </div>
                   </div>
                 }
@@ -192,7 +200,11 @@
   <div class="dialog-backdrop" (click)="cancelWinnerDialog()">
     <section class="dialog-card" (click)="$event.stopPropagation()">
       <h3>Sector Times</h3>
-      <p class="dialog-hint">Enter seconds and milliseconds for each sector</p>
+      <p class="dialog-hint">Enter seconds and milliseconds for each sector, or choose a quick winner.</p>
+      <div class="quick-winner-row">
+        <button type="button" class="quick-winner-btn" [class.active]="dialog.selectedWinner === 'left'" (click)="selectWinnerQuick('left')">{{ dialog.leftName }} wins</button>
+        <button type="button" class="quick-winner-btn" [class.active]="dialog.selectedWinner === 'right'" (click)="selectWinnerQuick('right')">{{ dialog.rightName }} wins</button>
+      </div>
       <div class="sector-dialog-grid">
         <div class="team-sector-col">
           <h4>{{ dialog.leftName }}</h4>
