@@ -13,7 +13,7 @@
         @for (n of notifService.notifications(); track n.id) {
           <div class="notification-card" [class.unread]="!n.read">
             <div class="notif-content">
-              <span class="notif-date">{{ n.created_at | date:'short' }}</span>
+              <span class="notif-date">{{ n.created_at | date:'EEE, MMM d, y • HH:mm' }}</span>
               <p>{{ n.message }}</p>
             </div>
             @if (!n.read) {

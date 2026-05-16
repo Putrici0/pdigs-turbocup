@@ -1,6 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/auth.service';
+import { NotificationService } from '../../core/notification.service';
 
 @Component({
   selector: 'app-toolbar',
@@ -16,9 +17,13 @@ export class ToolbarComponent {
   readonly logoutMessage = signal('');
   readonly isLogoutError = signal(false);
 
-  constructor(public readonly authService: AuthService) {}
+  constructor(
+    public readonly authService: AuthService,
+    public readonly notificationService: NotificationService
+  ) {}
 
   openToolbar(): void {
+    this.notificationService.fetchNotifications();
     this.isOpen.set(true);
   }
 

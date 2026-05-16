@@ -31,7 +31,11 @@ export class NotificationService {
 
   fetchNotifications() {
     const uid = this.auth.session()?.uid;
-    if (!uid) return;
+    if (!uid) {
+      this.notifications.set([]);
+      this.unreadCount.set(0);
+      return;
+    }
 
     this.http.get<AppNotification[]>(`http://127.0.0.1:5050/api/notifications/user/${uid}`).subscribe(data => {
       this.notifications.set(data);

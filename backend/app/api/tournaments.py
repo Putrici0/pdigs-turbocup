@@ -55,6 +55,13 @@ def _compute_status(start_date_str, end_date_str):
     if end_date and end_date <= now: return 'past'
     return 'current' if start_date else 'scheduled'
 
+def _format_datetime_for_notification(value):
+    dt = _parse_iso_datetime(value)
+    if not dt:
+        raw = str(value or "").strip()
+        return raw or "N/A"
+    return dt.strftime("%Y-%m-%d %H:%M UTC")
+
 def _serialize_tournament(doc):
     data = serialize_firestore(doc)
     data.setdefault('participants', [])
@@ -63,6 +70,42 @@ def _serialize_tournament(doc):
     data.setdefault('started', False)
     data['status'] = _compute_status(data.get('start_date'), data.get('end_date'))
     return data
+
+def _get_tournament_member_user_ids(tournament_data):
+    team_ids = list(tournament_data.get("registered_team_ids", []))
+    if not team_ids:
+        return []
+
+    team_refs = [db.collection("teams").document(team_id) for team_id in team_ids]
+    member_ids = set()
+    for team_doc in db.get_all(team_refs):
+        if not team_doc.exists:
+            continue
+        team_data = team_doc.to_dict() or {}
+        pilot_id = str(team_data.get("pilot_id", "")).strip()
+        copilot_id = str(team_data.get("copilot_id", "")).strip()
+        if pilot_id:
+            member_ids.add(pilot_id)
+        if copilot_id:
+            member_ids.add(copilot_id)
+    return list(member_ids)
+
+def _notify_tournament_members(tournament_data, message):
+    user_ids = _get_tournament_member_user_ids(tournament_data)
+    if not user_ids:
+        return
+
+    created_at = datetime.now(timezone.utc).isoformat()
+    batch = db.batch()
+    for user_id in user_ids:
+        notif_ref = db.collection("notifications").document()
+        batch.set(notif_ref, {
+            "user_id": user_id,
+            "message": message,
+            "read": False,
+            "created_at": created_at,
+        })
+    batch.commit()
 
 def _get_detailed_tournament_data(tournament_id):
     tourn_ref = db.collection("tournaments").document(tournament_id)
@@ -87,9 +130,15 @@ def finish_tournament(tournament_id):
     if not tourn_doc.exists:
         return jsonify({"message": "Tournament not found"}), 404
     
-    tourn_ref.update({
-        "end_date": datetime.now(timezone.utc).isoformat()
-    })
+    finished_at = datetime.now(timezone.utc).isoformat()
+    tourn_ref.update({"end_date": finished_at})
+
+    tourn_data = tourn_doc.to_dict() or {}
+    tournament_name = tourn_data.get("name", "Tournament")
+    _notify_tournament_members(
+        tourn_data,
+        f'Tournament "{tournament_name}" was marked as finished by the tournament admin.'
+    )
     
     # Return refreshed details
     detailed_data = _get_detailed_tournament_data(tournament_id)
@@ -301,11 +350,26 @@ def update_tournament(tournament_id):
     if end_dt <= start_dt:
         return jsonify({"message": "end_date must be later than start_date"}), 400
 
-    tourn_ref.update({
-        "name": name,
-        "start_date": start_date,
-        "end_date": end_date,
-    })
+    changes = []
+    if name != str(current_data.get("name", "")).strip():
+        changes.append(f'name: "{current_data.get("name", "")}" -> "{name}"')
+    if start_date != str(current_data.get("start_date", "")).strip():
+        old_start = _format_datetime_for_notification(current_data.get("start_date", ""))
+        new_start = _format_datetime_for_notification(start_date)
+        changes.append(f'start date: "{old_start}" -> "{new_start}"')
+    if end_date != str(current_data.get("end_date", "")).strip():
+        old_end = _format_datetime_for_notification(current_data.get("end_date", ""))
+        new_end = _format_datetime_for_notification(end_date)
+        changes.append(f'end date: "{old_end}" -> "{new_end}"')
+
+    tourn_ref.update({"name": name, "start_date": start_date, "end_date": end_date})
+
+    if changes:
+        tournament_name = name or current_data.get("name", "Tournament")
+        _notify_tournament_members(
+            current_data,
+            f'Tournament "{tournament_name}" was updated by the tournament admin: ' + "; ".join(changes)
+        )
     return jsonify(_serialize_tournament(tourn_ref.get())), 200
 
 @tournaments_bp.route('/<tournament_id>/generate-matches', methods=['POST'])
@@ -393,6 +457,13 @@ def generate_tournament_matches(tournament_id):
     for rm in resolved_matches:
         _resolve_pending_predictions(rm["match_id"], rm["winner_id"])
 
+    tournament_name = tourn_data.get("name", "Tournament")
+    action_detail = "Full bracket simulation generated." if simulate else "Round pairings generated."
+    _notify_tournament_members(
+        tourn_data,
+        f'Tournament "{tournament_name}" was updated by the tournament admin. {action_detail}'
+    )
+
     return jsonify({"message": f"Successfully generated {total_generated} matches.", "rounds": round_num - 1 if simulate else 1}), 201
 
 @tournaments_bp.route('/<tournament_id>/start', methods=['POST'])
@@ -432,6 +503,11 @@ def start_tournament(tournament_id):
         batch.set(m_ref, payload)
     batch.commit()
     tourn_ref.update({"started": True})
+    tournament_name = tourn_data.get("name", "Tournament")
+    _notify_tournament_members(
+        tourn_data,
+        f'Tournament "{tournament_name}" was started by the tournament admin.'
+    )
 
     refreshed = tourn_ref.get()
     data = _serialize_tournament(refreshed)
@@ -545,6 +621,18 @@ def set_match_result(tournament_id, match_id):
             "end_date": datetime.now(timezone.utc).isoformat()
         })
 
+    tourn_doc = db.collection("tournaments").document(tournament_id).get()
+    tourn_data = tourn_doc.to_dict() or {}
+    tournament_name = tourn_data.get("name", "Tournament")
+    _notify_tournament_members(
+        tourn_data,
+        (
+            f'Tournament "{tournament_name}" was updated by the tournament admin. '
+            f'Match result recorded: {match_data.get("team_a_name", "Team A")} vs '
+            f'{match_data.get("team_b_name", "Team B")} - winner: {winner_name}.'
+        )
+    )
+
     # Return refreshed details
     detailed_data = _get_detailed_tournament_data(tournament_id)
     if not detailed_data:
@@ -629,9 +717,20 @@ def leave_tournament(tournament_id):
 
 @tournaments_bp.route('/<tournament_id>', methods=['DELETE'])
 def delete_tournament(tournament_id):
+    tourn_ref = db.collection('tournaments').document(tournament_id)
+    tourn_doc = tourn_ref.get()
+    tourn_data = tourn_doc.to_dict() if tourn_doc.exists else {}
+    tournament_name = (tourn_data or {}).get("name", "Tournament")
+
+    if tourn_data:
+        _notify_tournament_members(
+            tourn_data,
+            f'Tournament "{tournament_name}" was deleted by the tournament admin.'
+        )
+
     matches = db.collection("matches").where(filter=FieldFilter("tournament_id", "==", tournament_id)).stream()
     for m in matches: m.reference.delete()
-    db.collection('tournaments').document(tournament_id).delete()
+    tourn_ref.delete()
     return jsonify({"message": "Deleted successfully"}), 200
 
 @tournaments_bp.route('/user/<user_id>', methods=['GET'])

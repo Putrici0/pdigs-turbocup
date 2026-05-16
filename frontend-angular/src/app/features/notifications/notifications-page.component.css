@@ -68,14 +68,21 @@
 }
 
 .notif-date {
-  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.35);
+  font-size: 0.8rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #9ca3af;
+  color: #cbd5e1;
 }
 
 .notification-card.unread .notif-date {
+  border-color: rgba(220, 36, 126, 0.45);
+  background: rgba(220, 36, 126, 0.12);
   color: #f9a8d4;
 }
 

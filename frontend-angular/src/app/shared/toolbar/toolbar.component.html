@@ -47,8 +47,12 @@
             routerLink="/notifications"
             routerLinkActive="active-link"
             (click)="closeToolbar()"
+            class="notifications-link"
           >
             Notifications
+            @if (notificationService.unreadCount() > 0) {
+              <span class="notification-badge">{{ notificationService.unreadCount() }}</span>
+            }
           </a>
         @if (authService.session()?.role === 'participant_pilot' || authService.session()?.role === 'participant_copilot') {
           <a
