@@ -108,10 +108,6 @@ Registered blueprints:
 - `/api/predictions`
 - `/api/matches`
 
-## Project Status
-
-Active development. It is recommended to work with feature branches and Pull Requests for functional changes.
-
 ## Authors
 
 - Pablo Llopis Parrilla
